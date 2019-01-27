@@ -1,0 +1,17 @@
+#include "Helper.h"
+
+gboolean g_string_compare(GString* str1, GString* str2)
+{
+    if(str1->len != str2->len)
+        return FALSE;
+
+    return strncmp(str1->str, str2->str, str1->len);
+}
+
+gboolean g_string_starts_with(GString* str, GString* startsWith)
+{
+    if(startsWith->len > str->len)
+        return FALSE;
+
+    return strncmp(str->str, startsWith->str, startsWith->len);
+}
