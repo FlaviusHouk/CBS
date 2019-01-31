@@ -3,6 +3,7 @@
 #include "CLI.h"
 #include "Helper.h"
 #include "CLICommandInfo.h"
+#include "ModelProjectManager.h"
 
 struct _CLICommandParser
 {
@@ -15,7 +16,14 @@ G_DEFINE_TYPE(CLICommandParser, cli_command_parser, G_TYPE_OBJECT)
 
 static void ProcessCreateCommand(CLICommandInfo* command)
 {
+	ModelProjectManager* manager = model_project_manager_new();
 
+	GPtrArray* args = cli_command_info_get_args(command);
+	GString* loc = (GString*) g_ptr_array_index(args, 0);
+
+	model_project_manager_create_project(loc);
+
+	g_object_unref(manager);
 }
 
 static void ProcessAddCommand(CLICommandInfo* command)
@@ -123,11 +131,11 @@ static void cli_command_parser_set_input_state(gint state)
 	}
 	else
 	{
-		currentCommand = (CLICommandInfo*)g_ptr_array_index(AvailableCommands, CREATE);
+		currentCommand = (CLICommandInfo*)g_ptr_array_index(AvailableCommands, CREATE - 1);
 	}
 
 	current_state = state;
-	currentCommand = (CLICommandInfo*)g_ptr_array_index(AvailableCommands, state);
+	currentCommand = (CLICommandInfo*)g_ptr_array_index(AvailableCommands, state - 1);
 }
 
 static void cli_command_parser_add_to_current_collection(GString* arg)
@@ -160,8 +168,11 @@ cli_command_parser_filter_commands (gpointer obj, gpointer user_data)
 	CLICommandInfo* com = (CLICommandInfo*)obj;
 	CLICommandParser* this = (CLICommandParser*)user_data;
 
-	if(cli_command_info_get_args_count(com) > 0)
+	if(cli_command_info_get_args(com)->len > 0)
+	{
+		g_print(cli_command_info_get_command(com)->str);
 		g_ptr_array_add(this->_commands, com);
+	}
 }
 
 static void
@@ -210,6 +221,8 @@ CLICommandParser* cli_command_parser_new(char** args, int argn)
 						this);
 
 	g_ptr_array_sort(this->_commands, cli_command_parser_compare_commands);
+
+	return this;
 }
 
 void cli_command_parser_execute(CLICommandParser* this)

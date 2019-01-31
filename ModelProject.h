@@ -37,6 +37,7 @@ model_project_add_dependency(ModelProject* this, ModelProjectDependency* depende
 
 void
 model_project_remove_dependency(ModelProject* this, ModelProjectDependency* dependency);
+*/
 
 void
 model_project_add_include_folder(ModelProject* this, GString* folder);
@@ -44,5 +45,7 @@ model_project_add_include_folder(ModelProject* this, GString* folder);
 void
 model_project_remove_include_folder(ModelProject* this, GString* folder);
 
-*/
+void
+model_project_save(ModelProject* this, const GString* dest);
+
 #endif

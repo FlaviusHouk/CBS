@@ -3,7 +3,7 @@ $LIBS = pkg-config --libs glib-2.0
 $cc = gcc
 
 Main: main.o CLI.o helper.o CLICommandInfo.o ModelProject.o ModelSourceFile.o ModelProjectDependency.o ModelProjectManager.o
-	cc -g  main.o helper.o CLI.o CLICommandInfo.o ModelProject.o ModelSourceFile.o ModelProjectDependency.o ModelProjectManager.o $(shell pkg-config --libs glib-2.0 gobject-2.0 libxml-2.0) -o cbs.lef
+	cc -g  main.o helper.o ModelProject.o ModelSourceFile.o ModelProjectDependency.o ModelProjectManager.o CLI.o CLICommandInfo.o $(shell pkg-config --libs glib-2.0 gobject-2.0 libxml-2.0) -o cbs.lef
 
 main.o:
 	cc -g -c main.c -o main.o $(shell pkg-config --cflags glib-2.0 gobject-2.0 libxml-2.0)
@@ -12,7 +12,7 @@ helper.o:
 	cc -g -c Helper.c -o helper.o $(shell pkg-config --cflags glib-2.0 gobject-2.0)
 
 CLI.o:
-	cc -g -c  CLI.c -o CLI.o $(shell pkg-config --cflags glib-2.0 gobject-2.0)
+	cc -g -c  CLI.c -o CLI.o $(shell pkg-config --cflags glib-2.0 gobject-2.0 libxml-2.0)
 
 CLICommandInfo.o:
 	cc -g -c  CLICommandInfo.c -o CLICommandInfo.o $(shell pkg-config --cflags glib-2.0 gobject-2.0)

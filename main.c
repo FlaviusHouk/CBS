@@ -8,6 +8,8 @@
 int main(int argc, char** argv)
 {
 	CLICommandParser* p = cli_command_parser_new(argv, argc);
+	
+	cli_command_parser_execute(p);
 
-	ModelProject* proj = model_project_load_or_create_project(g_string_new("/home/Flavius/C/CBS/proj2/proj.cpd"));
+	g_object_unref(p);
 }

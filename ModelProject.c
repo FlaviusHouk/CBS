@@ -259,7 +259,7 @@ model_project_write_project(ModelProject* this)
     rc = xmlTextWriterStartElement(writer, BAD_CAST "SystemDependencies");
     g_assert(rc >= 0);
 
-    g_ptr_array_foreach(this->_headersFolders, 
+    g_ptr_array_foreach(this->_dependencies, 
                         model_project_write_system_dependencies,
                         writer);
 
@@ -320,4 +320,32 @@ model_project_remove_source_file(ModelProject* this, ModelSourceFile* file)
     g_ptr_array_remove(this->_sourceFiles, file);
 
     g_object_unref(file);
+}
+
+void
+model_project_add_include_folder(ModelProject* this, GString* folder)
+{
+    g_assert(this);
+    g_assert(folder);
+
+    g_ptr_array_add(this->_headersFolders, folder);
+}
+
+void
+model_project_remove_include_folder(ModelProject* this, GString* folder)
+{
+    g_assert(this);
+    g_assert(folder);
+
+    g_ptr_array_remove(this->_headersFolders, folder);
+}
+
+void
+model_project_save(ModelProject* this, const GString* dest)
+{
+    //розкоментувати після видалення location із ModelProject
+    /*g_object_unref(this->_location);
+    this->_location = dest;*/
+
+    model_project_write_project(this);
 }
