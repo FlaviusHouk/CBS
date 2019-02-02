@@ -60,7 +60,7 @@ model_project_read(xmlNodePtr root, ModelProject* this)
         node = node->next;
     }
 
-    //this->_location = g_string_new(xmlNodeGetContent(node));
+    this->_location = g_string_new(xmlNodeGetContent(node));
 
     //read SourceFiles list
     while(node != NULL && strcmp(node->name, "SourceFiles") != 0)
@@ -81,6 +81,8 @@ model_project_read(xmlNodePtr root, ModelProject* this)
         
         if(file != NULL)
             g_ptr_array_add(this->_sourceFiles, file);
+
+        sourceFiles = sourceFiles->next;
     }
 
     //read IncludeForders list
@@ -98,7 +100,9 @@ model_project_read(xmlNodePtr root, ModelProject* this)
             includeFolder = includeFolder->next;
         }
 
-        g_ptr_array_add(this->_headersFolders, g_string_new(xmlNodeGetContent(includeFolder)));
+        GString* data = g_string_new(xmlNodeGetContent(includeFolder));
+        g_ptr_array_add(this->_headersFolders, data);
+        includeFolder = includeFolder->next;
     }
 
     //read Dependencies list
@@ -116,7 +120,10 @@ model_project_read(xmlNodePtr root, ModelProject* this)
             deps = deps->next;
         }
 
+        //змінити так як тепер Залежність - це окремий тип
+
         g_ptr_array_add(this->_dependencies, g_string_new(xmlNodeGetContent(includeFolder)));
+        deps = deps->next;
     }
 }
 
@@ -302,7 +309,13 @@ model_project_add_source_file(ModelProject* this, ModelSourceFile* file)
     g_assert(this);
     g_assert(file);
 
-    if(g_ptr_array_find(this->_sourceFiles, file, NULL))
+    FILE* fileCheck = fopen(model_source_file_get_path(file)->str, "r");
+    if(fileCheck)
+        fclose(fileCheck);
+    else
+        g_assert(FALSE);
+
+    if(g_ptr_array_find_with_equal_func(this->_sourceFiles, file, model_source_file_equals, NULL))
         return;
 
     g_ptr_array_add(this->_sourceFiles, file);
@@ -314,10 +327,10 @@ model_project_remove_source_file(ModelProject* this, ModelSourceFile* file)
     g_assert(this);
     g_assert(file);
 
-    if(!g_ptr_array_find(this->_sourceFiles, file, NULL))
-        return;
+    int index = -1;
 
-    g_ptr_array_remove(this->_sourceFiles, file);
+    if(g_ptr_array_find_with_equal_func(this->_sourceFiles, file, model_source_file_equals, &index))
+        g_ptr_array_remove_index(this->_sourceFiles, index);
 
     g_object_unref(file);
 }
@@ -343,7 +356,7 @@ model_project_remove_include_folder(ModelProject* this, GString* folder)
 void
 model_project_save(ModelProject* this, const GString* dest)
 {
-    //розкоментувати після видалення location із ModelProject
+    //розкоментувати після видалення location із ModelProject xml
     /*g_object_unref(this->_location);
     this->_location = dest;*/
 

@@ -38,4 +38,10 @@ enum ModelSourceFileTypes
 int
 model_source_file_get_file_type(ModelSourceFile* file);
 
+gboolean
+model_source_file_equals(const void* this, const void* that);
+
+GString*
+model_source_file_get_path(ModelSourceFile* this);
+
 #endif

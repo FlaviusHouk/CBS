@@ -26,14 +26,56 @@ static void ProcessCreateCommand(CLICommandInfo* command)
 	g_object_unref(manager);
 }
 
+static void AddFileToProject(gpointer fileName, gpointer project)
+{
+	GString* fileLoc = (GString*)fileName;
+	ModelProject* proj = (ModelProject*) project;
+
+	ModelSourceFile* file = model_source_file_new(fileLoc);
+
+	model_project_add_source_file(proj, file);
+}
+
 static void ProcessAddCommand(CLICommandInfo* command)
 {
+	GPtrArray* files = cli_command_info_get_args(command);
 
+	GString* projLoc = g_ptr_array_index(files, 0);
+	g_ptr_array_remove(files, projLoc);
+
+	ModelProject* proj = model_project_load_or_create_project(projLoc);
+
+	g_ptr_array_foreach(files, AddFileToProject, proj);
+
+	model_project_save(proj, NULL);
+
+	g_object_unref(proj);
+}
+
+static void RemoveFileFromProject(gpointer fileName, gpointer project)
+{
+	GString* fileLoc = (GString*)fileName;
+	ModelProject* proj = (ModelProject*) project;
+
+	ModelSourceFile* file = model_source_file_new(fileLoc);
+
+	model_project_remove_source_file(proj, file);
 }
 
 static void ProcessDeleteCommand(CLICommandInfo* command)
 {
+	GPtrArray* files = cli_command_info_get_args(command);
 
+	GString* projLoc = g_ptr_array_index(files, 0);
+	g_ptr_array_remove(files, projLoc);
+
+	ModelProject* proj = model_project_load_or_create_project(projLoc);
+
+	g_ptr_array_foreach(files, RemoveFileFromProject, proj);
+
+	model_project_save(proj, NULL);
+
+	g_object_unref(proj);
 }
 
 static void ProcessAddDepCommand(CLICommandInfo* command)

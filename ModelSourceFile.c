@@ -61,7 +61,15 @@ model_source_file_write_xml(ModelSourceFile* file, xmlTextWriterPtr writer)
     g_assert(file);
     g_assert(writer);
 
+    int rc;
+
+    rc = xmlTextWriterStartElement(writer, BAD_CAST "SourceFile");
+    g_assert(rc >= 0);
+
     xmlTextWriterWriteElement(writer, "Path", file->_path->str);
+
+    rc = xmlTextWriterEndElement(writer);
+    g_assert(rc >= 0);
 }
 
 static const char* 
@@ -85,4 +93,21 @@ model_source_file_get_file_type(ModelSourceFile* file)
         return VIEW;
     else
         return RESOURCE;
+}
+
+gboolean
+model_source_file_equals(const void* this, const void* that)
+{ 
+    ModelSourceFile* file1 = (ModelSourceFile*)this;
+    ModelSourceFile* file2 = (ModelSourceFile*)that;
+
+    return g_string_equal(file1->_path, file2->_path);
+}
+
+GString*
+model_source_file_get_path(ModelSourceFile* this)
+{
+    g_assert(this);
+
+    return this->_path;
 }
