@@ -1,4 +1,10 @@
 #include "Helper.h"
+#include "stdio.h"
+#include "stdlib.h"
+#include "unistd.h"
+
+#include <sys/types.h>
+#include <sys/wait.h>
 
 gboolean g_string_compare(GString* str1, GString* str2)
 {
@@ -34,3 +40,48 @@ gboolean g_string_starts_with(GString* str, GString* startsWith)
 
     return toRet;
 }*/
+
+static GString*
+read_from_pipe (int file)
+{
+    GString* toRet = g_string_new("");
+    FILE *stream;
+    int c;
+
+    stream = fdopen (file, "r");
+    while ((c = fgetc (stream)) != EOF)
+        g_string_append_c(toRet, c);
+    fclose (stream);
+
+    return toRet;
+}
+
+GString*
+run_tool(char* tool, char** args)
+{
+    int link[2];
+    pid_t pid;
+    GString* toRet = NULL;
+
+    int rc = pipe(link);
+    g_assert(rc != -1);
+
+    pid = fork(); 
+    g_assert(pid != -1);
+
+    if(pid == 0) 
+    {
+        dup2 (link[1], STDOUT_FILENO);
+        close(link[0]);
+        close(link[1]);
+        execv (tool, args);
+        exit(0);
+    } 
+    else
+    {
+        close(link[1]);
+        toRet = read_from_pipe(link[0]);
+    }
+
+    return toRet;
+}
