@@ -82,7 +82,8 @@ model_project_read(xmlNodePtr root, ModelProject* this)
         if(file != NULL)
             g_ptr_array_add(this->_sourceFiles, file);
 
-        sourceFiles = sourceFiles->next;
+        if(sourceFiles != NULL)
+            sourceFiles = sourceFiles->next;
     }
 
     //read IncludeForders list
@@ -115,14 +116,16 @@ model_project_read(xmlNodePtr root, ModelProject* this)
 
     while(deps != NULL)
     {
-        while(deps != NULL && strcmp(deps->name, "string") != 0)
+        while(deps != NULL && strcmp(deps->name, "Dependency") != 0)
         {
             deps = deps->next;
         }
 
-        //змінити так як тепер Залежність - це окремий тип
+        ModelProjectDependency* dep = model_project_dependency_new_from_xml(deps);
 
-        g_ptr_array_add(this->_dependencies, g_string_new(xmlNodeGetContent(includeFolder)));
+        if(dep != NULL)
+            g_ptr_array_add(this->_dependencies, dep);
+
         deps = deps->next;
     }
 }
@@ -212,9 +215,9 @@ static void
 model_project_write_system_dependencies(gpointer obj, gpointer data)
 {
     xmlTextWriterPtr writer = (xmlTextWriterPtr)data;
-    GString* str = (GString*)obj;
+    ModelProjectDependency* dep = (ModelProjectDependency*)obj;
 
-    xmlTextWriterWriteElement(writer, "string", str->str);
+    model_project_dependency_write_xml(dep, writer);
 }
 
 static void
@@ -361,4 +364,46 @@ model_project_save(ModelProject* this, const GString* dest)
     this->_location = dest;*/
 
     model_project_write_project(this);
+}
+
+void
+model_project_add_dependency(ModelProject* this, ModelProjectDependency* dependency)
+{
+    g_assert(this);
+    g_assert(dependency);
+
+    //add validation here
+
+    g_ptr_array_add(this->_dependencies, dependency);    
+}
+
+void
+model_project_remove_dependency(ModelProject* this, ModelProjectDependency* dependency)
+{
+    g_assert(this);
+    g_assert(dependency);
+
+    //add validation here and find with equal func
+
+    g_ptr_array_remove(this->_dependencies, dependency);   
+}
+
+void
+model_project_remove_dependency_by_name(ModelProject* this, GString* depName)
+{
+    g_assert(this);
+    g_assert(depName);
+
+    int length = this->_dependencies->len;
+
+    for(int i = 0; i<length; i++)
+    {
+        ModelProjectDependency* curr = (ModelProjectDependency*)g_ptr_array_index(this->_dependencies, i);
+
+        if(g_string_equal(depName, model_project_dependency_get_representation(curr)))
+        {
+            g_ptr_array_remove(this->_dependencies, curr);
+            return;
+        }
+    }
 }

@@ -3,6 +3,7 @@
 #include "CLI.h"
 #include "Helper.h"
 #include "CLICommandInfo.h"
+#include "ModelProjectDependency.h"
 #include "ModelProjectManager.h"
 
 struct _CLICommandParser
@@ -80,12 +81,50 @@ static void ProcessDeleteCommand(CLICommandInfo* command)
 
 static void ProcessAddDepCommand(CLICommandInfo* command)
 {
+	GPtrArray* dep = cli_command_info_get_args(command);
 
+	GString* projLoc = g_ptr_array_index(dep, 0);
+	g_ptr_array_remove(dep, projLoc);
+
+	ModelProject* proj = model_project_load_or_create_project(projLoc);
+
+	g_assert(dep->len == 2);
+
+	int type = atoi(((GString*)g_ptr_array_index(dep, 0))->str);
+	GString* dependency = (GString*)g_ptr_array_index(dep, 1);
+
+	ModelProjectDependency* depObj = model_project_dependency_new(dependency, type);
+
+	model_project_add_dependency(proj, depObj);
+
+	model_project_save(proj, NULL);
+
+	g_object_unref(proj);
+}
+
+static void
+RemoveDependency(gpointer obj, gpointer data)
+{
+	GString* dep = (GString*)obj;
+	ModelProject* proj = (ModelProject*)data;
+
+	model_project_remove_dependency_by_name(proj, dep);
 }
 
 static void ProcessRemDepCommand(CLICommandInfo* command)
 {
+	GPtrArray* deps = cli_command_info_get_args(command);
 
+	GString* projLoc = g_ptr_array_index(deps, 0);
+	g_ptr_array_remove(deps, projLoc);
+
+	ModelProject* proj = model_project_load_or_create_project(projLoc);
+
+	g_ptr_array_foreach(deps, RemoveDependency, proj);
+
+	model_project_save(proj, NULL);
+
+	g_object_unref(proj);
 }
 
 static void ProcessBuildCommand(CLICommandInfo* command)
@@ -129,12 +168,12 @@ cli_command_parser_class_init(CLICommandParserClass* class)
 	g_ptr_array_add(AvailableCommands,
 			cli_command_info_new(g_string_new("--addDependency"),
 					ADD_DEP,
-					1,
+					2,
 					4,
 					ProcessAddDepCommand));
 
 	g_ptr_array_add(AvailableCommands,
-			cli_command_info_new(g_string_new("--remDependency"),
+			cli_command_info_new(g_string_new("--deleteDependency"),
 					REM_DEP,
 					1,
 					5,
@@ -198,6 +237,8 @@ static void cli_command_parser_parse_commands(gpointer data, gpointer userData)
 		cli_command_parser_set_input_state(DELETE_FILE);
     else if(strcmp(str->str, "--addDependency") == 0)
 		cli_command_parser_set_input_state(ADD_DEP);
+	else if(strcmp(str->str, "--deleteDependency") == 0)
+		cli_command_parser_set_input_state(REM_DEP);
 	else if(strcmp(str->str, "--build") == 0)
 		cli_command_parser_set_input_state(BUILD);
 	else

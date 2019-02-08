@@ -16,6 +16,30 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE(ModelProjectDependency, model_project_dependency, MODEL, PROJECT_DEPENDENCY, GObject);
 
+enum MODEL_PROJECT_DEPENDENCY_TYPES
+{
+    SYSTEM_DEP,
+    EXTERNAL_STATIC_LIB,
+    EXTERNAL_DYNAMIC_LIB,
+    CBS_PROJECT,
+    LAST_DEP_TYPE
+};
+
+ModelProjectDependency*
+model_project_dependency_new(GString* representation, gint type);
+
+ModelProjectDependency*
+model_project_dependency_new_from_xml(xmlNodePtr node);
+
+void
+model_project_dependency_write_xml(ModelProjectDependency* this, xmlTextWriterPtr writer);
+
+GString*
+model_project_dependency_get_representation(ModelProjectDependency* this);
+
+gint
+model_project_dependency_get_dependency_type(ModelProjectDependency* this);
+
 G_END_DECLS
 
 #endif

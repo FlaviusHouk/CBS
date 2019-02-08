@@ -8,6 +8,7 @@
 #include "gmodule.h"
 
 #include "ModelSourceFile.h"
+#include "ModelProjectDependency.h"
 
 G_BEGIN_DECLS
 
@@ -26,13 +27,14 @@ model_project_add_source_file(ModelProject* this, ModelSourceFile* file);
 void
 model_project_remove_source_file(ModelProject* this, ModelSourceFile* file);
 
-/*
 void
 model_project_add_dependency(ModelProject* this, ModelProjectDependency* dependency);
 
 void
 model_project_remove_dependency(ModelProject* this, ModelProjectDependency* dependency);
-*/
+
+void
+model_project_remove_dependency_by_name(ModelProject* this, GString* depName);
 
 void
 model_project_add_include_folder(ModelProject* this, GString* folder);
