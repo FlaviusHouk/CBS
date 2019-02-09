@@ -79,3 +79,48 @@ model_project_manager_create_project(GString* location)
 
     return 0;
 }
+
+static void
+model_project_manager_process_includes(gpointer obj, gpointer data)
+{
+    GString* include = (GString*)obj;
+    GString* all = (GString*)data;
+
+    GString* copy = g_string_new(g_strdup(include->str));
+    copy = g_string_prepend(copy, "-I");
+    copy = g_string_append(copy, " ");
+
+    g_string_append(all, copy->str);
+}
+
+static void 
+model_project_manager_process_system_deps(gpointer obj, gpointer data)
+{
+    ModelProjectDependency* dep = (ModelProjectDependency*)obj;
+    GString* includes = (GString*)data;
+    GString* depInclude =  model_project_dependency_get_includes(dep);
+
+    g_string_append(includes,depInclude->str);
+}
+
+static GString*
+model_project_manager_build_include_string(ModelProject* building)
+{
+    GString* includes = g_string_new("");
+
+    g_ptr_array_foreach(model_project_get_includes(building),
+                        model_project_manager_process_includes,
+                        includes);
+
+    g_ptr_array_foreach(model_project_get_dependencies(building),
+                        model_project_manager_process_system_deps,
+                        includes);
+
+    return includes;
+}
+
+int
+model_project_manager_build_project(ModelProjectManager* this, ModelProject* toBuild)
+{
+    GString* includes = model_project_manager_build_include_string(toBuild);
+}

@@ -129,7 +129,19 @@ static void ProcessRemDepCommand(CLICommandInfo* command)
 
 static void ProcessBuildCommand(CLICommandInfo* command)
 {
+	GPtrArray* params = cli_command_info_get_args(command);
 
+	GString* projLoc = g_ptr_array_index(params, 0);
+	g_ptr_array_remove(params, projLoc);
+
+	ModelProject* proj = model_project_load_or_create_project(projLoc);
+
+	ModelProjectManager* manager = model_project_manager_new();
+
+	model_project_manager_build_project(manager, proj);
+
+	g_object_unref(manager);
+	g_object_unref(proj);
 }
 
 static void ProcessPublishCommand(CLICommandInfo* command)
@@ -182,7 +194,7 @@ cli_command_parser_class_init(CLICommandParserClass* class)
 	g_ptr_array_add(AvailableCommands,
 			cli_command_info_new(g_string_new("--build"),
 					BUILD,
-					-1,
+					1,
 					6,
 					ProcessBuildCommand));
 

@@ -37,6 +37,9 @@ model_project_dependency_write_xml(ModelProjectDependency* this, xmlTextWriterPt
 GString*
 model_project_dependency_get_representation(ModelProjectDependency* this);
 
+GString*
+model_project_dependency_get_includes(ModelProjectDependency* this);
+
 gint
 model_project_dependency_get_dependency_type(ModelProjectDependency* this);
 

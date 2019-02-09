@@ -407,3 +407,27 @@ model_project_remove_dependency_by_name(ModelProject* this, GString* depName)
         }
     }
 }
+
+GPtrArray*
+model_project_get_source_files(ModelProject* this)
+{
+    g_assert(this);
+
+    return this->_sourceFiles;
+}
+
+GPtrArray*
+model_project_get_dependencies(ModelProject* this)
+{
+    g_assert(this);
+
+    return this->_dependencies;
+}
+
+GPtrArray*
+model_project_get_includes(ModelProject* this)
+{
+    g_assert(this);
+
+    return this->_headersFolders;
+}

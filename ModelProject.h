@@ -24,11 +24,17 @@ model_project_load_or_create_project(GString* location);
 void
 model_project_add_source_file(ModelProject* this, ModelSourceFile* file);
 
+GPtrArray*
+model_project_get_source_files(ModelProject* this);
+
 void
 model_project_remove_source_file(ModelProject* this, ModelSourceFile* file);
 
 void
 model_project_add_dependency(ModelProject* this, ModelProjectDependency* dependency);
+
+GPtrArray*
+model_project_get_dependencies(ModelProject* this);
 
 void
 model_project_remove_dependency(ModelProject* this, ModelProjectDependency* dependency);
@@ -38,6 +44,9 @@ model_project_remove_dependency_by_name(ModelProject* this, GString* depName);
 
 void
 model_project_add_include_folder(ModelProject* this, GString* folder);
+
+GPtrArray*
+model_project_get_includes(ModelProject* this);
 
 void
 model_project_remove_include_folder(ModelProject* this, GString* folder);

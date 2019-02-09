@@ -2,7 +2,7 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "unistd.h"
-
+#include "errno.h"
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -74,7 +74,14 @@ run_tool(char* tool, char** args)
         dup2 (link[1], STDOUT_FILENO);
         close(link[0]);
         close(link[1]);
-        execv (tool, args);
+        int status = execv (tool, args);
+        
+        if(status == -1)
+        {
+            g_print("%d\n", errno);
+            g_print("%s\n", strerror(errno));
+        }
+
         exit(0);
     } 
     else
