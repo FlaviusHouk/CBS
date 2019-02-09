@@ -21,6 +21,9 @@ G_END_DECLS
 ModelProject* 
 model_project_load_or_create_project(GString* location);
 
+GString*
+model_project_get_location(ModelProject* this);
+
 void
 model_project_add_source_file(ModelProject* this, ModelSourceFile* file);
 

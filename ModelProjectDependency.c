@@ -91,7 +91,7 @@ model_project_dependency_get_includes(ModelProjectDependency* this)
     g_assert(this);
     if(this->_type == SYSTEM_DEP) //в майбутньому розширити для підтримки CBS залежності
     {
-        char** args = (char**)g_alloca(sizeof(char*) * 4);
+        char** args = (char**)malloc(sizeof(char*) * 4);
         args[0] = g_strdup("pkgconf");
         args[1] = g_strdup("--cflags");
         args[2] = this->_representation->str;
@@ -100,6 +100,8 @@ model_project_dependency_get_includes(ModelProjectDependency* this)
         GString* out = run_tool("/usr/bin/pkgconf", args); //в мабутньому варто перевіряти чи є pkg-config взагалі
 
         //додати перевірку на правильність рядка
+
+        g_free(args);
 
         return out;
     }

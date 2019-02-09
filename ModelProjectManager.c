@@ -1,5 +1,8 @@
 #include "ModelProjectManager.h"
 
+#include "string.h"
+#include "Helper.h"
+
 struct _ModelProjectManager
 {
     GObject parent_object;
@@ -122,5 +125,76 @@ model_project_manager_build_include_string(ModelProject* building)
 int
 model_project_manager_build_project(ModelProjectManager* this, ModelProject* toBuild)
 {
+    GError* error;
+    GString* loc = g_string_new(g_dirname(model_project_get_location(toBuild)->str));
+
+    GString* objFolder = g_string_new(g_strdup(loc->str));
+    objFolder = g_string_append(objFolder, "/obj");
+
+    GString* binFolder = g_string_new(g_strdup(loc->str));
+    binFolder = g_string_append(binFolder, "/bin");
+
     GString* includes = model_project_manager_build_include_string(toBuild);
+
+    GDir* objFold = g_dir_open(objFolder->str, 0, &error);
+    if(objFold)
+    {
+        g_dir_close(objFold);
+    }
+    else
+    {
+        g_mkdir_with_parents(objFolder->str, 8*8*7 + 8*6 + 4);
+    }
+
+    g_print("Building...");
+
+    GPtrArray* sources = model_project_get_source_files(toBuild);
+    for(int i = 0; i<sources->len; i++)
+    {
+        ModelSourceFile* file = (ModelSourceFile*)g_ptr_array_index(sources, i);
+
+        if(model_source_file_get_file_type(file) == CODE)
+        {
+            GPtrArray* args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
+            g_ptr_array_add(args, g_strdup("gcc"));
+            g_ptr_array_add(args, model_source_file_get_path(file)->str);
+            g_ptr_array_add(args, g_strdup("-o"));
+
+            GString* objFile = g_string_new(g_strdup(objFolder->str));
+            objFile = g_string_append(objFile, "/");
+            objFile = g_string_append(objFile, g_path_get_basename(model_source_file_get_path(file)->str));
+            objFile = g_string_append(objFile, ".o");
+            g_ptr_array_add(args, objFile->str);
+
+            char** includePatrs = g_strsplit(includes->str, " ", -1);
+            for(int i = 0;;i++)
+            {
+                char* curr = includePatrs[i];
+
+                if(curr == NULL)
+                    break;
+
+                if(strlen(curr) > 2)
+                {
+                    g_ptr_array_add(args, curr);   
+                }
+            }
+            g_ptr_array_add(args, NULL);
+
+            GString* output = run_tool("/usr/bin/gcc", (char**)args->pdata);
+            if(output->len > 0)
+                g_print("%s\n", output->str);
+            
+            g_string_free(output, TRUE);
+
+            g_ptr_array_free(args, TRUE);
+        }
+    }
+
+    
+
+    g_string_free(loc, TRUE);
+    g_string_free(objFolder, TRUE);
+    g_string_free(binFolder, TRUE);
+    g_string_free(includes, TRUE);
 }

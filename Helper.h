@@ -6,3 +6,6 @@ gboolean g_string_starts_with(GString* str, GString* startsWith);
 
 GString*
 run_tool(char* tool, char** args);
+
+void
+clear_collection_with_null_elems(void* data);

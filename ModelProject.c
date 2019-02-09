@@ -431,3 +431,11 @@ model_project_get_includes(ModelProject* this)
 
     return this->_headersFolders;
 }
+
+GString*
+model_project_get_location(ModelProject* this)
+{
+    g_assert(this);
+
+    return this->_location;
+}

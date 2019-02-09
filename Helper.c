@@ -92,3 +92,10 @@ run_tool(char* tool, char** args)
 
     return toRet;
 }
+
+void
+clear_collection_with_null_elems(void* data)
+{
+    if(data != NULL)
+        g_free(data);
+}
