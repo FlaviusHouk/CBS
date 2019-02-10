@@ -40,6 +40,9 @@ model_project_dependency_get_representation(ModelProjectDependency* this);
 GString*
 model_project_dependency_get_includes(ModelProjectDependency* this);
 
+GString*
+model_project_dependency_get_links(ModelProjectDependency* this);
+
 gint
 model_project_dependency_get_dependency_type(ModelProjectDependency* this);
 

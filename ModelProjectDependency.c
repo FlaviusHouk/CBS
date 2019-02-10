@@ -109,6 +109,49 @@ model_project_dependency_get_includes(ModelProjectDependency* this)
     return NULL;
 }
 
+GString*
+model_project_dependency_get_links(ModelProjectDependency* this)
+{
+    g_assert(this);
+
+    if(this->_type == SYSTEM_DEP)
+    {
+        char** args = (char**)malloc(sizeof(char*) * 4);
+        args[0] = g_strdup("pkgconf");
+        args[1] = g_strdup("--libs");
+        args[2] = g_strdup(this->_representation->str);
+        args[3] = (char*)NULL;
+
+        GString* out = run_tool("/usr/bin/pkgconf", args); 
+
+        for(int i = 0; i<4; i++)
+        {
+            if(args[i])
+                g_free(args[i]);
+        }
+
+        g_free(args);
+
+        return out;
+    }
+    else if(this->_type == EXTERNAL_DYNAMIC_LIB)
+    {
+        GString* loc = g_string_new("-l");
+        loc = g_string_append(loc, this->_representation->str);
+
+        return g_string_append(loc, " ");
+    }
+    else if(this->_type == CBS_PROJECT)
+    {
+        GString* projLoc = g_string_new("-L");
+        projLoc = g_string_append(projLoc, g_path_get_dirname(this->_representation->str));
+        
+        return g_string_append(projLoc, "/bin ");
+    }
+
+    return NULL;
+}
+
 gint
 model_project_dependency_get_dependency_type(ModelProjectDependency* this)
 {

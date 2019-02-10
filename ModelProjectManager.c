@@ -122,6 +122,29 @@ model_project_manager_build_include_string(ModelProject* building)
     return includes;
 }
 
+static void 
+model_project_manager_process_deps_to_link(gpointer obj, gpointer data)
+{
+    ModelProjectDependency* dep = (ModelProjectDependency*)obj;
+    GString* links = (GString*)data;
+   
+    GString* depLink = model_project_dependency_get_links(dep);
+
+    g_string_append(links, depLink->str);
+}
+
+static GString*
+model_project_manager_build_link_string(ModelProject* building)
+{
+    GString* link = g_string_new("");
+
+    g_ptr_array_foreach(model_project_get_dependencies(building),
+                        model_project_manager_process_deps_to_link,
+                        link);
+
+    return link;
+}
+
 int
 model_project_manager_build_project(ModelProjectManager* this, ModelProject* toBuild)
 {
@@ -149,6 +172,7 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
     g_print("Building...");
 
     GPtrArray* sources = model_project_get_source_files(toBuild);
+    GPtrArray* objFiles = g_ptr_array_new();
     for(int i = 0; i<sources->len; i++)
     {
         ModelSourceFile* file = (ModelSourceFile*)g_ptr_array_index(sources, i);
@@ -157,6 +181,7 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
         {
             GPtrArray* args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
             g_ptr_array_add(args, g_strdup("gcc"));
+            g_ptr_array_add(args, g_strdup("-c"));
             g_ptr_array_add(args, model_source_file_get_path(file)->str);
             g_ptr_array_add(args, g_strdup("-o"));
 
@@ -164,7 +189,8 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
             objFile = g_string_append(objFile, "/");
             objFile = g_string_append(objFile, g_path_get_basename(model_source_file_get_path(file)->str));
             objFile = g_string_append(objFile, ".o");
-            g_ptr_array_add(args, objFile->str);
+            g_ptr_array_add(objFiles, objFile);
+            g_ptr_array_add(args, g_strdup(objFile->str));
 
             char** includePatrs = g_strsplit(includes->str, " ", -1);
             for(int i = 0;;i++)
@@ -191,7 +217,53 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
         }
     }
 
+    g_print("Linking...");
+    GString* link = model_project_manager_build_link_string(toBuild);
+    GPtrArray* args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
+    g_ptr_array_add(args, g_strdup("gcc"));
+    for(int i = 0; i<objFiles->len; i++)
+    {
+        GString* file = (GString*)g_ptr_array_index(objFiles, i);
+        g_ptr_array_add(args, g_strdup(file->str));
+    }
+
+    g_ptr_array_add(args, g_strdup("-o"));
+
+    GDir* binFold = g_dir_open(binFolder->str, 0, &error);
+    if(binFold)
+    {
+        g_dir_close(binFold);
+    }
+    else
+    {
+        g_mkdir_with_parents(binFolder->str, 8*8*7 + 8*6 + 4);
+    }
+
+    char* projName = g_path_get_basename(model_project_get_location(toBuild)->str);
+    binFolder = g_string_append(binFolder, "/");
+    binFolder = g_string_append(binFolder, projName);
+
+    g_ptr_array_add(args, binFolder->str);
+
+    char **linkParts = g_strsplit(link->str, " ", -1);
+    for (int i = 0;; i++)
+    {
+        char *curr = linkParts[i];
+
+        if (curr == NULL)
+            break;
+
+        if (strlen(curr) > 2)
+        {
+            g_ptr_array_add(args, curr);
+        }
+    }
+    g_ptr_array_add(args, NULL);
+
+    GString* output = run_tool("/usr/bin/gcc", (char**)args->pdata);
     
+    if(output->len > 0)
+        g_print("%s\n", output->str);
 
     g_string_free(loc, TRUE);
     g_string_free(objFolder, TRUE);
