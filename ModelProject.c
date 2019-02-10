@@ -289,7 +289,13 @@ ModelProject*
 model_project_load_or_create_project(GString* location)
 {
     FILE* proj = fopen(location->str, "r");
-    ModelProject* toRet = model_project_new(location);
+
+    GString* dot = g_string_new(".");
+    ModelProject* toRet;
+    if(g_string_equal(location, dot))
+        toRet = model_project_new(g_string_new(""));
+    else
+        toRet = model_project_new(location);
 
     if(proj) //exists
     {

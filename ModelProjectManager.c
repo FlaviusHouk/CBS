@@ -31,17 +31,35 @@ model_project_manager_create_project(GString* location)
     ModelProject* proj = model_project_load_or_create_project(location);
 
     const char* baseDir = g_dirname(location->str);
-    char* buf = g_alloca(strlen(baseDir));
-    strcpy(buf, baseDir);
+    gboolean relativeNaming = g_strcmp0(baseDir, ".") == 0;
 
-    GString* dirPath = g_string_append(g_string_new(buf), "/src");
+    char* buf;
+    if(relativeNaming)
+    {
+        buf = g_strdup("");
+    }
+    else
+    {
+        buf = g_alloca(strlen(baseDir));
+        strcpy(buf, baseDir);
+    }
+
+    GString* dirPath = g_string_new(buf);
+    if(!relativeNaming)
+        dirPath = g_string_append(dirPath, "/");
+
+    dirPath = g_string_append(dirPath, "src");
     GDir* srcDir = g_dir_open(dirPath->str, 0, &error);
     if(srcDir)
     {
         const char* filename;
         while(filename = g_dir_read_name(srcDir))
-            model_project_add_source_file(proj, model_source_file_new(
-                                                    g_string_append(g_string_append(dirPath, "/"), filename)));
+        {
+            GString* filePath = g_string_new(g_strdup(dirPath->str));
+            filePath = g_string_append(g_string_append(filePath, "/"), filename);
+            ModelSourceFile* toAdd = model_source_file_new(filePath);
+            model_project_add_source_file(proj, toAdd);
+        }
 
         g_dir_close(srcDir);
     }
@@ -50,9 +68,13 @@ model_project_manager_create_project(GString* location)
         g_mkdir_with_parents(dirPath->str, 8*8*7 + 8*6 + 4);
     }
 
-    //g_object_unref(dirPath);
+    g_string_free(dirPath, TRUE);
 
-    dirPath = g_string_append(g_string_new(buf), "/headers");
+    dirPath = g_string_new(buf);
+    if(!relativeNaming)
+        dirPath = g_string_append(dirPath, "/");
+
+    dirPath = g_string_append(g_string_new(buf), "headers");
     GDir* headDir = g_dir_open(dirPath->str, 0, &error);
     if(headDir)
     {
@@ -65,7 +87,11 @@ model_project_manager_create_project(GString* location)
 
     model_project_add_include_folder(proj, dirPath);
 
-    dirPath = g_string_append(g_string_new(buf), "/scripts");
+    dirPath = g_string_new(buf);
+    if(!relativeNaming)
+        dirPath = g_string_append(dirPath, "/");
+
+    dirPath = g_string_append(g_string_new(buf), "scripts");
     GDir* scriptDir = g_dir_open(dirPath->str, 0, &error);
     if(scriptDir)
     {
@@ -76,7 +102,7 @@ model_project_manager_create_project(GString* location)
         g_mkdir_with_parents(dirPath->str, 8*8*7 + 8*6 + 4);
     }
 
-    //g_object_unref(baseDir);
+    //g_free(baseDir);
     
     model_project_save(proj, location);
 
@@ -102,6 +128,8 @@ model_project_manager_process_system_deps(gpointer obj, gpointer data)
     ModelProjectDependency* dep = (ModelProjectDependency*)obj;
     GString* includes = (GString*)data;
     GString* depInclude =  model_project_dependency_get_includes(dep);
+    
+    depInclude = g_string_truncate(depInclude, depInclude->len - 1);
 
     g_string_append(includes,depInclude->str);
 }
@@ -129,6 +157,7 @@ model_project_manager_process_deps_to_link(gpointer obj, gpointer data)
     GString* links = (GString*)data;
    
     GString* depLink = model_project_dependency_get_links(dep);
+    depLink = g_string_truncate(depLink, depLink->len-1);
 
     g_string_append(links, depLink->str);
 }
@@ -149,13 +178,26 @@ int
 model_project_manager_build_project(ModelProjectManager* this, ModelProject* toBuild)
 {
     GError* error;
-    GString* loc = g_string_new(g_dirname(model_project_get_location(toBuild)->str));
+    GString* loc;
+    char* baseName = g_dirname(model_project_get_location(toBuild)->str);
+    gboolean relativeNaming = strcmp(baseName, ".") == 0;
+
+    if(relativeNaming)
+        loc = g_string_new("");
+    else
+        loc = g_string_new(baseName);
 
     GString* objFolder = g_string_new(g_strdup(loc->str));
-    objFolder = g_string_append(objFolder, "/obj");
+    if(!relativeNaming)
+        objFolder = g_string_append(objFolder, "/");
+
+    objFolder = g_string_append(objFolder, "obj");
 
     GString* binFolder = g_string_new(g_strdup(loc->str));
-    binFolder = g_string_append(binFolder, "/bin");
+    if(!relativeNaming)
+        binFolder = g_string_append(binFolder, "/");
+
+    binFolder = g_string_append(binFolder, "bin");
 
     GString* includes = model_project_manager_build_include_string(toBuild);
 
