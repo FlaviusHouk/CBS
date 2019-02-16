@@ -79,6 +79,58 @@ static void ProcessDeleteCommand(CLICommandInfo* command)
 	g_object_unref(proj);
 }
 
+static void
+AddIncludeFolder(gpointer folder, gpointer proj)
+{
+	GString* incl = (GString*)folder;
+	ModelProject* project = (ModelProject*) proj;
+
+	model_project_add_include_folder(project, incl);
+}
+
+static void
+ProcessAddInclCommand(CLICommandInfo* command)
+{
+	GPtrArray* args = cli_command_info_get_args(command);
+
+	GString* projLoc = g_ptr_array_index(args, 0);
+	g_ptr_array_remove(args, projLoc);
+
+	ModelProject* proj = model_project_load_or_create_project(projLoc);
+
+	g_ptr_array_foreach(args, AddIncludeFolder, proj);
+
+	model_project_save(proj, NULL);
+
+	g_object_unref(proj);
+}
+
+static void
+DeleteIncludeFolder(gpointer folder, gpointer proj)
+{
+	GString* incl = (GString*)folder;
+	ModelProject* project = (ModelProject*) proj;
+
+	model_project_remove_include_folder(project, incl);
+}
+
+static void
+ProcessDeleteInclCommand(CLICommandInfo* command)
+{
+	GPtrArray* args = cli_command_info_get_args(command);
+
+	GString* projLoc = g_ptr_array_index(args, 0);
+	g_ptr_array_remove(args, projLoc);
+
+	ModelProject* proj = model_project_load_or_create_project(projLoc);
+
+	g_ptr_array_foreach(args, DeleteIncludeFolder, proj);
+
+	model_project_save(proj, NULL);
+
+	g_object_unref(proj);
+}
+
 static void ProcessAddDepCommand(CLICommandInfo* command)
 {
 	GPtrArray* dep = cli_command_info_get_args(command);
@@ -178,31 +230,45 @@ cli_command_parser_class_init(CLICommandParserClass* class)
 					ProcessDeleteCommand));
 
 	g_ptr_array_add(AvailableCommands,
+			cli_command_info_new(g_string_new("--addInclude"),
+					ADD_INCL,
+					-1,
+					4,
+					ProcessAddInclCommand));
+
+	g_ptr_array_add(AvailableCommands,
+			cli_command_info_new(g_string_new("--deleteInclude"),
+					DELETE_INCL,
+					1,
+					5,
+					ProcessDeleteInclCommand));
+
+	g_ptr_array_add(AvailableCommands,
 			cli_command_info_new(g_string_new("--addDependency"),
 					ADD_DEP,
 					2,
-					4,
+					6,
 					ProcessAddDepCommand));
 
 	g_ptr_array_add(AvailableCommands,
 			cli_command_info_new(g_string_new("--deleteDependency"),
 					REM_DEP,
 					1,
-					5,
+					7,
 					ProcessRemDepCommand));
 
 	g_ptr_array_add(AvailableCommands,
 			cli_command_info_new(g_string_new("--build"),
 					BUILD,
 					1,
-					6,
+					8,
 					ProcessBuildCommand));
 
 	g_ptr_array_add(AvailableCommands,
 			cli_command_info_new(g_string_new("--publish"),
 					PUBLISH,
 					2,
-					7,
+					9,
 					ProcessPublishCommand));
 }
 
@@ -247,6 +313,10 @@ static void cli_command_parser_parse_commands(gpointer data, gpointer userData)
 		cli_command_parser_set_input_state(ADD_FILE);
 	else if(strcmp(str->str, "--deleteFile") == 0)
 		cli_command_parser_set_input_state(DELETE_FILE);
+	else if(strcmp(str->str, "--addInclude") == 0)
+		cli_command_parser_set_input_state(ADD_INCL);
+	else if(strcmp(str->str, "--deleteInclude") == 0)
+		cli_command_parser_set_input_state(DELETE_INCL);
     else if(strcmp(str->str, "--addDependency") == 0)
 		cli_command_parser_set_input_state(ADD_DEP);
 	else if(strcmp(str->str, "--deleteDependency") == 0)
