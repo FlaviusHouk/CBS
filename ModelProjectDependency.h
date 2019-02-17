@@ -46,6 +46,8 @@ model_project_dependency_get_links(ModelProjectDependency* this);
 gint
 model_project_dependency_get_dependency_type(ModelProjectDependency* this);
 
+int
+model_project_dependency_equals(const void* obj1, const void* obj2);
 G_END_DECLS
 
 #endif

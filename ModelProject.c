@@ -344,11 +344,31 @@ model_project_remove_source_file(ModelProject* this, ModelSourceFile* file)
     g_object_unref(file);
 }
 
+static gboolean
+model_project_find_gstring(const void* obj1, const void* obj2)
+{
+    GString* str1 = (GString*)obj1;
+    GString* str2 = (GString*)obj2;
+
+    return g_string_equal(str1, str2);
+}
+
 void
 model_project_add_include_folder(ModelProject* this, GString* folder)
 {
     g_assert(this);
     g_assert(folder);
+
+    GError* error = NULL;
+
+    GDir* test = g_dir_open(folder->str, 0, &error);
+    if(test)
+        g_dir_close(test);
+    else
+        g_assert(test);
+
+    if(g_ptr_array_find_with_equal_func(this->_headersFolders, folder, model_project_find_gstring, NULL))
+        return;
 
     g_ptr_array_add(this->_headersFolders, folder);
 }
@@ -359,7 +379,11 @@ model_project_remove_include_folder(ModelProject* this, GString* folder)
     g_assert(this);
     g_assert(folder);
 
-    g_ptr_array_remove(this->_headersFolders, folder);
+    int index = -1;
+    if(!g_ptr_array_find_with_equal_func(this->_headersFolders, folder, model_project_find_gstring, &index))
+        return;
+
+    g_ptr_array_remove_index(this->_headersFolders, index);
 }
 
 void
@@ -378,6 +402,9 @@ model_project_add_dependency(ModelProject* this, ModelProjectDependency* depende
     g_assert(this);
     g_assert(dependency);
 
+    if(g_ptr_array_find_with_equal_func(this->_dependencies, dependency, model_project_dependency_equals, NULL))
+        return;
+
     //add validation here
 
     g_ptr_array_add(this->_dependencies, dependency);    
@@ -389,9 +416,13 @@ model_project_remove_dependency(ModelProject* this, ModelProjectDependency* depe
     g_assert(this);
     g_assert(dependency);
 
-    //add validation here and find with equal func
+    int index = -1;
+    if(!g_ptr_array_find_with_equal_func(this->_dependencies, dependency, model_project_dependency_equals, &index))
+        return;
 
-    g_ptr_array_remove(this->_dependencies, dependency);   
+    //add validation here
+
+    g_ptr_array_remove_index(this->_dependencies, index); 
 }
 
 void
