@@ -334,10 +334,7 @@ cli_command_parser_filter_commands (gpointer obj, gpointer user_data)
 	CLICommandParser* this = (CLICommandParser*)user_data;
 
 	if(cli_command_info_get_args(com)->len > 0)
-	{
-		g_print(cli_command_info_get_command(com)->str);
 		g_ptr_array_add(this->_commands, com);
-	}
 }
 
 static void

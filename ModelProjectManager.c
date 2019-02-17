@@ -174,6 +174,33 @@ model_project_manager_build_link_string(ModelProject* building)
     return link;
 }
 
+static void
+model_project_manager_append_part(gpointer part, gpointer string)
+{
+    char* str = (char*)part;
+    GString* command = (GString*)string;
+    
+    if(str != NULL)
+    {
+        g_string_append(command, " ");
+        g_string_append(command, str);
+    }
+}
+
+static void
+model_project_manager_print_command(GPtrArray* args)
+{
+    GString* command = g_string_new("");
+
+    g_ptr_array_foreach(args, model_project_manager_append_part, command);
+    g_string_append(command, "\n");
+    g_string_erase(command, 0, 1);
+
+    g_print(command->str);
+
+    g_string_free(command, FALSE);
+}
+
 int
 model_project_manager_build_project(ModelProjectManager* this, ModelProject* toBuild)
 {
@@ -211,7 +238,7 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
         g_mkdir_with_parents(objFolder->str, 8*8*7 + 8*6 + 4);
     }
 
-    g_print("Building...");
+    g_print("Building...\n");
 
     GPtrArray* sources = model_project_get_source_files(toBuild);
     GPtrArray* objFiles = g_ptr_array_new();
@@ -249,6 +276,7 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
             }
             g_ptr_array_add(args, NULL);
 
+            model_project_manager_print_command(args);
             GString* output = run_tool("/usr/bin/gcc", (char**)args->pdata);
             if(output->len > 0)
                 g_print("%s\n", output->str);
@@ -259,7 +287,7 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
         }
     }
 
-    g_print("Linking...");
+    g_print("Linking...\n");
     GString* link = model_project_manager_build_link_string(toBuild);
     GPtrArray* args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
     g_ptr_array_add(args, g_strdup("gcc"));
