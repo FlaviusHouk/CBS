@@ -71,7 +71,37 @@ cbs --addDependency projLocation depType depName
 There is four types of dependencies that are supported:
 
 * Library installed in system (type 0)
+    
+    For this type depName is the library name that installed in the system. To find information about it pkg-config is used. So a valid name for it should be specified.
+
 * Dynamic library (type 1)
+
+    For this type depName is the path to dynamic library, including fileName.
+
 * Static library (type 2)
+
+    Same as for Dynamic library
+
 * Other CBS project (type 3)
 
+    Here depName is the path to another project definition.
+
+### Delete dependency
+
+```
+cbs --deleteDependency projLocation depName
+```
+
+Deletes the first dependency with the same depName that was found. 
+
+### Build
+
+```
+cbs --build projName
+```
+
+When build is started two additional folders will be created if they does not exist: obj and bin. First one containes object file for each processed source file and the second one containes compiled binary file - build artifact. 
+
+While build is executed all compiler output and build commands for each file are printed in console you're using. All compile and link errors are printed as well.
+
+By default gcc compiler is used. For now only builds without debug info is defualt optimization level is supported. 
