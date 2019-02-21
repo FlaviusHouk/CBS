@@ -17,9 +17,16 @@ G_DEFINE_TYPE(CLICommandParser, cli_command_parser, G_TYPE_OBJECT)
 
 static void ProcessCreateCommand(CLICommandInfo* command)
 {
+	GPtrArray* args = cli_command_info_get_args(command);
+	int expectedCount = cli_command_info_get_args_count(command);
+	if(expectedCount != args->len)
+	{
+		g_print("Create command usage:\n\t--create projName\nprojName - path to project definition file to be created\n");
+		g_assert(FALSE);
+	}
+
 	ModelProjectManager* manager = model_project_manager_new();
 
-	GPtrArray* args = cli_command_info_get_args(command);
 	GString* loc = (GString*) g_ptr_array_index(args, 0);
 
 	model_project_manager_create_project(loc);
@@ -40,6 +47,12 @@ static void AddFileToProject(gpointer fileName, gpointer project)
 static void ProcessAddCommand(CLICommandInfo* command)
 {
 	GPtrArray* files = cli_command_info_get_args(command);
+	int expectedCount = cli_command_info_get_args_count(command);
+	if(expectedCount != files->len)
+	{
+		g_print("Add file command usage:\n\t--addFile projName file1 file2 ... fileN\nprojName - path to project definition, file - path to file you want to add\n");
+		g_assert(FALSE);
+	}
 
 	GString* projLoc = g_ptr_array_index(files, 0);
 	g_ptr_array_remove(files, projLoc);
@@ -66,6 +79,12 @@ static void RemoveFileFromProject(gpointer fileName, gpointer project)
 static void ProcessDeleteCommand(CLICommandInfo* command)
 {
 	GPtrArray* files = cli_command_info_get_args(command);
+	int expectedCount = cli_command_info_get_args_count(command);
+	if(expectedCount != files->len)
+	{
+		g_print("Delete file command usage:\n\t--deleteFile projName file\nprojName - path to project definition, file - path to file you want to remove\n");
+		g_assert(FALSE);
+	}
 
 	GString* projLoc = g_ptr_array_index(files, 0);
 	g_ptr_array_remove(files, projLoc);
@@ -92,6 +111,12 @@ static void
 ProcessAddInclCommand(CLICommandInfo* command)
 {
 	GPtrArray* args = cli_command_info_get_args(command);
+	int expectedCount = cli_command_info_get_args_count(command);
+	if(expectedCount != args->len)
+	{
+		g_print("Add include folder command usage:\n\t--addInclude projName fold1 fold2 ... foldN\nprojName - path to project definition, fold - path to folder you want to add\n");
+		g_assert(FALSE);
+	}
 
 	GString* projLoc = g_ptr_array_index(args, 0);
 	g_ptr_array_remove(args, projLoc);
@@ -118,6 +143,12 @@ static void
 ProcessDeleteInclCommand(CLICommandInfo* command)
 {
 	GPtrArray* args = cli_command_info_get_args(command);
+	int expectedCount = cli_command_info_get_args_count(command);
+	if(expectedCount != args->len)
+	{
+		g_print("Delete include folder command usage:\n\t--deleteInclude projName fold\nprojName - path to project definition, fold - path to folder you want to remove\n");
+		g_assert(FALSE);
+	}
 
 	GString* projLoc = g_ptr_array_index(args, 0);
 	g_ptr_array_remove(args, projLoc);
@@ -134,6 +165,12 @@ ProcessDeleteInclCommand(CLICommandInfo* command)
 static void ProcessAddDepCommand(CLICommandInfo* command)
 {
 	GPtrArray* dep = cli_command_info_get_args(command);
+	int expectedCount = cli_command_info_get_args_count(command);
+	if(expectedCount != dep->len)
+	{
+		g_print("Add dependency command usage:\n\t--addDependency projName depType depName\nprojName - path to project definition, depType - integer number(dependency type), depName - dependency representation according to type\n");
+		g_assert(FALSE);
+	}
 
 	GString* projLoc = g_ptr_array_index(dep, 0);
 	g_ptr_array_remove(dep, projLoc);
@@ -166,6 +203,12 @@ RemoveDependency(gpointer obj, gpointer data)
 static void ProcessRemDepCommand(CLICommandInfo* command)
 {
 	GPtrArray* deps = cli_command_info_get_args(command);
+	int expectedCount = cli_command_info_get_args_count(command);
+	if(expectedCount != deps->len)
+	{
+		g_print("Delete dependency command usage:\n\t--deleteDependency projName depName\nprojName - path to project definition, depName - representation of dependency you want to remove\n");
+		g_assert(FALSE);
+	}
 
 	GString* projLoc = g_ptr_array_index(deps, 0);
 	g_ptr_array_remove(deps, projLoc);
@@ -182,6 +225,12 @@ static void ProcessRemDepCommand(CLICommandInfo* command)
 static void ProcessBuildCommand(CLICommandInfo* command)
 {
 	GPtrArray* params = cli_command_info_get_args(command);
+	int expectedCount = cli_command_info_get_args_count(command);
+	if(expectedCount != params->len)
+	{
+		g_print("Build command usage:\n\t--build projName\nprojName - path to project definition you want to build\n");
+		g_assert(FALSE);
+	}
 
 	GString* projLoc = g_ptr_array_index(params, 0);
 	g_ptr_array_remove(params, projLoc);
@@ -196,9 +245,19 @@ static void ProcessBuildCommand(CLICommandInfo* command)
 	g_object_unref(proj);
 }
 
-static void ProcessPublishCommand(CLICommandInfo* command)
+static void
+ProcessHelpCommand(CLICommandInfo* command)
 {
-
+	g_print("Usage: %s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
+			"--create projName",
+			"--addFile projName file1 file2 ... fileN",
+			"--deleteFile projName file",
+			"--addInclude projName fold1 fold2 ... foldN",
+			"--deleteInclude projName fold",
+			"--addDependency projName depType depName",
+			"--deleteDependency projName depName",
+			"--build projName",
+			"--help");
 }
 
 static GPtrArray* AvailableCommands;
@@ -225,7 +284,7 @@ cli_command_parser_class_init(CLICommandParserClass* class)
 	g_ptr_array_add(AvailableCommands,
 			cli_command_info_new(g_string_new("--deleteFile"),
 					DELETE_FILE,
-					-1,
+					2,
 					3,
 					ProcessDeleteCommand));
 
@@ -239,21 +298,21 @@ cli_command_parser_class_init(CLICommandParserClass* class)
 	g_ptr_array_add(AvailableCommands,
 			cli_command_info_new(g_string_new("--deleteInclude"),
 					DELETE_INCL,
-					1,
+					2,
 					5,
 					ProcessDeleteInclCommand));
 
 	g_ptr_array_add(AvailableCommands,
 			cli_command_info_new(g_string_new("--addDependency"),
 					ADD_DEP,
-					2,
+					3,
 					6,
 					ProcessAddDepCommand));
 
 	g_ptr_array_add(AvailableCommands,
 			cli_command_info_new(g_string_new("--deleteDependency"),
 					REM_DEP,
-					1,
+					2,
 					7,
 					ProcessRemDepCommand));
 
@@ -263,13 +322,12 @@ cli_command_parser_class_init(CLICommandParserClass* class)
 					1,
 					8,
 					ProcessBuildCommand));
-
 	g_ptr_array_add(AvailableCommands,
-			cli_command_info_new(g_string_new("--publish"),
-					PUBLISH,
-					2,
-					9,
-					ProcessPublishCommand));
+			cli_command_info_new(g_string_new("--help"),
+					HELP,
+					0,
+					8,
+					ProcessHelpCommand));
 }
 
 static void

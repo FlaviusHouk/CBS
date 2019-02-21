@@ -26,7 +26,7 @@ enum CLI_COMMAND_PARSER_INPUT_STATES
 	ADD_DEP,
 	REM_DEP,
 	BUILD,
-	PUBLISH
+	HELP
 };
 
 CLICommandInfo* cli_command_info_new(GString* command, 
