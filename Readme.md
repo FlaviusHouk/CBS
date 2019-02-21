@@ -1,10 +1,10 @@
 # C Build System
 
-This is a tool for automatization of build procedure for C projects. It aims to be lightweight and fast. With the minimum of third party dependencies it tries to provide full support for different kinds of projects with a single XML-definition. It is inspired by dotnet projects and build tools.
+This is a tool for automation of build procedure for C projects. It aims to be lightweight and fast. With the minimum of third party dependencies it tries to provide full support for different kinds of projects with a single XML-definition. It is inspired by dotnet projects and build tools.
 
 ## Compiling
 
-To compile current version of build system its bettter to use build script build.sh. It is delete previously compiled binaries and uses make for build. In future it will be replaced by CBS.
+To compile current version of build system its better to use build script build.sh. It is delete previously compiled binaries and uses make for build. In future it will be replaced by CBS.
 
 ## Usage
 
@@ -18,7 +18,7 @@ Can be called by
 cbs --create projName
 ```
 
-When project folder initialized a few folders (src, include and scripts) are created. If folder already containing such folder, they will not be overriden. All files in src folders automatically will be added to project as source files. Project definition is stored in file called projName. It is XML file with UTF-8 encoding that might be edited in any text editor.
+When project folder initialized a few folders (src, include and scripts) are created. If folder already containing such folder, they will not be overridden. All files in src folders automatically will be added to project as source files. Project definition is stored in file called projName. It is XML file with UTF-8 encoding that might be edited in any text editor.
 
 
 ### Add source files
@@ -27,7 +27,7 @@ When project folder initialized a few folders (src, include and scripts) are cre
 cbs --addFile projLocation file1 file2 ... fileN
 ```
 
-Relative and absolute pathes are supproted for either project location and source files. It is not necessary to hold all files in src folder. They just have to be accessible to read in build time. All files can be added to project, but only ones that have have .c extension is processed as file with C code. Non existing file cannot be added.
+Relative and absolute paths are supported for either project location and source files. It is not necessary to hold all files in src folder. They just have to be accessible to read in build time. All files can be added to project, but only ones that have have .c extension is processed as file with C code. Non existing file cannot be added.
 
 Currently there are four files types:
 
@@ -44,7 +44,7 @@ Header files might not be added to project. To use it you can specify just inclu
 cbs --deleteFile projLocation file
 ```
 
-Currently only single file deletion is supprorted. Pay attention: when you deletinig file from the project, it still stays in the folder.
+Currently only single file deletion is supported. Pay attention: when you deleting file from the project, it still stays in the folder.
 
 ### Add include folder
 
@@ -100,8 +100,8 @@ Deletes the first dependency with the same depName that was found.
 cbs --build projName
 ```
 
-When build is started two additional folders will be created if they does not exist: obj and bin. First one containes object file for each processed source file and the second one containes compiled binary file - build artifact. 
+When build is started two additional folders will be created if they does not exist: obj and bin. First one contains object file for each processed source file and the second one contains compiled binary file - build artifact. 
 
 While build is executed all compiler output and build commands for each file are printed in console you're using. All compile and link errors are printed as well.
 
-By default gcc compiler is used. For now only builds without debug info is defualt optimization level is supported. 
+By default gcc compiler is used. For now only builds without debug info and default optimization level is supported. 
