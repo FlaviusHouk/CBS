@@ -73,6 +73,6 @@ void
 model_project_remove_include_folder(ModelProject* this, GString* folder);
 
 void
-model_project_save(ModelProject* this, const GString* dest);
+model_project_save(ModelProject* this, GString* dest);
 
 #endif

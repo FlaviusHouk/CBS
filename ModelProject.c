@@ -71,14 +71,6 @@ static void
 model_project_read(xmlNodePtr root, ModelProject* this)
 {
     xmlNodePtr node = root->children;
-    
-    //read Location string
-    while(node != NULL && strcmp(node->name, "Location") != 0)
-    {
-        node = node->next;
-    }
-
-    this->_location = g_string_new(xmlNodeGetContent(node));
 
     //read SourceFiles list
     while(node != NULL && strcmp(node->name, "SourceFiles") != 0)
@@ -258,12 +250,6 @@ model_project_write_project(ModelProject* this)
     if(tmp)
         g_free(tmp);
 
-    //tmp = xml_convert_input(this->_location, "ASCII");
-    rc = xmlTextWriterWriteFormatElement(writer, BAD_CAST "Location", "%s", this->_location->str);
-    g_assert(rc >= 0);
-    if(tmp)
-        g_free(tmp);
-
     rc = xmlTextWriterStartElement(writer, BAD_CAST "SourceFiles");
     g_assert(rc >= 0);
 
@@ -405,11 +391,17 @@ model_project_remove_include_folder(ModelProject* this, GString* folder)
 }
 
 void
-model_project_save(ModelProject* this, const GString* dest)
+model_project_save(ModelProject* this, GString* dest)
 {
-    //розкоментувати після видалення location із ModelProject xml
-    /*g_object_unref(this->_location);
-    this->_location = dest;*/
+    g_assert(this);
+    g_assert(dest);
+
+    if(!g_string_equal(this->_location, dest))
+    {
+        GString* newLoc = g_string_new(dest->str);
+        g_string_free(this->_location, TRUE);
+        this->_location = newLoc;
+    }
 
     model_project_write_project(this);
 }
