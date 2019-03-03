@@ -256,7 +256,7 @@ static void ProcessBuildCommand(CLICommandInfo* command)
 
 	ModelProjectManager* manager = model_project_manager_new();
 
-	model_project_manager_build_project(manager, proj);
+	model_project_manager_build_project(manager, proj, NULL);
 
 	g_object_unref(manager);
 	g_object_unref(proj);

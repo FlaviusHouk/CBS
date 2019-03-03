@@ -27,6 +27,7 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "ModelSourceFile.h"
 #include "ModelProjectDependency.h"
+#include "ModelProjectConfiguration.h"
 
 G_BEGIN_DECLS
 
@@ -74,5 +75,8 @@ model_project_remove_include_folder(ModelProject* this, GString* folder);
 
 void
 model_project_save(ModelProject* this, GString* dest);
+
+ModelProjectConfiguration*
+model_project_get_build_config(ModelProject* this, GString* configName);
 
 #endif

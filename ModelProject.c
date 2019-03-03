@@ -30,6 +30,7 @@ struct _ModelProject
     GPtrArray* _sourceFiles;
     GPtrArray* _headersFolders;
     GPtrArray* _dependencies;
+    GPtrArray* _buildConfigs;
 };
 
 G_DEFINE_TYPE(ModelProject, model_project, G_TYPE_OBJECT)
@@ -40,17 +41,56 @@ model_project_handle_xml_error(void* userData, xmlErrorPtr error)
     g_print("%s", error->message);
 }
 
+GPtrArray *defaultConfigs;
+
+ModelProjectConfiguration*
+model_project_get_build_config(ModelProject* this, GString* configName)
+{
+    g_assert(this);
+
+    if(configName == NULL)
+        return g_ptr_array_index(defaultConfigs, 0);
+
+    ModelProjectConfiguration* seek = model_project_configuration_new(configName);
+    ModelProjectConfiguration* toRet = NULL;
+
+    gint index = -1;
+    if(g_ptr_array_find(this->_buildConfigs, seek, &index))
+        toRet = g_ptr_array_index(this->_buildConfigs, index);
+    else if(g_ptr_array_find(defaultConfigs, seek, &index))
+        toRet = g_ptr_array_index(defaultConfigs, index);
+    else
+        g_assert(FALSE);
+
+    g_object_unref(seek);
+
+    return toRet;
+}
+
 static void
 model_project_class_init(ModelProjectClass* class)
 {
     LIBXML_TEST_VERSION
 
     xmlSetStructuredErrorFunc(NULL, model_project_handle_xml_error);
+
+    defaultConfigs = g_ptr_array_new();
+
+    g_ptr_array_add(defaultConfigs, model_project_configuration_new(g_string_new("Debug")));
+
+    ModelProjectConfiguration* conf = model_project_configuration_new(g_string_new("Release"));
+    model_project_configuration_set_optimization_level(conf, RELEASE_1);
+    g_ptr_array_add(defaultConfigs, conf);
 }
 
 static void
 model_project_init(ModelProject* this)
-{}
+{
+    this->_sourceFiles = g_ptr_array_new();
+    this->_headersFolders = g_ptr_array_new();
+    this->_dependencies = g_ptr_array_new();
+    this->_buildConfigs = g_ptr_array_new();
+}
 
 static ModelProject* 
 model_project_new(GString* location)
@@ -59,10 +99,6 @@ model_project_new(GString* location)
     this = g_object_new(MODEL_TYPE_PROJECT, NULL);
 
     this->_location = location;
-
-    this->_sourceFiles = g_ptr_array_new();
-    this->_headersFolders = g_ptr_array_new();
-    this->_dependencies = g_ptr_array_new();
 
     return this;
 }
@@ -137,6 +173,29 @@ model_project_read(xmlNodePtr root, ModelProject* this)
             g_ptr_array_add(this->_dependencies, dep);
 
         deps = deps->next;
+    }
+
+    //read Build configurations
+    while(node != NULL && strcmp(node->name, "BuildConfigs") != 0)
+    {
+        node = node->next;
+    }
+
+    xmlNodePtr configs = node->children;
+
+    while(configs != NULL)
+    {
+        while(configs != NULL && strcmp(configs->name, "Configuration") != 0)
+        {
+            configs = configs->next;
+        }
+
+        ModelProjectConfiguration* conf = model_project_configuration_new_from_xml(configs);
+
+        if(conf != NULL)
+            g_ptr_array_add(this->_buildConfigs, conf);
+
+        configs = configs->next;
     }
 }
 
@@ -231,6 +290,15 @@ model_project_write_system_dependencies(gpointer obj, gpointer data)
 }
 
 static void
+model_project_write_build_configs(gpointer obj, gpointer data)
+{
+    xmlTextWriterPtr writer = (xmlTextWriterPtr)data;
+    ModelProjectConfiguration* conf = (ModelProjectConfiguration*)obj;
+
+    model_project_configuration_write_xml(conf, writer);
+}
+
+static void
 model_project_write_project(ModelProject* this)
 {
     int rc;
@@ -250,6 +318,7 @@ model_project_write_project(ModelProject* this)
     if(tmp)
         g_free(tmp);
 
+    //write files collection
     rc = xmlTextWriterStartElement(writer, BAD_CAST "SourceFiles");
     g_assert(rc >= 0);
 
@@ -260,6 +329,7 @@ model_project_write_project(ModelProject* this)
     rc = xmlTextWriterEndElement(writer);
     g_assert(rc >= 0);
 
+    //write include folders collection
     rc = xmlTextWriterStartElement(writer, BAD_CAST "IncludeFolders");
     g_assert(rc >= 0);
 
@@ -270,11 +340,23 @@ model_project_write_project(ModelProject* this)
     rc = xmlTextWriterEndElement(writer);
     g_assert(rc >= 0);
 
+    //write dependencies collection
     rc = xmlTextWriterStartElement(writer, BAD_CAST "SystemDependencies");
     g_assert(rc >= 0);
 
     g_ptr_array_foreach(this->_dependencies, 
                         model_project_write_system_dependencies,
+                        writer);
+
+    rc = xmlTextWriterEndElement(writer);
+    g_assert(rc >= 0);
+
+    //write build configuration collection
+    rc = xmlTextWriterStartElement(writer, BAD_CAST "BuildConfigs");
+    g_assert(rc >= 0);
+
+    g_ptr_array_foreach(this->_buildConfigs, 
+                        model_project_write_build_configs,
                         writer);
 
     rc = xmlTextWriterEndElement(writer);

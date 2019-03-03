@@ -45,7 +45,7 @@ int
 model_project_manager_create_project(GString* location);
 
 int
-model_project_manager_build_project(ModelProjectManager* this, ModelProject* toBuild);
+model_project_manager_build_project(ModelProjectManager* this, ModelProject* toBuild, GString* config);
 
 int
 model_project_run_tests(ModelProjectManager* this, ModelProject* toBuild);

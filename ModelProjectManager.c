@@ -220,7 +220,7 @@ model_project_manager_print_command(GPtrArray* args)
 }
 
 int
-model_project_manager_build_project(ModelProjectManager* this, ModelProject* toBuild)
+model_project_manager_build_project(ModelProjectManager* this, ModelProject* toBuild, GString* configName)
 {
     GError* error;
     GString* loc;
@@ -244,6 +244,8 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
 
     binFolder = g_string_append(binFolder, "bin");
 
+    ModelProjectConfiguration* config = model_project_get_build_config(toBuild, configName);
+
     GString* includes = model_project_manager_build_include_string(toBuild);
 
     GDir* objFold = g_dir_open(objFolder->str, 0, &error);
@@ -260,6 +262,7 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
 
     GPtrArray* sources = model_project_get_source_files(toBuild);
     GPtrArray* objFiles = g_ptr_array_new();
+    GString* configString = model_project_configuration_build_config_string(config);
     for(int i = 0; i<sources->len; i++)
     {
         ModelSourceFile* file = (ModelSourceFile*)g_ptr_array_index(sources, i);
@@ -268,6 +271,21 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
         {
             GPtrArray* args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
             g_ptr_array_add(args, g_strdup("gcc"));
+
+            char** configParts = g_strsplit(configString->str, " ", -1);
+            for(int i = 0;;i++)
+            {
+                char* curr = configParts[i];
+
+                if(curr == NULL)
+                    break;
+
+                if(strlen(curr) >= 2)
+                {
+                    g_ptr_array_add(args, curr);   
+                }
+            }
+
             g_ptr_array_add(args, g_strdup("-c"));
             g_ptr_array_add(args, model_source_file_get_path(file)->str);
             g_ptr_array_add(args, g_strdup("-o"));
@@ -309,6 +327,21 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
     GString* link = model_project_manager_build_link_string(toBuild);
     GPtrArray* args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
     g_ptr_array_add(args, g_strdup("gcc"));
+
+    char** configParts = g_strsplit(configString->str, " ", -1);
+    for(int i = 0;;i++)
+    {
+        char* curr = configParts[i];
+
+        if(curr == NULL)
+            break;
+
+        if(strlen(curr) >= 2)
+        {
+            g_ptr_array_add(args, curr);   
+        }
+    }
+
     for(int i = 0; i<objFiles->len; i++)
     {
         GString* file = (GString*)g_ptr_array_index(objFiles, i);
@@ -329,7 +362,12 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
 
     char* projName = g_path_get_basename(model_project_get_location(toBuild)->str);
     binFolder = g_string_append(binFolder, "/");
-    binFolder = g_string_append(binFolder, projName);
+
+    GString* outputName = model_project_configuration_get_output_name(config);
+    if(outputName != NULL)
+        binFolder = g_string_append(binFolder, g_strdup(outputName->str));
+    else
+        binFolder = g_string_append(binFolder, projName);
 
     g_ptr_array_add(args, binFolder->str);
 
