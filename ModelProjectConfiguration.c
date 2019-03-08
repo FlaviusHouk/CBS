@@ -26,6 +26,7 @@ struct _ModelProjectConfiguration
     GString* _outputName;
     gint _optimization;
     gint _cStandard;
+    GPtrArray* _macrosToDefine;
 
     gboolean _ignoreOptions;
     GString* _customConfig;
@@ -39,7 +40,15 @@ model_project_configuration_class_init(ModelProjectConfigurationClass* class)
 
 static void 
 model_project_configuration_init(ModelProjectConfiguration* this)
-{}
+{
+    this->_outputName = NULL;
+    this->_cStandard = C11;
+    this->_optimization = DEBUG_2;
+    this->_macrosToDefine = g_ptr_array_new();
+
+    this->_ignoreOptions = FALSE;
+    this->_customConfig = NULL;
+}
 
 ModelProjectConfiguration*
 model_project_configuration_new(GString* name)
@@ -47,12 +56,6 @@ model_project_configuration_new(GString* name)
     ModelProjectConfiguration* this = g_object_new(MODEL_TYPE_PROJECT_CONFIGURATION, NULL);
 
     this->_name = name;
-    this->_outputName = NULL;
-    this->_cStandard = C11;
-    this->_optimization = DEBUG_2;
-
-    this->_ignoreOptions = FALSE;
-    this->_customConfig = NULL;
 }
 
 ModelProjectConfiguration*
@@ -82,6 +85,23 @@ model_project_configuration_new_from_xml(xmlNodePtr node)
             this->_optimization = atoi(xmlNodeGetContent(conf));
             g_assert(this->_optimization >= 0 && this->_optimization <= DEBUG_3);
         }
+        else if(strcmp(conf->name, "Macros") == 0)
+        {
+            xmlNode* macros = conf->children;
+
+            while(macros != NULL)
+            {
+                while(macros != NULL && strcmp(macros->name, "string") != 0)
+                {
+                    macros = macros->next;
+                }
+
+                GString* data = g_string_new(xmlNodeGetContent(macros));
+                g_ptr_array_add(this->_macrosToDefine, data);
+
+                macros = macros->next;
+            }
+        }
         else if(strcmp(conf->name, "IgnoreOptions") == 0)
         {
             this->_ignoreOptions = atoi(xmlNodeGetContent(conf));
@@ -95,6 +115,15 @@ model_project_configuration_new_from_xml(xmlNodePtr node)
     }
 
     return this;
+}
+
+static void
+model_project_configuration_write_macros(gpointer obj, gpointer data)
+{
+    GString* macro = (GString*)obj;
+    xmlTextWriter* writer = (xmlTextWriter*)data;
+
+    xmlTextWriterWriteElement(writer, "string", macro->str);
 }
 
 void
@@ -121,6 +150,16 @@ model_project_configuration_write_xml(ModelProjectConfiguration* this, xmlTextWr
 
     sprintf(num, "%d", this->_optimization);
     rc = xmlTextWriterWriteElement(writer, "Optimization", num);
+    g_assert(rc >= 0);
+
+    rc = xmlTextWriterStartElement(writer, "Macros");
+    g_assert(rc >= 0);
+
+    g_ptr_array_foreach(this->_macrosToDefine,
+                        model_project_configuration_write_macros,
+                        writer);
+
+    rc = xmlTextWriterEndElement(writer);
     g_assert(rc >= 0);
 
     sprintf(num, "%d", this->_ignoreOptions);
@@ -226,6 +265,16 @@ model_project_configuration_equals(const void* first, const void* second)
     return g_string_equal(that->_name, this->_name);
 }
 
+static void
+model_project_configuration_append_macros(gpointer obj, gpointer data)
+{
+    GString* macro = (GString*)obj;
+    GString* string = (GString*)data;
+
+    g_string_append(string, macro->str);
+    g_string_append(string, g_strdup(" "));
+}
+
 GString*
 model_project_configuration_build_config_string(ModelProjectConfiguration* this)
 {
@@ -324,7 +373,12 @@ model_project_configuration_build_config_string(ModelProjectConfiguration* this)
         }
 
         toRet = g_string_append(toRet, toAppendOptimization);
-        
+        toRet = g_string_append(toRet, g_strdup(" "));
+
+        g_ptr_array_foreach(this->_macrosToDefine,
+                            model_project_configuration_append_macros,
+                            toRet);
+
         if(this->_customConfig != NULL)
         {
             toRet = g_string_append(toRet, g_strdup(" "));

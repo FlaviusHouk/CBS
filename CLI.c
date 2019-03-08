@@ -243,7 +243,7 @@ static void ProcessBuildCommand(CLICommandInfo* command)
 {
 	GPtrArray* params = cli_command_info_get_args(command);
 	int expectedCount = cli_command_info_get_args_count(command);
-	if(expectedCount != params->len)
+	if(expectedCount != params->len && expectedCount != params->len - 1)
 	{
 		g_print("Build command usage:\n\t--build projName\nprojName - path to project definition you want to build\n");
 		g_assert(FALSE);
@@ -256,7 +256,11 @@ static void ProcessBuildCommand(CLICommandInfo* command)
 
 	ModelProjectManager* manager = model_project_manager_new();
 
-	model_project_manager_build_project(manager, proj, NULL);
+	GString* buildDef = NULL;
+	if(params->len > 0)
+		buildDef = g_ptr_array_index(params, 0);
+
+	model_project_manager_build_project(manager, proj, buildDef);
 
 	g_object_unref(manager);
 	g_object_unref(proj);
@@ -336,7 +340,7 @@ cli_command_parser_class_init(CLICommandParserClass* class)
 	g_ptr_array_add(AvailableCommands,
 			cli_command_info_new(g_string_new("--build"),
 					BUILD,
-					1,
+					2,
 					8,
 					ProcessBuildCommand));
 	g_ptr_array_add(AvailableCommands,

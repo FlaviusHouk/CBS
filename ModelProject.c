@@ -55,9 +55,9 @@ model_project_get_build_config(ModelProject* this, GString* configName)
     ModelProjectConfiguration* toRet = NULL;
 
     gint index = -1;
-    if(g_ptr_array_find(this->_buildConfigs, seek, &index))
+    if(g_ptr_array_find_with_equal_func(this->_buildConfigs, seek, model_project_configuration_equals, &index))
         toRet = g_ptr_array_index(this->_buildConfigs, index);
-    else if(g_ptr_array_find(defaultConfigs, seek, &index))
+    else if(g_ptr_array_find_with_equal_func(defaultConfigs, seek, model_project_configuration_equals, &index))
         toRet = g_ptr_array_index(defaultConfigs, index);
     else
         g_assert(FALSE);
