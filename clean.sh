@@ -17,3 +17,4 @@
 
 find . -name '*.o' -delete
 find . -name '*.lef' -delete
+find . -name '*.so' -delete
