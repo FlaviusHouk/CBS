@@ -17,5 +17,7 @@
 
 clear
 find . -name '*.o' -delete
-find . -name '*.lef' -delete
+find . -name '*.elf' -delete
+find . -name '*.so' -delete
+
 make
