@@ -26,6 +26,7 @@ struct _ModelProjectConfiguration
     GString* _outputName;
     gint _optimization;
     gint _cStandard;
+    gint _outputType;
     GPtrArray* _macrosToDefine;
 
     gboolean _ignoreOptions;
@@ -79,6 +80,11 @@ model_project_configuration_new_from_xml(xmlNodePtr node)
         {
             this->_cStandard = atoi(xmlNodeGetContent(conf));
             g_assert(this->_cStandard >= 0 && this->_cStandard <= C11);
+        }
+        else if(strcmp(conf->name, "OutputType") == 0)
+        {
+            this->_outputType = atoi(xmlNodeGetContent(conf));
+            g_assert(this->_outputType >= 0 && this->_outputType < OUTPUT_TYPE_COUNT);
         }
         else if(strcmp(conf->name, "Optimization") == 0)
         {
@@ -146,6 +152,10 @@ model_project_configuration_write_xml(ModelProjectConfiguration* this, xmlTextWr
     char num[16];
     sprintf(num, "%d", this->_cStandard);
     rc = xmlTextWriterWriteElement(writer, "CStandard", num);
+    g_assert(rc >= 0);
+
+    sprintf(num, "%d", this->_outputType);
+    rc = xmlTextWriterWriteElement(writer, "OutputType", num);
     g_assert(rc >= 0);
 
     sprintf(num, "%d", this->_optimization);
@@ -219,6 +229,22 @@ model_project_configuration_get_c_standard_version(ModelProjectConfiguration* th
     g_assert(this);
 
     return this->_cStandard;
+}
+
+gint
+model_project_configuration_get_output_type(ModelProjectConfiguration* this)
+{
+    g_assert(this);
+
+    return this->_outputType;
+}
+
+void
+model_project_configuration_set_output_type(ModelProjectConfiguration* this, gint outputType)
+{
+    g_assert(this);
+
+    this->_outputType = outputType;
 }
 
 void

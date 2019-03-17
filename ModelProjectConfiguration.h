@@ -47,6 +47,15 @@ enum Optimization
     DEBUG_3, //-g3
 };
 
+enum OutputType
+{
+    ELF,
+    DYNAMIC_LIB,
+    STATIC_LIB,
+
+    OUTPUT_TYPE_COUNT
+};
+
 #define MODEL_TYPE_PROJECT_CONFIGURATION model_project_configuration_get_type()
 
 G_DECLARE_FINAL_TYPE(ModelProjectConfiguration, model_project_configuration, MODEL, PROJECT_CONFIGURATION, GObject);
@@ -80,6 +89,12 @@ model_project_configuration_get_c_standard_version(ModelProjectConfiguration* th
 
 void
 model_project_configuration_set_c_standard_version(ModelProjectConfiguration* this, gint version);
+
+gint
+model_project_configuration_get_output_type(ModelProjectConfiguration* this);
+
+void
+model_project_configuration_set_output_type(ModelProjectConfiguration* this, gint outputType);
 
 gboolean
 model_project_configuration_get_is_ignore_options(ModelProjectConfiguration* this);
