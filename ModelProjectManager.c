@@ -258,54 +258,18 @@ model_project_manager_print_command(GPtrArray* args)
     g_string_free(command, FALSE);
 }
 
-int
-model_project_manager_build_project(ModelProjectManager* this, ModelProject* toBuild, GString* configName)
+static void
+model_project_manager_run_script(GString* scriptFolder, gchar* script)
 {
-    GError* error;
-    GString* loc;
-    
-    loc = g_string_new(model_project_manager_get_project_work_dir(model_project_get_location(toBuild)));
-
-    GString* objFolder = g_string_new(g_strdup(loc->str));
-    if(loc->len != 0)
-        objFolder = g_string_append(objFolder, "/");
-
-    objFolder = g_string_append(objFolder, "obj");
-
-    GString* binFolder = g_string_new(g_strdup(loc->str));
-    if(loc->len != 0)
-        binFolder = g_string_append(binFolder, "/");
-
-    binFolder = g_string_append(binFolder, "bin");
-
-    GString* scriptFolder = g_string_new(g_strdup(loc->str));
-    if(loc->len != 0)
-        scriptFolder = g_string_append(scriptFolder, "/");
-
-    scriptFolder = g_string_append(scriptFolder, "scripts");
-
-    ModelProjectConfiguration* config = model_project_get_build_config(toBuild, configName);
-
-    GString* includes = model_project_manager_build_include_string(toBuild);
-
-    GDir* objFold = g_dir_open(objFolder->str, 0, &error);
-    if(objFold)
-    {
-        g_dir_close(objFold);
-    }
-    else
-    {
-        g_mkdir_with_parents(objFolder->str, 8*8*7 + 8*6 + 4);
-    }
-
-    g_print("Running prebuild script...\n");
+    g_print("Running %s script...\n", script);
 
     GPtrArray* args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
 
     g_ptr_array_add(args, g_strdup("sh"));
 
     GString* preBuildScriptLocation = g_string_new(g_strdup(scriptFolder->str));
-    g_string_append(preBuildScriptLocation, "/preBuild.sh");
+    g_string_append(preBuildScriptLocation, "/");
+    g_string_append(preBuildScriptLocation, script);
 
     GString* output = NULL;
 
@@ -326,6 +290,89 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
 
     g_string_free(preBuildScriptLocation, TRUE);
     g_ptr_array_free(args, TRUE);
+}
+
+static void
+model_project_manager_split_and_add_to(GPtrArray *toAdd, GString *string)
+{
+    char **configParts = g_strsplit(string->str, " ", -1);
+    for (int i = 0;; i++)
+    {
+        char *curr = configParts[i];
+
+        if (curr == NULL)
+            break;
+
+        if (strlen(curr) >= 2)
+        {
+            g_ptr_array_add(toAdd, curr);
+        }
+    }
+}
+
+static GString *
+model_project_manager_process_code_file(ModelSourceFile* file, 
+                                        GString* objFolder, 
+                                        GString* configString,
+                                        GString* includes)
+{
+    GPtrArray *args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
+    g_ptr_array_add(args, g_strdup("gcc"));
+
+    model_project_manager_split_and_add_to(args, configString);
+
+    g_ptr_array_add(args, g_strdup("-c"));
+    g_ptr_array_add(args, g_strdup(model_source_file_get_path(file)->str));
+    g_ptr_array_add(args, g_strdup("-o"));
+
+    GString *objFile = g_string_new(g_strdup(objFolder->str));
+    g_string_append_printf(objFile, "/%s.o", g_path_get_basename(model_source_file_get_path(file)->str));
+
+    g_ptr_array_add(args, g_strdup(objFile->str));
+
+    model_project_manager_split_and_add_to(args, includes);
+
+    g_ptr_array_add(args, NULL);
+
+    model_project_manager_print_command(args);
+    GString* output = run_tool("/usr/bin/gcc", (char **)args->pdata);
+    if (output->len > 0)
+        g_print("%s\n", output->str);
+
+    g_string_free(output, TRUE);
+
+    g_ptr_array_free(args, TRUE);
+
+    return objFile;
+}
+
+int
+model_project_manager_build_project(ModelProjectManager* this, ModelProject* toBuild, GString* configName)
+{
+    GError* error;
+    GString* loc, *output;
+    
+    loc = g_string_new(model_project_manager_get_project_work_dir(model_project_get_location(toBuild)));
+
+    GString* objFolder = model_project_manager_get_project_dir(toBuild, "obj");
+    GString* binFolder = model_project_manager_get_project_dir(toBuild, "bin");
+    GString* scriptFolder = model_project_manager_get_project_dir(toBuild, "scripts");
+
+    ModelProjectConfiguration* config = model_project_get_build_config(toBuild, configName);
+
+    GString* includes = model_project_manager_build_include_string(toBuild);
+
+    GDir* objFold = g_dir_open(objFolder->str, 0, &error);
+    if(objFold)
+    {
+        g_dir_close(objFold);
+    }
+    else
+    {
+        g_mkdir_with_parents(objFolder->str, 8*8*7 + 8*6 + 4);
+    }
+
+    model_project_manager_run_script(scriptFolder, "preBuild.sh");
 
     g_print("Building...\n");
 
@@ -336,80 +383,19 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
     {
         ModelSourceFile* file = (ModelSourceFile*)g_ptr_array_index(sources, i);
 
-        if(model_source_file_get_file_type(file) == CODE)
-        {
-            GPtrArray* args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
-            g_ptr_array_add(args, g_strdup("gcc"));
-
-            char** configParts = g_strsplit(configString->str, " ", -1);
-            for(int i = 0;;i++)
-            {
-                char* curr = configParts[i];
-
-                if(curr == NULL)
-                    break;
-
-                if(strlen(curr) >= 2)
-                {
-                    g_ptr_array_add(args, curr);   
-                }
-            }
-
-            g_ptr_array_add(args, g_strdup("-c"));
-            g_ptr_array_add(args, g_strdup(model_source_file_get_path(file)->str));
-            g_ptr_array_add(args, g_strdup("-o"));
-
-            GString* objFile = g_string_new(g_strdup(objFolder->str));
-            objFile = g_string_append(objFile, "/");
-            objFile = g_string_append(objFile, g_path_get_basename(model_source_file_get_path(file)->str));
-            objFile = g_string_append(objFile, ".o");
-            g_ptr_array_add(objFiles, objFile);
-            g_ptr_array_add(args, g_strdup(objFile->str));
-
-            char** includePatrs = g_strsplit(includes->str, " ", -1);
-            for(int i = 0;;i++)
-            {
-                char* curr = includePatrs[i];
-
-                if(curr == NULL)
-                    break;
-
-                if(strlen(curr) > 2)
-                {
-                    g_ptr_array_add(args, curr);   
-                }
-            }
-            g_ptr_array_add(args, NULL);
-
-            model_project_manager_print_command(args);
-            GString* output = run_tool("/usr/bin/gcc", (char**)args->pdata);
-            if(output->len > 0)
-                g_print("%s\n", output->str);
-            
-            g_string_free(output, TRUE);
-
-            g_ptr_array_free(args, TRUE);
-        }
+        if(model_source_file_get_file_type(file) == CODE)        
+            g_ptr_array_add(objFiles, model_project_manager_process_code_file(file,
+                                                                              objFolder,
+                                                                              configString,
+                                                                              includes));
     }
 
     g_print("Linking...\n");
     GString* link = model_project_manager_build_link_string(toBuild);
-    args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
+    GPtrArray* args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
     g_ptr_array_add(args, g_strdup("gcc"));
 
-    char** configParts = g_strsplit(configString->str, " ", -1);
-    for(int i = 0;;i++)
-    {
-        char* curr = configParts[i];
-
-        if(curr == NULL)
-            break;
-
-        if(strlen(curr) >= 2)
-        {
-            g_ptr_array_add(args, curr);   
-        }
-    }
+    model_project_manager_split_and_add_to(args, configString);
 
     for(int i = 0; i<objFiles->len; i++)
     {
@@ -440,19 +426,8 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
 
     g_ptr_array_add(args, binFolder->str);
 
-    char **linkParts = g_strsplit(link->str, " ", -1);
-    for (int i = 0;; i++)
-    {
-        char *curr = linkParts[i];
-
-        if (curr == NULL)
-            break;
-
-        if (strlen(curr) > 2)
-        {
-            g_ptr_array_add(args, curr);
-        }
-    }
+    model_project_manager_split_and_add_to(args, link);
+    
     g_ptr_array_add(args, NULL);
 
     output = run_tool("/usr/bin/gcc", (char**)args->pdata);
@@ -460,31 +435,8 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
     if(output->len > 0)
         g_print("%s\n", output->str);
 
-    g_print("Running postbuild script...\n");
+    model_project_manager_run_script(scriptFolder, "postBuild.sh");
 
-    args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
-
-    g_ptr_array_add(args, g_strdup("sh"));
-
-    GString* postBuildScriptLocation = g_string_new(g_strdup(scriptFolder->str));
-    g_string_append(postBuildScriptLocation, "/postBuild.sh");
-
-    check = fopen(postBuildScriptLocation->str, "r");
-    if(check)
-    {
-        fclose(check);
-
-        g_ptr_array_add(args, g_strdup(postBuildScriptLocation->str));
-        g_ptr_array_add(args, NULL);
-
-        output = run_tool("/usr/bin/sh", (char**)args->pdata);
-        if(output->len > 0)
-            g_print("%s\n", output->str);
-        
-        g_string_free(output, TRUE);
-    }   
-
-    g_string_free(postBuildScriptLocation, TRUE);
     g_ptr_array_free(args, TRUE);
 
     g_string_free(loc, TRUE);
