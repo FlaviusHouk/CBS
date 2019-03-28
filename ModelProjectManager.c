@@ -430,6 +430,7 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
     
     g_ptr_array_add(args, NULL);
 
+    model_project_manager_print_command(args);
     output = run_tool("/usr/bin/gcc", (char**)args->pdata);
     
     if(output->len > 0)
