@@ -46,6 +46,7 @@ model_project_configuration_init(ModelProjectConfiguration* this)
     this->_cStandard = C11;
     this->_optimization = DEBUG_2;
     this->_macrosToDefine = g_ptr_array_new();
+    this->_outputType = ELF;
 
     this->_ignoreOptions = FALSE;
     this->_customConfig = NULL;
@@ -344,6 +345,9 @@ model_project_configuration_build_config_string(ModelProjectConfiguration* this)
         toRet = g_string_append(toRet, toAppend);
         toRet = g_string_append(toRet, g_strdup(" "));
         
+        if(this->_outputType == DYNAMIC_LIB)
+            toRet = g_string_append(toRet, g_strdup("-fpic "));
+
         char* toAppendOptimization;
         switch(this->_optimization)
         {

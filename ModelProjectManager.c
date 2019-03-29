@@ -390,51 +390,82 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
                                                                               includes));
     }
 
-    g_print("Linking...\n");
-    GString* link = model_project_manager_build_link_string(toBuild);
-    GPtrArray* args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
-    g_ptr_array_add(args, g_strdup("gcc"));
+    gint outputType = model_project_configuration_get_output_type(config);
+    GPtrArray *args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
 
-    model_project_manager_split_and_add_to(args, configString);
-
-    for(int i = 0; i<objFiles->len; i++)
-    {
-        GString* file = (GString*)g_ptr_array_index(objFiles, i);
-        g_ptr_array_add(args, g_strdup(file->str));
-    }
-
-    g_ptr_array_add(args, g_strdup("-o"));
-
-    GDir* binFold = g_dir_open(binFolder->str, 0, &error);
-    if(binFold)
+    GDir *binFold = g_dir_open(binFolder->str, 0, &error);
+    if (binFold)
     {
         g_dir_close(binFold);
     }
     else
     {
-        g_mkdir_with_parents(binFolder->str, 8*8*7 + 8*6 + 4);
+        g_mkdir_with_parents(binFolder->str, 8 * 8 * 7 + 8 * 6 + 4);
     }
 
-    char* projName = g_path_get_basename(model_project_get_location(toBuild)->str);
+    char *projName = g_path_get_basename(model_project_get_location(toBuild)->str);
     binFolder = g_string_append(binFolder, "/");
 
-    GString* outputName = model_project_configuration_get_output_name(config);
-    if(outputName != NULL)
+    GString *outputName = model_project_configuration_get_output_name(config);
+    if (outputName != NULL)
         binFolder = g_string_append(binFolder, g_strdup(outputName->str));
     else
         binFolder = g_string_append(binFolder, projName);
 
-    g_ptr_array_add(args, binFolder->str);
+    g_print("Linking...\n");
 
-    model_project_manager_split_and_add_to(args, link);
-    
-    g_ptr_array_add(args, NULL);
+    if (outputType != STATIC_LIB)
+    {
+        GString *link = model_project_manager_build_link_string(toBuild);
+        g_ptr_array_add(args, g_strdup("gcc"));
 
-    model_project_manager_print_command(args);
-    output = run_tool("/usr/bin/gcc", (char**)args->pdata);
-    
-    if(output->len > 0)
-        g_print("%s\n", output->str);
+        if(outputType == DYNAMIC_LIB)
+            g_ptr_array_add(args, "-shared");
+
+        //I think there are no build options for linking stage
+        //model_project_manager_split_and_add_to(args, configString);
+
+        for (int i = 0; i < objFiles->len; i++)
+        {
+            GString *file = (GString *)g_ptr_array_index(objFiles, i);
+            g_ptr_array_add(args, g_strdup(file->str));
+        }
+
+        g_ptr_array_add(args, g_strdup("-o"));
+
+        g_ptr_array_add(args, g_strdup(binFolder->str));
+
+        model_project_manager_split_and_add_to(args, link);
+
+        g_ptr_array_add(args, NULL);
+
+        model_project_manager_print_command(args);
+        output = run_tool("/usr/bin/gcc", (char **)args->pdata);
+
+        if (output->len > 0)
+            g_print("%s\n", output->str);
+    }
+    else
+    {
+        g_ptr_array_add(args, g_strdup("ar"));
+        g_ptr_array_add(args, g_strdup("rcs"));
+
+        g_ptr_array_add(args, g_strdup(binFolder->str));
+
+        for (int i = 0; i < objFiles->len; i++)
+        {
+            GString *file = (GString *)g_ptr_array_index(objFiles, i);
+            g_ptr_array_add(args, g_strdup(file->str));
+        }
+
+        g_ptr_array_add(args, NULL);
+
+        model_project_manager_print_command(args);
+        output = run_tool("/usr/bin/ar", (char **)args->pdata);
+
+        if (output->len > 0)
+            g_print("%s\n", output->str);
+    }
 
     model_project_manager_run_script(scriptFolder, "postBuild.sh");
 
