@@ -48,6 +48,8 @@ static void ProcessCreateCommand(CLICommandInfo* command)
 
 	model_project_manager_create_project(loc);
 
+	g_print("Project was successfully created!\n");
+
 	g_object_unref(manager);
 }
 
@@ -59,6 +61,8 @@ static void AddFileToProject(gpointer fileName, gpointer project)
 	ModelSourceFile* file = model_source_file_new(fileLoc);
 
 	model_project_add_source_file(proj, file);
+
+	g_printf("%s was added.\n", fileLoc->str);
 }
 
 static void ProcessAddCommand(CLICommandInfo* command)
@@ -91,6 +95,8 @@ static void RemoveFileFromProject(gpointer fileName, gpointer project)
 	ModelSourceFile* file = model_source_file_new(fileLoc);
 
 	model_project_remove_source_file(proj, file);
+
+	g_print("%s was removed.\n", fileLoc->str);
 }
 
 static void ProcessDeleteCommand(CLICommandInfo* command)
@@ -122,6 +128,8 @@ AddIncludeFolder(gpointer folder, gpointer proj)
 	ModelProject* project = (ModelProject*) proj;
 
 	model_project_add_include_folder(project, incl);
+
+		g_printf("%s was added.\n", incl->str);
 }
 
 static void
@@ -154,6 +162,8 @@ DeleteIncludeFolder(gpointer folder, gpointer proj)
 	ModelProject* project = (ModelProject*) proj;
 
 	model_project_remove_include_folder(project, incl);
+
+	g_printf("%s was removed.\n", incl->str);
 }
 
 static void
@@ -182,7 +192,7 @@ ProcessDeleteInclCommand(CLICommandInfo* command)
 static void ProcessAddDepCommand(CLICommandInfo* command)
 {
 	GPtrArray* dep = cli_command_info_get_args(command);
-	int expectedCount = cli_command_info_get_args_count(command);
+	gint expectedCount = cli_command_info_get_args_count(command);
 	if(expectedCount != dep->len)
 	{
 		g_print("Add dependency command usage:\n\t--addDependency projName depType depName\nprojName - path to project definition, depType - integer number(dependency type), depName - dependency representation according to type\n");
@@ -196,7 +206,7 @@ static void ProcessAddDepCommand(CLICommandInfo* command)
 
 	g_assert(dep->len == 2);
 
-	int type = atoi(((GString*)g_ptr_array_index(dep, 0))->str);
+	gint type = atoi(((GString*)g_ptr_array_index(dep, 0))->str);
 	GString* dependency = (GString*)g_ptr_array_index(dep, 1);
 
 	ModelProjectDependency* depObj = model_project_dependency_new(dependency, type);
@@ -204,6 +214,8 @@ static void ProcessAddDepCommand(CLICommandInfo* command)
 	model_project_add_dependency(proj, depObj);
 
 	model_project_save(proj, NULL);
+
+	g_print("%s was added with %d type.\n", dependency->str, type);
 
 	g_object_unref(proj);
 }
@@ -215,6 +227,8 @@ RemoveDependency(gpointer obj, gpointer data)
 	ModelProject* proj = (ModelProject*)data;
 
 	model_project_remove_dependency_by_name(proj, dep);
+
+	g_printf("%s was removed.\n", dep->str);
 }
 
 static void ProcessRemDepCommand(CLICommandInfo* command)
