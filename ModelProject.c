@@ -476,9 +476,8 @@ void
 model_project_save(ModelProject* this, GString* dest)
 {
     g_assert(this);
-    g_assert(dest);
 
-    if(!g_string_equal(this->_location, dest))
+    if(dest != NULL && !g_string_equal(this->_location, dest))
     {
         GString* newLoc = g_string_new(dest->str);
         g_string_free(this->_location, TRUE);

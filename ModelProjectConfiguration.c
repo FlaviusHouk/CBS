@@ -177,8 +177,11 @@ model_project_configuration_write_xml(ModelProjectConfiguration* this, xmlTextWr
     rc = xmlTextWriterWriteElement(writer, "IgnoreOptions", num);
     g_assert(rc >= 0);
 
-    rc = xmlTextWriterWriteElement(writer, "CustomConfig", this->_customConfig->str);
-    g_assert(rc >= 0);
+    if(this->_customConfig != NULL)
+    {
+        rc = xmlTextWriterWriteElement(writer, "CustomConfig", this->_customConfig->str);
+        g_assert(rc >= 0);
+    }
 
     rc = xmlTextWriterEndElement(writer);
     g_assert(rc >= 0);

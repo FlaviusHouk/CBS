@@ -420,7 +420,7 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
         g_ptr_array_add(args, g_strdup("gcc"));
 
         if(outputType == DYNAMIC_LIB)
-            g_ptr_array_add(args, "-shared");
+            g_ptr_array_add(args, g_strdup("-shared"));
 
         //I think there are no build options for linking stage
         //model_project_manager_split_and_add_to(args, configString);

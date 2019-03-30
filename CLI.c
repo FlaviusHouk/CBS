@@ -65,7 +65,7 @@ static void ProcessAddCommand(CLICommandInfo* command)
 {
 	GPtrArray* files = cli_command_info_get_args(command);
 	int expectedCount = cli_command_info_get_args_count(command);
-	if(expectedCount != files->len)
+	if(expectedCount != files->len && expectedCount != -1)
 	{
 		g_print("Add file command usage:\n\t--addFile projName file1 file2 ... fileN\nprojName - path to project definition, file - path to file you want to add\n");
 		g_assert(FALSE);
@@ -129,7 +129,7 @@ ProcessAddInclCommand(CLICommandInfo* command)
 {
 	GPtrArray* args = cli_command_info_get_args(command);
 	int expectedCount = cli_command_info_get_args_count(command);
-	if(expectedCount != args->len)
+	if(expectedCount != args->len && expectedCount != -1)
 	{
 		g_print("Add include folder command usage:\n\t--addInclude projName fold1 fold2 ... foldN\nprojName - path to project definition, fold - path to folder you want to add\n");
 		g_assert(FALSE);

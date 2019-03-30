@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License
 along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 ***********************************************************************/
 
+#define _POSIX_C_SOURCE 200809L
 
 #include "Helper.h"
 #include "stdio.h"
