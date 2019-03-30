@@ -17,6 +17,7 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 
 
 #include "ModelProjectDependency.h"
+#include "ModelProject.h"
 
 #include "Helper.h"
 #include "string.h"
@@ -122,6 +123,16 @@ model_project_dependency_get_includes(ModelProjectDependency* this)
         g_free(args);
 
         return out;
+    }
+    else if(this->_type == CBS_PROJECT)
+    {
+        ModelProject* dep = model_project_load_or_create_project(this->_representation);
+
+        GString* loc = g_string_new(g_path_get_dirname(model_project_get_location(dep)->str));
+
+        loc = g_string_prepend(loc, g_strdup("-I"));
+
+        return g_string_append(loc, g_strdup("/headers  "));
     }
 
     return NULL;
