@@ -1,14 +1,16 @@
 # C Build System
 
-This is a tool for automation of build procedure for C projects. It aims to be lightweight and fast. With the minimum of third party dependencies it tries to provide full support for different kinds of projects with a single XML-definition. It is inspired by dotnet projects and build tools.
+This is a tool for automation of build procedure for C projects. It aims to be lightweight and fast. With the minimum of third party dependencies it tries to provide full support for different kinds of projects with a single XML-definition. It is inspired by MS dotnet projects and build tools.
 
 ## Compiling
 
-To compile current version of build system its better to use build script build.sh. It is delete previously compiled binaries and uses make for build. In future it will be replaced by CBS.
+Before compiling makefile should be edited and some setting for cbs executable should be provided. 
+
+To compile current version of build system its better to use build script build.sh. It deletes previously compiled binaries and uses automake for build. In future it will be replaced by CBS.
 
 ## Usage
 
-For the 0.0.1 version there is a few supported basic commands. 
+For the 0.0.2 version there is a few supported basic commands. 
 
 ### Create
 
@@ -84,7 +86,7 @@ There is four types of dependencies that are supported:
 
 * Other CBS project (type 3)
 
-    Here depName is the path to another project definition.
+    Here depName is the path to another project definition. All these dependencies will be build before "current" project.
 
 ### Delete dependency
 
@@ -97,11 +99,13 @@ Deletes the first dependency with the same depName that was found.
 ### Build
 
 ```
-cbs --build projName
+cbs --build projName buildConfigName
 ```
 
 When build is started two additional folders will be created if they does not exist: obj and bin. First one contains object file for each processed source file and the second one contains compiled binary file - build artifact. 
 
 While build is executed all compiler output and build commands for each file are printed in console you're using. All compile and link errors are printed as well.
 
-By default gcc compiler is used. For now only builds without debug info and default optimization level is supported. 
+By default gcc compiler is used. 
+
+In this version there are two default build definitions: Debug and Release. Both will build elf executable with c11 language standard. Debug config uses -g option to produce debug info and Release uses -O1. Currently there is no opportunity to add build build definition with cli interface and you have to edit "BuildConfigurations" section in cpd file.
