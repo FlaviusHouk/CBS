@@ -5,6 +5,7 @@ This is a tool for automation of build procedure for C projects. It aims to be l
 ## Compiling
 
 Before compiling makefile should be edited and some setting for cbs executable should be provided. 
+To link dynamic library rpath should be provided, so add following parameters in compiler call for Main build target(without quotes): "-Wl,-rpath=/path/to/folder/with/libcbs -L/path/to/folder/with/libcbs".
 
 To compile current version of build system its better to use build script build.sh. It deletes previously compiled binaries and uses automake for build. In future it will be replaced by CBS.
 
