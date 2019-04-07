@@ -56,7 +56,7 @@ model_project_manager_get_project_work_dir(GString* location)
     }
     else
     {
-        buf = g_alloca(strlen(baseDir));
+        buf = g_malloc(strlen(baseDir));
         strcpy(buf, baseDir);
     }
 
@@ -166,19 +166,6 @@ model_project_manager_create_project(GString* location)
     return 0;
 }
 
-static void
-model_project_manager_process_includes(gpointer obj, gpointer data)
-{
-    GString* include = (GString*)obj;
-    GString* all = (GString*)data;
-
-    GString* copy = g_string_new(g_strdup(include->str));
-    copy = g_string_prepend(copy, "-I");
-    copy = g_string_append(copy, " ");
-
-    g_string_append(all, copy->str);
-}
-
 static void 
 model_project_manager_process_system_deps(gpointer obj, gpointer data)
 {
@@ -192,13 +179,23 @@ model_project_manager_process_system_deps(gpointer obj, gpointer data)
 }
 
 static GString*
-model_project_manager_build_include_string(ModelProject* building)
+model_project_manager_build_include_string(ModelProject* building, GString* projLoc)
 {
     GString* includes = g_string_new("");
 
-    g_ptr_array_foreach(model_project_get_includes(building),
-                        model_project_manager_process_includes,
-                        includes);
+    GPtrArray* includeCollection = model_project_get_includes(building);
+
+    for(int i = 0; i<includeCollection->len; i++)
+    {
+        GString* include = (GString*)includeCollection->pdata[i];
+
+        GString* copy = g_string_new(g_strdup(projLoc->str));
+        if(copy->len != 0)
+            g_string_append(copy, g_strdup("/"));
+        g_string_append(copy, g_strdup(include->str));
+
+        g_string_append_printf(includes, "-I%s ", copy->str);
+    }
 
     g_ptr_array_foreach(model_project_get_dependencies(building),
                         model_project_manager_process_system_deps,
@@ -314,15 +311,22 @@ static GString *
 model_project_manager_process_code_file(ModelSourceFile* file, 
                                         GString* objFolder, 
                                         GString* configString,
-                                        GString* includes)
+                                        GString* includes,
+                                        GString* projLoc)
 {
     GPtrArray *args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
     g_ptr_array_add(args, g_strdup("gcc"));
 
+    GString* loc = g_string_new(g_strdup(projLoc->str));
+    if(loc->len != 0)
+        loc = g_string_append(loc, g_strdup("/"));
+    
+    loc = g_string_append(loc, g_strdup(model_source_file_get_path(file)->str));
+
     model_project_manager_split_and_add_to(args, configString);
 
     g_ptr_array_add(args, g_strdup("-c"));
-    g_ptr_array_add(args, g_strdup(model_source_file_get_path(file)->str));
+    g_ptr_array_add(args, g_strdup(loc->str));
     g_ptr_array_add(args, g_strdup("-o"));
 
     GString *objFile = g_string_new(g_strdup(objFolder->str));
@@ -340,7 +344,7 @@ model_project_manager_process_code_file(ModelSourceFile* file,
         g_print("%s\n", output->str);
 
     g_string_free(output, TRUE);
-
+    g_string_free(loc, TRUE);
     g_ptr_array_free(args, TRUE);
 
     return objFile;
@@ -358,9 +362,12 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
     GString* binFolder = model_project_manager_get_project_dir(toBuild, "bin");
     GString* scriptFolder = model_project_manager_get_project_dir(toBuild, "scripts");
 
+    if(configName != NULL)
+        model_project_set_active_build_config(toBuild, configName);
+
     ModelProjectConfiguration* config = model_project_get_build_config(toBuild, configName);
 
-    GString* includes = model_project_manager_build_include_string(toBuild);
+    GString* includes = model_project_manager_build_include_string(toBuild, loc);
 
     GDir* objFold = g_dir_open(objFolder->str, 0, &error);
     if(objFold)
@@ -387,7 +394,8 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
             g_ptr_array_add(objFiles, model_project_manager_process_code_file(file,
                                                                               objFolder,
                                                                               configString,
-                                                                              includes));
+                                                                              includes,
+                                                                              loc));
     }
 
     gint outputType = model_project_configuration_get_output_type(config);

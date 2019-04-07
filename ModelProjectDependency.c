@@ -18,6 +18,7 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "ModelProjectDependency.h"
 #include "ModelProject.h"
+#include "ModelProjectManager.h"
 
 #include "Helper.h"
 #include "string.h"
@@ -172,10 +173,28 @@ model_project_dependency_get_links(ModelProjectDependency* this)
     }
     else if(this->_type == CBS_PROJECT)
     {
-        GString* projLoc = g_string_new("-L");
-        projLoc = g_string_append(projLoc, g_path_get_dirname(this->_representation->str));
-        
-        return g_string_append(projLoc, "/bin ");
+        ModelProject* dep = model_project_load_or_create_project(this->_representation);
+
+        ModelProjectConfiguration* conf = model_project_get_build_config(dep, NULL);
+
+        gint outputType = model_project_configuration_get_output_type(conf);
+        g_assert(outputType != ELF);
+
+        if(outputType == DYNAMIC_LIB)
+        {
+            ModelProjectManager* manager = model_project_manager_new();
+
+            model_project_manager_build_project(manager, dep, NULL);
+
+            g_object_unref(manager);
+
+            GString* projLoc = g_string_new("-L");
+            projLoc = g_string_append(projLoc, g_path_get_dirname(this->_representation->str));
+
+            return g_string_append(projLoc, "/bin ");
+        }
+
+        g_object_unref(dep);
     }
 
     return NULL;
