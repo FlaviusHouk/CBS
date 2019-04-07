@@ -62,7 +62,7 @@ static void AddFileToProject(gpointer fileName, gpointer project)
 
 	model_project_add_source_file(proj, file);
 
-	g_printf("%s was added.\n", fileLoc->str);
+	g_print("%s was added.\n", fileLoc->str);
 }
 
 static void ProcessAddCommand(CLICommandInfo* command)
@@ -129,7 +129,7 @@ AddIncludeFolder(gpointer folder, gpointer proj)
 
 	model_project_add_include_folder(project, incl);
 
-		g_printf("%s was added.\n", incl->str);
+	g_print("%s was added.\n", incl->str);
 }
 
 static void
@@ -163,7 +163,7 @@ DeleteIncludeFolder(gpointer folder, gpointer proj)
 
 	model_project_remove_include_folder(project, incl);
 
-	g_printf("%s was removed.\n", incl->str);
+	g_print("%s was removed.\n", incl->str);
 }
 
 static void
@@ -228,7 +228,7 @@ RemoveDependency(gpointer obj, gpointer data)
 
 	model_project_remove_dependency_by_name(proj, dep);
 
-	g_printf("%s was removed.\n", dep->str);
+	g_print("%s was removed.\n", dep->str);
 }
 
 static void ProcessRemDepCommand(CLICommandInfo* command)
