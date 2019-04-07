@@ -26,11 +26,15 @@ struct _ModelProject
 {
     GObject parent_object;
 
+    //runtime fields
     GString* _location;
+
+    //storable fields
     GPtrArray* _sourceFiles;
     GPtrArray* _headersFolders;
     GPtrArray* _dependencies;
     GPtrArray* _buildConfigs;
+    GString* _activeConfiguration;
 };
 
 G_DEFINE_TYPE(ModelProject, model_project, G_TYPE_OBJECT)
@@ -49,7 +53,12 @@ model_project_get_build_config(ModelProject* this, GString* configName)
     g_assert(this);
 
     if(configName == NULL)
-        return g_ptr_array_index(defaultConfigs, 0);
+    {
+        if(this->_activeConfiguration != NULL)
+            return model_project_get_build_config(this, this->_activeConfiguration);
+        else
+            return g_ptr_array_index(defaultConfigs, 0);
+    }
 
     ModelProjectConfiguration* seek = model_project_configuration_new(configName);
     ModelProjectConfiguration* toRet = NULL;
@@ -197,6 +206,14 @@ model_project_read(xmlNodePtr root, ModelProject* this)
 
         configs = configs->next;
     }
+
+    //read active build definition
+    while(node != NULL && strcmp(node->name, "ActiveBuildConfig") != 0)
+    {
+        node = node->next;
+    }
+
+    this->_activeConfiguration = g_string_new(xmlNodeGetContent(node));
 }
 
 static void
@@ -360,6 +377,15 @@ model_project_write_project(ModelProject* this)
                         writer);
 
     rc = xmlTextWriterEndElement(writer);
+    g_assert(rc >= 0);
+
+    gchar* activeConf = NULL;
+    if(this->_activeConfiguration == NULL)
+        activeConf = "";
+    else
+        activeConf = this->_activeConfiguration->str;
+
+    rc = xmlTextWriterWriteElement(writer, "ActiveBuildConfig", this->_activeConfiguration->str);
     g_assert(rc >= 0);
 
     rc = xmlTextWriterEndDocument(writer);
