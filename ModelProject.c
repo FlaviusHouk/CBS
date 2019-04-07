@@ -593,3 +593,19 @@ model_project_get_location(ModelProject* this)
 
     return this->_location;
 }
+
+GString*
+model_project_get_active_build_config(ModelProject* this)
+{
+    g_assert(this);
+
+    return this->_activeConfiguration;
+}
+
+void
+model_project_set_active_build_config(ModelProject* this, GString* configName)
+{
+    g_assert(this);
+
+    this->_activeConfiguration = configName;    
+}

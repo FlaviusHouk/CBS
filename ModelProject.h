@@ -79,4 +79,10 @@ model_project_save(ModelProject* this, GString* dest);
 ModelProjectConfiguration*
 model_project_get_build_config(ModelProject* this, GString* configName);
 
+GString*
+model_project_get_active_build_config(ModelProject* this);
+
+void
+model_project_set_active_build_config(ModelProject* this, GString* configName);
+
 #endif
