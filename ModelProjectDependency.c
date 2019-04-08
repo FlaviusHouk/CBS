@@ -15,7 +15,6 @@ You should have received a copy of the GNU General Public License
 along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 ***********************************************************************/
 
-
 #include "ModelProjectDependency.h"
 #include "ModelProject.h"
 #include "ModelProjectManager.h"
@@ -166,10 +165,15 @@ model_project_dependency_get_links(ModelProjectDependency* this)
     }
     else if(this->_type == EXTERNAL_DYNAMIC_LIB)
     {
-        GString* loc = g_string_new("-l");
-        loc = g_string_append(loc, this->_representation->str);
+        gchar* libName = g_path_get_basename(this->_representation->str);
+        gchar* libPath = g_path_get_dirname(this->_representation->str);
+        gchar* absPath = g_path_get_absolute(libPath);
 
-        return g_string_append(loc, " ");
+        GString* link = g_string_new("-L");
+
+        g_string_append_printf(link, "%s -l%s -Wl,-rpath=%s  ", libPath, libName, absPath);
+
+        return link;
     }
     else if(this->_type == CBS_PROJECT)
     {
@@ -188,10 +192,32 @@ model_project_dependency_get_links(ModelProjectDependency* this)
 
             g_object_unref(manager);
 
-            GString* projLoc = g_string_new("-L");
-            projLoc = g_string_append(projLoc, g_path_get_dirname(this->_representation->str));
+            gchar* libName = g_path_get_basename(this->_representation->str);
 
-            return g_string_append(projLoc, "/bin ");
+            if(g_str_has_prefix(libName, "lib") && g_str_has_suffix(libName, ".cpd"))
+            {
+                gchar* linkName = g_str_substr(libName, 3, strlen(libName) - 7);
+                g_free(libName);
+
+                libName = linkName;
+            }
+            else if(g_str_has_suffix(libName, ".cpd"))
+            {
+                gchar* linkName = g_str_substr(libName, 0, strlen(libName) - 4);
+                g_free(libName);
+
+                libName = linkName;
+            }
+
+            gchar* libPath = g_path_get_dirname(this->_representation->str);
+
+            GString* link = g_string_new("-L");
+
+            gchar* absPath = g_path_get_absolute(libPath);
+
+            g_string_append_printf(link, "%s/bin -l%s -Wl,-rpath=%s/bin  ", libPath, libName, absPath);
+
+            return link;
         }
 
         g_object_unref(dep);

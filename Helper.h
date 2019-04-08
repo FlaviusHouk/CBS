@@ -22,6 +22,12 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 gboolean g_string_compare(GString* str1, GString* str2);
 gboolean g_string_starts_with(GString* str, GString* startsWith);
 
+gchar* 
+g_str_substr(const gchar* src, int offset, int len);
+
+gchar* 
+g_path_get_absolute(gchar* relPath);
+
 GString*
 run_tool(char* tool, char** args);
 

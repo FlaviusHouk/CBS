@@ -41,6 +41,41 @@ gboolean g_string_starts_with(GString* str, GString* startsWith)
     return strncmp(str->str, startsWith->str, startsWith->len);
 }
 
+gchar* g_str_substr(const gchar* src, int offset, int len)
+{
+    g_assert(src);
+
+    int origLen = strlen(src);
+
+    g_assert(offset + len < origLen);
+
+    gchar* subStr = (gchar*)g_malloc(sizeof(char) * len + 1);
+    for(int i = 0; i<len; i++)
+        subStr[i] = src[offset + i];
+
+    subStr[len] = '\0';
+
+    return subStr;
+}
+
+gchar* g_path_get_absolute(gchar* relPath)
+{
+    GPtrArray* args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
+    g_ptr_array_add(args, g_strdup("realpath"));
+    g_ptr_array_add(args, strdup(relPath));
+    g_ptr_array_add(args, NULL);
+
+    GString* output = run_tool("/usr/bin/realpath", (char**)args->pdata);
+    g_string_erase(output, output->len - 1, 1);
+
+    gchar* absPath = output->str;
+
+    g_string_free(output, FALSE);
+    g_ptr_array_free(args, TRUE);
+
+    return absPath;
+}
+
 /*gint g_string_index_of(const GString* str, const GString* seek)
 {
     if(seek->len > str->len)
