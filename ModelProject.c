@@ -385,7 +385,7 @@ model_project_write_project(ModelProject* this)
     else
         activeConf = this->_activeConfiguration->str;
 
-    rc = xmlTextWriterWriteElement(writer, "ActiveBuildConfig", this->_activeConfiguration->str);
+    rc = xmlTextWriterWriteElement(writer, "ActiveBuildConfig", activeConf);
     g_assert(rc >= 0);
 
     rc = xmlTextWriterEndDocument(writer);
