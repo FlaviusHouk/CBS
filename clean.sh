@@ -16,5 +16,5 @@
 #along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 
 find . -name '*.o' -delete
-find . -name '*.lef' -delete
+find . -name '*.elf' -delete
 find . -name '*.so' -delete
