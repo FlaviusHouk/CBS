@@ -26,6 +26,7 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 
 G_BEGIN_DECLS
 
+///Enum with C standard versions
 enum CStandard
 {
     ANSI_C,
@@ -34,6 +35,7 @@ enum CStandard
     C11
 };
 
+///Enum with GCC optimization levels
 enum Optimization
 {
     RELEASE_FAST, //-Ofast
@@ -47,6 +49,7 @@ enum Optimization
     DEBUG_3, //-g3
 };
 
+///Enum with possible output files for project build.
 enum OutputType
 {
     ELF,
@@ -58,56 +61,78 @@ enum OutputType
 
 #define MODEL_TYPE_PROJECT_CONFIGURATION model_project_configuration_get_type()
 
+///Type for storing basic build information (Output file name, optimization level and so on)
 G_DECLARE_FINAL_TYPE(ModelProjectConfiguration, model_project_configuration, MODEL, PROJECT_CONFIGURATION, GObject);
 
+///Constructor for ProjectConfiguration type.
+///name - config name
 ModelProjectConfiguration*
 model_project_configuration_new(GString* name);
 
+///Deserialization method.
+///node - xmlNode to read from.
 ModelProjectConfiguration*
 model_project_configuration_new_from_xml(xmlNodePtr node);
 
+///Serialization method.
+///writer - xml writer to save data
 void
 model_project_configuration_write_xml(ModelProjectConfiguration* this, xmlTextWriterPtr writer);
 
+///Getter for Config name property
 GString*
 model_project_configuration_get_name(ModelProjectConfiguration* this);
 
+///Getter for Output File name property
 GString*
 model_project_configuration_get_output_name(ModelProjectConfiguration* this);
 
+///Setter for Output File name property
 void
 model_project_configuration_set_output_name(ModelProjectConfiguration* this, GString* outputName);
 
+///Getter for Optimization level property
 gint
 model_project_configuration_get_optimization_level(ModelProjectConfiguration* this);
 
+///Setter for Optimization level property
 void
 model_project_configuration_set_optimization_level(ModelProjectConfiguration* this, gint optimization);
 
+///Getter for C Standard property
 gint
 model_project_configuration_get_c_standard_version(ModelProjectConfiguration* this);
 
+///Setter for C Standard property
 void
 model_project_configuration_set_c_standard_version(ModelProjectConfiguration* this, gint version);
 
+///Getter for Output file type property
 gint
 model_project_configuration_get_output_type(ModelProjectConfiguration* this);
 
+///Setter for Output file type property
 void
 model_project_configuration_set_output_type(ModelProjectConfiguration* this, gint outputType);
 
+///Getter for Is Ignore Options property.
 gboolean
 model_project_configuration_get_is_ignore_options(ModelProjectConfiguration* this);
 
+///Setter for Is Ignore Options property.
 void
 model_project_configuration_set_is_ignore_options(ModelProjectConfiguration* this, gboolean isIgnoreChanges);
 
+///Getter for Custom config property.
 GString*
 model_project_configuration_get_custom_config(ModelProjectConfiguration* this);
 
+///Function for comparing two ProjectConfiguration instances. 
 gboolean
 model_project_configuration_equals(const void* first, const void* second);
 
+///Function builds config string for compiler according to ProjectConfiguration parameters.
+///Allocates new string.
 GString*
 model_project_configuration_build_config_string(ModelProjectConfiguration* this);
 

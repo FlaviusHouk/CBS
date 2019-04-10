@@ -32,19 +32,23 @@ G_BEGIN_DECLS
 
 #define MODEL_TYPE_SOURCE_FILE model_source_file_get_type()
 
+///Type that represent one file that used in project.
 G_DECLARE_FINAL_TYPE(ModelSourceFile, model_source_file, MODEL, SOURCE_FILE, GObject);
 
-G_END_DECLS
-
+///Constructor for SourceFile type.
+///location - file location.
 ModelSourceFile*
 model_source_file_new(GString* location);
 
+///Deserialization function.
 ModelSourceFile*
 model_source_file_new_from_xml(xmlNodePtr node);
 
+///Serialization function.
 void
 model_source_file_write_xml(ModelSourceFile* file, xmlTextWriterPtr writer);
 
+///Available source file types.
 enum ModelSourceFileTypes
 {
     CODE,
@@ -53,13 +57,18 @@ enum ModelSourceFileTypes
     RESOURCE
 };
 
+///Getter for File type property(as ModelSourceFileTypes enum).
 int
 model_source_file_get_file_type(ModelSourceFile* file);
 
+///Equilty function for two SourceFile instances.
 gboolean
 model_source_file_equals(const void* this, const void* that);
 
+///Getter for Path property.
 GString*
 model_source_file_get_path(ModelSourceFile* this);
+
+G_END_DECLS
 
 #endif
