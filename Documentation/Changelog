@@ -1,0 +1,11 @@
+## 0.0.2
+* Build config type provided. Now it is possible to use such build parameters
+as C Standard, Optimization level and so on. Also provided default build config for project 
+and some predefined configs for system;
+* Provided opportunity to run pre and post build scripts;
+* CBS dependencies are building when main project is building;
+* All cli commands have messeges with execution status;
+* Project structure was imroved. There is no backward compatibility bitween projects created
+with 0.0.1 version and 0.0.2 version. To use old projects some changes in XML structure should be
+performed;
+* Small bug fixed and improvements.
