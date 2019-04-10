@@ -27,11 +27,12 @@ struct _CLICommandParser
 {
 	GObject parent_instance;
 
-	GPtrArray* _commands;
+	GPtrArray* _commands; 
 };
 
 G_DEFINE_TYPE(CLICommandParser, cli_command_parser, G_TYPE_OBJECT)
 
+///Create command handler
 static void ProcessCreateCommand(CLICommandInfo* command)
 {
 	GPtrArray* args = cli_command_info_get_args(command);
@@ -53,6 +54,8 @@ static void ProcessCreateCommand(CLICommandInfo* command)
 	g_object_unref(manager);
 }
 
+///Function for GPtrArray foreach looping and adding source files 
+///into project
 static void AddFileToProject(gpointer fileName, gpointer project)
 {
 	GString* fileLoc = (GString*)fileName;
@@ -65,6 +68,7 @@ static void AddFileToProject(gpointer fileName, gpointer project)
 	g_print("%s was added.\n", fileLoc->str);
 }
 
+///Add file command handler
 static void ProcessAddCommand(CLICommandInfo* command)
 {
 	GPtrArray* files = cli_command_info_get_args(command);
@@ -87,6 +91,7 @@ static void ProcessAddCommand(CLICommandInfo* command)
 	g_object_unref(proj);
 }
 
+///Remove file command handler
 static void RemoveFileFromProject(gpointer fileName, gpointer project)
 {
 	GString* fileLoc = (GString*)fileName;
@@ -99,6 +104,7 @@ static void RemoveFileFromProject(gpointer fileName, gpointer project)
 	g_print("%s was removed.\n", fileLoc->str);
 }
 
+///Delete command handler
 static void ProcessDeleteCommand(CLICommandInfo* command)
 {
 	GPtrArray* files = cli_command_info_get_args(command);
@@ -121,6 +127,8 @@ static void ProcessDeleteCommand(CLICommandInfo* command)
 	g_object_unref(proj);
 }
 
+///Function for looping through GPtrArray and adding include folders 
+///into project
 static void
 AddIncludeFolder(gpointer folder, gpointer proj)
 {
@@ -132,6 +140,7 @@ AddIncludeFolder(gpointer folder, gpointer proj)
 	g_print("%s was added.\n", incl->str);
 }
 
+///Add include folder command handler
 static void
 ProcessAddInclCommand(CLICommandInfo* command)
 {
@@ -155,6 +164,8 @@ ProcessAddInclCommand(CLICommandInfo* command)
 	g_object_unref(proj);
 }
 
+///Function for foreach looping through GPtrArray and removing include folder
+///from project
 static void
 DeleteIncludeFolder(gpointer folder, gpointer proj)
 {
@@ -166,6 +177,7 @@ DeleteIncludeFolder(gpointer folder, gpointer proj)
 	g_print("%s was removed.\n", incl->str);
 }
 
+///Delete include folder command handler
 static void
 ProcessDeleteInclCommand(CLICommandInfo* command)
 {
@@ -189,6 +201,7 @@ ProcessDeleteInclCommand(CLICommandInfo* command)
 	g_object_unref(proj);
 }
 
+///Add dependency command handler
 static void ProcessAddDepCommand(CLICommandInfo* command)
 {
 	GPtrArray* dep = cli_command_info_get_args(command);
@@ -220,6 +233,8 @@ static void ProcessAddDepCommand(CLICommandInfo* command)
 	g_object_unref(proj);
 }
 
+///Function for foreach looping through GPtrArray and removing 
+///dependencies from project. 
 static void
 RemoveDependency(gpointer obj, gpointer data)
 {
@@ -231,6 +246,7 @@ RemoveDependency(gpointer obj, gpointer data)
 	g_print("%s was removed.\n", dep->str);
 }
 
+///Delete dependency command handler
 static void ProcessRemDepCommand(CLICommandInfo* command)
 {
 	GPtrArray* deps = cli_command_info_get_args(command);
@@ -253,6 +269,7 @@ static void ProcessRemDepCommand(CLICommandInfo* command)
 	g_object_unref(proj);
 }
 
+///Build command handler
 static void ProcessBuildCommand(CLICommandInfo* command)
 {
 	GPtrArray* params = cli_command_info_get_args(command);
@@ -280,6 +297,7 @@ static void ProcessBuildCommand(CLICommandInfo* command)
 	g_object_unref(proj);
 }
 
+///Help command handler
 static void
 ProcessHelpCommand(CLICommandInfo* command)
 {
@@ -295,8 +313,10 @@ ProcessHelpCommand(CLICommandInfo* command)
 			"--help");
 }
 
+///Collection with predefined commands
 static GPtrArray* AvailableCommands;
 
+///Static constructor for CommandParser class. Fills AvailableCommands collection
 static void
 cli_command_parser_class_init(CLICommandParserClass* class)
 {
@@ -371,12 +391,16 @@ cli_command_parser_init(CLICommandParser* this)
 
 }
 
+///Current parser state. Maybe it should be moved into class?
 static gint current_state = START;
+
 static CLICommandInfo* currentCommand;
 
+///Function checks state of parser and looks for available command to fill with given params
 static void cli_command_parser_set_input_state(gint state)
 {
-	if(current_state != START)
+	// there is no situations except START when command have no arguments.
+	if(current_state != START) 
 	{
 		g_assert(currentCommand);
 		g_assert(cli_command_info_get_args(currentCommand)->len);
@@ -390,11 +414,13 @@ static void cli_command_parser_set_input_state(gint state)
 	currentCommand = (CLICommandInfo*)g_ptr_array_index(AvailableCommands, state - 1);
 }
 
+///Add parameter to command is now parsing
 static void cli_command_parser_add_to_current_collection(GString* arg)
 {
 	g_ptr_array_add(cli_command_info_get_args(currentCommand) ,arg);
 }
 
+///Loops through all transered params and loads command or add string as a parameter.
 static void cli_command_parser_parse_commands(gpointer data, gpointer userData)
 {
 	GString* str = (GString*)data;
@@ -420,16 +446,18 @@ static void cli_command_parser_parse_commands(gpointer data, gpointer userData)
 		cli_command_parser_add_to_current_collection(str);
 }
 
+///Selects command that should be executed 
 static void
 cli_command_parser_filter_commands (gpointer obj, gpointer user_data)
 {
 	CLICommandInfo* com = (CLICommandInfo*)obj;
 	CLICommandParser* this = (CLICommandParser*)user_data;
 
-	if(cli_command_info_get_args(com)->len > 0)
+	if(cli_command_info_get_args(com)->len > 0) //if any parameters that it can be executed.
 		g_ptr_array_add(this->_commands, com);
 }
 
+///Loops through filtered commands and invokes them
 static void
 cli_command_parser_process_command(gpointer obj, gpointer user_data)
 {
@@ -438,7 +466,7 @@ cli_command_parser_process_command(gpointer obj, gpointer user_data)
 	cli_command_info_process_command(com);
 }
 
-
+///Clears command's collections. Propose to rewrite with GPtrCleaning func.
 static void
 cli_command_parser_clean_commands(gpointer obj, gpointer user_data)
 {
@@ -448,6 +476,7 @@ cli_command_parser_clean_commands(gpointer obj, gpointer user_data)
 	g_ptr_array_remove(this->_commands, com);
 }
 
+///Execution order comparer
 static gint 
 cli_command_parser_compare_commands(gconstpointer obj1, 
 									gconstpointer obj2)

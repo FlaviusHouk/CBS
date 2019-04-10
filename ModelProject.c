@@ -39,12 +39,14 @@ struct _ModelProject
 
 G_DEFINE_TYPE(ModelProject, model_project, G_TYPE_OBJECT)
 
+///Function for handling xml error and providing information about it. Mostly for debug.
 static void
 model_project_handle_xml_error(void* userData, xmlErrorPtr error)
 {
     g_print("%s", error->message);
 }
 
+///Collection of avalable default configs: Debug and Release; 
 GPtrArray *defaultConfigs;
 
 ModelProjectConfiguration*
@@ -76,6 +78,8 @@ model_project_get_build_config(ModelProject* this, GString* configName)
     return toRet;
 }
 
+///Static constructor of ModelProject class.
+///Init xmlErrorHanlder and defines default build configs.
 static void
 model_project_class_init(ModelProjectClass* class)
 {
@@ -231,6 +235,7 @@ model_project_read_project(ModelProject* this)
     xmlFreeDoc(doc);
 }
 
+///Converting input for right xml encoding. Should be moved into helpers file
 static xmlChar*
 xml_convert_input(char* string, char* enc)
 {
@@ -287,6 +292,9 @@ model_project_write_source_files(gpointer obj, gpointer data)
 {
     model_source_file_write_xml((ModelSourceFile*)obj, (xmlTextWriterPtr)data);
 }
+
+//There are a banch of function to iterate through GPtrArray with foreach loop
+//and executing some kind of job 
 
 static void
 model_project_write_include_folders(gpointer obj, gpointer data)
@@ -461,6 +469,7 @@ model_project_remove_source_file(ModelProject* this, ModelSourceFile* file)
     g_object_unref(file);
 }
 
+///Wrapper on g_string_equal. Created to prevent incorrect pointer warning.
 static gboolean
 model_project_find_gstring(const void* obj1, const void* obj2)
 {

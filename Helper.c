@@ -60,6 +60,8 @@ gchar* g_str_substr(const gchar* src, int offset, int len)
 
 gchar* g_path_get_absolute(gchar* relPath)
 {
+    //Cannot include realpath function, so realpath tool is called
+
     GPtrArray* args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
     g_ptr_array_add(args, g_strdup("realpath"));
     g_ptr_array_add(args, strdup(relPath));
@@ -95,6 +97,7 @@ gchar* g_path_get_absolute(gchar* relPath)
     return toRet;
 }*/
 
+///Performs reading from child process STDOUT
 static GString*
 read_from_pipe (int file)
 {
@@ -117,18 +120,23 @@ run_tool(char* tool, char** args)
     pid_t pid;
     GString* toRet = NULL;
 
-    int rc = pipe(link);
+    int rc = pipe(link); //creates pipe to read STDOUT of child process
     g_assert(rc != -1);
 
-    pid = fork(); 
+    pid = fork(); //creates a copy of current process.
     g_assert(pid != -1);
 
-    if(pid == 0) 
+    if(pid == 0) // flow for child process
     {
-        dup2 (link[1], STDOUT_FILENO);
+        //redirecting STDOUT and STDERR
+        dup2 (link[1], STDOUT_FILENO); 
         dup2 (link[1], STDERR_FILENO);
+
+        //In a lot of examples links closed before actual executing
         close(link[0]);
         close(link[1]);
+
+        //executing command
         int status = execv (tool, args);
         
         if(status == -1)
@@ -137,7 +145,7 @@ run_tool(char* tool, char** args)
             g_print("%s\n", strerror(errno));
         }
 
-        exit(0);
+        exit(0); //suspending process as it done it's job.
     } 
     else
     {

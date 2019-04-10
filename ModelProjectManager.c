@@ -42,6 +42,8 @@ model_project_manager_new()
     return g_object_new(MODEL_TYPE_PROJECT_MANAGER, NULL);
 }
 
+///Get base directory for project.
+///Allocates new string that should be freed.
 static gchar*
 model_project_manager_get_project_work_dir(GString* location)
 {
@@ -63,6 +65,8 @@ model_project_manager_get_project_work_dir(GString* location)
     return buf;
 }
 
+///Returns any project folder (/bin, /src, etc) relative to its location
+///dirName - needed folder. Copied in this function and should be freed.
 static GString*
 model_project_manager_get_project_dir(ModelProject* proj, gchar* dirName)
 {
@@ -174,6 +178,7 @@ model_project_manager_process_system_deps(gpointer obj, gpointer data)
     GString* depInclude =  model_project_dependency_get_includes(dep);
     
     depInclude = g_string_truncate(depInclude, depInclude->len - 1);
+    //added to prevent last space and make output looks consistent 
 
     g_string_append(includes,depInclude->str);
 }

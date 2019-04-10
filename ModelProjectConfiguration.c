@@ -310,7 +310,10 @@ model_project_configuration_build_config_string(ModelProjectConfiguration* this)
 {
     g_assert(this);
 
-    if(this->_ignoreOptions)
+    //if ignoreOptions flag is set, then all config properties are ignored
+    //and only CustomConfig is used
+
+    if(this->_ignoreOptions) 
         return this->_customConfig;
     else
     {
