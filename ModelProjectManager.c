@@ -350,10 +350,21 @@ model_project_manager_process_code_file(ModelSourceFile* file,
     return objFile;
 }
 
+static void
+model_project_manager_process_g_error(GError** error)
+{
+    if(*error != NULL)
+    {
+        //g_printerr(error->message);
+        g_error_free(*error);
+        *error = NULL;
+    }
+}
+
 int
 model_project_manager_build_project(ModelProjectManager* this, ModelProject* toBuild, GString* configName)
 {
-    GError* error;
+    GError* error = NULL;
     GString* loc, *output;
     
     loc = g_string_new(model_project_manager_get_project_work_dir(model_project_get_location(toBuild)));
@@ -378,6 +389,8 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
     {
         g_mkdir_with_parents(objFolder->str, 8*8*7 + 8*6 + 4);
     }
+
+    model_project_manager_process_g_error(&error);
 
     model_project_manager_run_script(scriptFolder, "preBuild.sh");
 
@@ -410,6 +423,8 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
     {
         g_mkdir_with_parents(binFolder->str, 8 * 8 * 7 + 8 * 6 + 4);
     }
+
+    model_project_manager_process_g_error(&error);
 
     char *projName = g_path_get_basename(model_project_get_location(toBuild)->str);
     binFolder = g_string_append(binFolder, "/");
