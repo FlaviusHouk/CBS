@@ -194,6 +194,8 @@ model_project_manager_build_include_string(ModelProject* building, GString* proj
     {
         GString* include = (GString*)includeCollection->pdata[i];
 
+        //better to set up calculated full path. It is important
+        //in case of building project as a dependency
         GString* copy = g_string_new(g_strdup(projLoc->str));
         if(copy->len != 0)
             g_string_append(copy, g_strdup("/"));
@@ -233,6 +235,7 @@ model_project_manager_build_link_string(ModelProject* building)
     return link;
 }
 
+//Helper method for concatenating command parts. Maybe it will be moved into Helpers file
 static void
 model_project_manager_append_part(gpointer part, gpointer string)
 {
@@ -260,6 +263,7 @@ model_project_manager_print_command(GPtrArray* args)
     g_string_free(command, FALSE);
 }
 
+//script is freed inside so a copy should be pased.
 static void
 model_project_manager_run_script(GString* scriptFolder, gchar* script)
 {
@@ -294,6 +298,7 @@ model_project_manager_run_script(GString* scriptFolder, gchar* script)
     g_ptr_array_free(args, TRUE);
 }
 
+//Converts strings to a GPtrArray collection to pass into run_tool() function
 static void
 model_project_manager_split_and_add_to(GPtrArray *toAdd, GString *string)
 {
@@ -322,6 +327,7 @@ model_project_manager_process_code_file(ModelSourceFile* file,
     GPtrArray *args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
     g_ptr_array_add(args, g_strdup("gcc"));
 
+    //check for relative pathes stored in project definition
     GString* loc = g_string_new(g_strdup(projLoc->str));
     if(loc->len != 0)
         loc = g_string_append(loc, g_strdup("/"));
@@ -355,6 +361,7 @@ model_project_manager_process_code_file(ModelSourceFile* file,
     return objFile;
 }
 
+///Function for correct freing GError. Maybe flag for printing should be provided  
 static void
 model_project_manager_process_g_error(GError** error)
 {
@@ -367,7 +374,9 @@ model_project_manager_process_g_error(GError** error)
 }
 
 int
-model_project_manager_build_project(ModelProjectManager* this, ModelProject* toBuild, GString* configName)
+model_project_manager_build_project(ModelProjectManager* this, 
+                                    ModelProject* toBuild, 
+                                    GString* configName)
 {
     GError* error = NULL;
     GString* loc, *output;
