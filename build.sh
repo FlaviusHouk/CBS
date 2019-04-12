@@ -16,8 +16,14 @@
 #along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 
 clear
-find . -name '*.o' -delete
-find . -name '*.elf' -delete
-find . -name '*.so' -delete
+
+mkdir -v old_build
+cd old_build
+
+cp ../libcbs/src/* ./
+cp ../cli/src/* ./
+cp ../libcbs/headers/* ./
+cp ../cli/headers/* ./
+cp ../Makefile ./
 
 make

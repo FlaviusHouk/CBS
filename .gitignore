@@ -3,4 +3,10 @@
 *.elf
 *.so
 
+libcbs/bin
+libcbs/obj
+
+cli/bin
+cli/obj
+
 .vscode

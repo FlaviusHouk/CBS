@@ -3,7 +3,7 @@ $LIBS = pkg-config --libs glib-2.0
 $cc = gcc
 
 Main: main.o CLI.o helper.o CLICommandInfo.o libcbs.so
-	cc -g  main.o helper.o CLI.o CLICommandInfo.o -lcbs $(shell pkg-config --libs glib-2.0 gobject-2.0 libxml-2.0) -o cbs.elf
+	cc -g  main.o helper.o CLI.o CLICommandInfo.o -Wl,-rpath=/home/Flavius/C/CBS/CBS -L/home/Flavius/C/CBS/CBS -lcbs $(shell pkg-config --libs glib-2.0 gobject-2.0 libxml-2.0) -o cbs.elf
 
 main.o:
 	cc -g -c main.c -o main.o $(shell pkg-config --cflags glib-2.0 gobject-2.0 libxml-2.0)
