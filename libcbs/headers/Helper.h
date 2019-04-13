@@ -51,3 +51,9 @@ run_tool(char* tool, char** args);
 ///data - memory to clean
 void
 clear_collection_with_null_elems(void* data);
+
+void 
+g_string_clean_up(void* string);
+
+GString*
+g_string_clone(GString* string);

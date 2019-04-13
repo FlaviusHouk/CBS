@@ -33,8 +33,33 @@ struct _ModelProjectDependency
 G_DEFINE_TYPE(ModelProjectDependency, model_project_dependency, G_TYPE_OBJECT);
 
 static void
+model_project_dependency_dispose(GObject* obj)
+{
+    ModelProjectDependency* this = MODEL_PROJECT_DEPENDENCY(obj);
+
+    if(this->_representation)
+    {
+        g_string_free(this->_representation, TRUE);
+        this->_representation = NULL;
+    }
+
+    G_OBJECT_CLASS(model_project_dependency_parent_class)->dispose(obj);
+}
+
+static void
+model_project_dependency_finalize(GObject* obj)
+{
+    G_OBJECT_CLASS(model_project_dependency_parent_class)->finalize(obj);
+}
+
+static void
 model_project_dependency_class_init(ModelProjectDependencyClass* class)
-{}
+{
+    GObjectClass* objectClass = G_OBJECT_CLASS(class);
+
+    objectClass->dispose = model_project_dependency_dispose;
+    objectClass->finalize = model_project_dependency_finalize;
+}
 
 static void
 model_project_dependency_init(ModelProjectDependency* this)

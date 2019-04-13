@@ -31,9 +31,33 @@ struct _ModelSourceFile
 G_DEFINE_TYPE(ModelSourceFile, model_source_file, G_TYPE_OBJECT);
 
 static void
+model_source_file_dispose(GObject* obj)
+{
+    ModelSourceFile* this = MODEL_SOURCE_FILE(obj);
+
+    if(this->_path)
+    {
+        g_string_free(this->_path, TRUE);
+        this->_path = NULL;
+    }
+
+    G_OBJECT_CLASS(model_source_file_parent_class)->dispose(obj);
+}
+
+static void
+model_source_file_finalize(GObject* obj)
+{
+    G_OBJECT_CLASS(model_source_file_parent_class)->finalize(obj);
+}
+
+
+static void
 model_source_file_class_init(ModelSourceFileClass* class)
 {
+    GObjectClass* objectClass = G_OBJECT_CLASS(class);
 
+    objectClass->dispose = model_source_file_dispose;
+    objectClass->finalize = model_source_file_finalize;
 }
 
 static void

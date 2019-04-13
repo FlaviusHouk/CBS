@@ -22,6 +22,8 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #include "libxml/xmlwriter.h"
 #include "libxml/xmlerror.h"
 
+#include "Helper.h"
+
 struct _ModelProject
 {
     GObject parent_object;
@@ -62,7 +64,7 @@ model_project_get_build_config(ModelProject* this, GString* configName)
             return g_ptr_array_index(defaultConfigs, 0);
     }
 
-    ModelProjectConfiguration* seek = model_project_configuration_new(configName);
+    ModelProjectConfiguration* seek = model_project_configuration_new(g_string_clone(configName));
     ModelProjectConfiguration* toRet = NULL;
 
     gint index = -1;
@@ -78,15 +80,9 @@ model_project_get_build_config(ModelProject* this, GString* configName)
     return toRet;
 }
 
-///Static constructor of ModelProject class.
-///Init xmlErrorHanlder and defines default build configs.
 static void
-model_project_class_init(ModelProjectClass* class)
+model_project_init_default_build_configs(void)
 {
-    LIBXML_TEST_VERSION
-
-    xmlSetStructuredErrorFunc(NULL, model_project_handle_xml_error);
-
     defaultConfigs = g_ptr_array_new();
 
     g_ptr_array_add(defaultConfigs, model_project_configuration_new(g_string_new("Debug")));
@@ -97,12 +93,81 @@ model_project_class_init(ModelProjectClass* class)
 }
 
 static void
+model_project_dispose(GObject* obj)
+{
+    ModelProject* this = MODEL_PROJECT(obj);
+
+    if(this->_location)
+    {
+        g_string_free(this->_location, TRUE);
+        this->_location = NULL;
+    }
+
+    if(this->_activeConfiguration)
+    {
+        g_string_free(this->_activeConfiguration, TRUE);
+        this->_activeConfiguration = NULL;
+    }
+
+    if(this->_sourceFiles)
+    {
+        g_ptr_array_free(this->_sourceFiles, TRUE);
+        this->_sourceFiles = NULL;
+    }
+
+    if(this->_headersFolders)
+    {
+        g_ptr_array_free(this->_headersFolders, TRUE);
+        this->_headersFolders = NULL;
+    }
+
+    if(this->_dependencies)
+    {
+        g_ptr_array_free(this->_dependencies, TRUE);
+        this->_dependencies = NULL;
+    }
+
+    if(this->_buildConfigs)
+    {
+        g_ptr_array_free(this->_buildConfigs, TRUE);
+        this->_buildConfigs = NULL;
+    }
+
+    G_OBJECT_CLASS(model_project_parent_class)->dispose(obj);
+}
+
+static void
+model_project_finalize(GObject* obj)
+{
+    G_OBJECT_CLASS(model_project_parent_class)->finalize(obj);
+}
+
+///Static constructor of ModelProject class.
+///Init xmlErrorHanlder and defines default build configs.
+static void
+model_project_class_init(ModelProjectClass* class)
+{
+    LIBXML_TEST_VERSION
+
+    xmlSetStructuredErrorFunc(NULL, model_project_handle_xml_error);
+
+    model_project_init_default_build_configs();
+
+    GObjectClass* class_object = G_OBJECT_CLASS(class);
+
+    class_object->dispose = model_project_dispose;
+    class_object->finalize = model_project_finalize;
+}
+
+static void
 model_project_init(ModelProject* this)
 {
-    this->_sourceFiles = g_ptr_array_new();
-    this->_headersFolders = g_ptr_array_new();
-    this->_dependencies = g_ptr_array_new();
-    this->_buildConfigs = g_ptr_array_new();
+    this->_activeConfiguration = NULL;
+
+    this->_sourceFiles = g_ptr_array_new_with_free_func(g_object_unref);
+    this->_headersFolders = g_ptr_array_new_with_free_func(g_string_clean_up);
+    this->_dependencies = g_ptr_array_new_with_free_func(g_object_unref);
+    this->_buildConfigs = g_ptr_array_new_with_free_func(g_object_unref);
 }
 
 static ModelProject* 
@@ -627,6 +692,9 @@ void
 model_project_set_active_build_config(ModelProject* this, GString* configName)
 {
     g_assert(this);
+
+    if(this->_activeConfiguration)
+        g_string_free(this->_activeConfiguration, TRUE);
 
     this->_activeConfiguration = configName;    
 }

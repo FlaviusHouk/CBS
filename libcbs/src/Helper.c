@@ -162,3 +162,18 @@ clear_collection_with_null_elems(void* data)
     if(data != NULL)
         g_free(data);
 }
+
+void g_string_clean_up(void* string)
+{
+    GString* gString = (GString*)string;
+
+    g_string_free(gString, TRUE);
+}
+
+GString*
+g_string_clone(GString* string)
+{
+    g_assert(string);
+
+    return g_string_new(g_strdup(string->str));
+}

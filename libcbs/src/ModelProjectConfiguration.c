@@ -18,6 +18,8 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #include "stdio.h"
 #include "ModelProjectConfiguration.h"
 
+#include "Helper.h"
+
 struct _ModelProjectConfiguration
 {
     GObject parent;
@@ -36,16 +38,60 @@ struct _ModelProjectConfiguration
 G_DEFINE_TYPE(ModelProjectConfiguration, model_project_configuration, G_TYPE_OBJECT);
 
 static void
+model_project_configuration_dispose(GObject* obj)
+{
+    ModelProjectConfiguration* this = MODEL_PROJECT_CONFIGURATION(obj);
+
+    if(this->_customConfig)
+    {
+        g_string_free(this->_customConfig, TRUE);
+        this->_customConfig = NULL;
+    }
+
+    if(this->_macrosToDefine)
+    {
+        g_ptr_array_free(this->_macrosToDefine, TRUE);
+        this->_macrosToDefine = NULL;
+    }
+
+    if(this->_name)
+    {
+        g_string_free(this->_name, TRUE);
+        this->_name = NULL;
+    }
+
+    if(this->_outputName)
+    {
+        g_string_free(this->_outputName, TRUE);
+        this->_outputName = NULL;
+    }
+
+    G_OBJECT_CLASS(model_project_configuration_parent_class)->dispose(obj);
+}
+
+static void
+model_project_configuration_finalize(GObject* obj)
+{
+    G_OBJECT_CLASS(model_project_configuration_parent_class)->finalize(obj);
+}
+
+static void
 model_project_configuration_class_init(ModelProjectConfigurationClass* class)
-{}
+{
+    GObjectClass* class_object = G_OBJECT_CLASS(class);
+
+    class_object->dispose = model_project_configuration_dispose;
+    class_object->finalize = model_project_configuration_finalize;
+}
 
 static void 
 model_project_configuration_init(ModelProjectConfiguration* this)
 {
+    this->_name = NULL;
     this->_outputName = NULL;
     this->_cStandard = C11;
     this->_optimization = DEBUG_2;
-    this->_macrosToDefine = g_ptr_array_new();
+    this->_macrosToDefine = g_ptr_array_new_with_free_func(g_string_clean_up);
     this->_outputType = ELF;
 
     this->_ignoreOptions = FALSE;
@@ -207,6 +253,9 @@ void
 model_project_configuration_set_output_name(ModelProjectConfiguration* this, GString* outputName)
 {
     g_assert(this);
+
+    if(this->_outputName)
+        g_string_free(this->_outputName, TRUE);
 
     this->_outputName = outputName;
 }

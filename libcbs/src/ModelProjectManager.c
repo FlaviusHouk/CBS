@@ -29,8 +29,25 @@ struct _ModelProjectManager
 G_DEFINE_TYPE(ModelProjectManager, model_project_manager, G_TYPE_OBJECT);
 
 static void
+model_project_manager_dispose(GObject* obj)
+{
+    G_OBJECT_CLASS(model_project_manager_parent_class)->dispose(obj);
+}
+
+static void
+model_project_manager_finalize(GObject* obj)
+{
+    G_OBJECT_CLASS(model_project_manager_parent_class)->finalize(obj);
+}
+
+static void
 model_project_manager_class_init(ModelProjectManagerClass* class)
-{}
+{
+    GObjectClass* objectClass = G_OBJECT_CLASS(class);
+
+    objectClass->dispose = model_project_manager_dispose;
+    objectClass->finalize = model_project_manager_finalize;
+}
 
 static void
 model_project_manager_init(ModelProjectManager* this)
