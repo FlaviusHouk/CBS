@@ -17,7 +17,6 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 
 
 #include "ModelProject.h"
-#include "ModelSourceFile.h"
 #include "libxml/xmlreader.h"
 #include "libxml/xmlwriter.h"
 #include "libxml/xmlerror.h"
@@ -248,7 +247,10 @@ model_project_read(xmlNodePtr root, ModelProject* this)
         ModelProjectDependency* dep = model_project_dependency_new_from_xml(deps);
 
         if(dep != NULL)
+        {
+            model_project_dependency_set_owner(dep, this);
             g_ptr_array_add(this->_dependencies, dep);
+        }
 
         deps = deps->next;
     }
@@ -604,6 +606,8 @@ model_project_add_dependency(ModelProject* this, ModelProjectDependency* depende
     if(g_ptr_array_find_with_equal_func(this->_dependencies, dependency, model_project_dependency_equals, NULL))
         return;
 
+    model_project_dependency_set_owner(dependency, this);
+
     //add validation here
 
     g_ptr_array_add(this->_dependencies, dependency);    
@@ -670,6 +674,61 @@ model_project_get_includes(ModelProject* this)
     g_assert(this);
 
     return this->_headersFolders;
+}
+
+GString*
+model_project_resolve_path(ModelProject* this, GString* relPath)
+{
+    g_assert(this);
+    g_assert(relPath);
+    g_assert(relPath->len != 0);
+    
+    if(g_str_has_prefix(relPath->str, "/"))
+        return g_string_clone(relPath);
+
+    GString* loc = g_string_new(g_path_get_dirname(this->_location->str));
+
+    if(strcmp(loc->str, ".") == 0)
+        g_string_truncate(loc, 0);
+
+    gchar** parts = g_strsplit(relPath->str, "/", -1);
+
+    int len = g_strv_length(parts);
+    gchar* part = NULL;
+    for(int i = 0; i<len; i++)
+    {
+        part = parts[i];
+
+        if(g_strcmp0(part, ".") == 0)
+        {
+            continue;   
+        }
+        else if(g_strcmp0(part, "..") == 0)
+        {
+            gint index = strrchr(loc->str, '/') - loc->str;
+            
+            if(index < 0)
+            {
+                if(loc->len != 0)
+                    index = 0;
+                else
+                    g_string_append(loc, g_strdup(".."));
+            }
+
+            g_string_truncate(loc, index);  
+        }
+        else
+        {
+            if(!g_str_has_suffix(loc->str, "/") && loc->len != 0)
+                g_string_append(loc, g_strdup("/"));
+
+            g_string_append(loc, g_strdup(part));
+        }
+    }
+
+    g_strfreev(parts);
+
+    return loc;
 }
 
 GString*

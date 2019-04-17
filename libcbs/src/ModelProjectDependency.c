@@ -26,6 +26,8 @@ struct _ModelProjectDependency
 {
     GObject parent_object;
 
+    ModelProject* _owner;
+
     GString* _representation;
     gint _type;
 };
@@ -36,6 +38,12 @@ static void
 model_project_dependency_dispose(GObject* obj)
 {
     ModelProjectDependency* this = MODEL_PROJECT_DEPENDENCY(obj);
+
+    if(this->_owner)
+    {
+        g_object_unref(this->_owner);
+        this->_owner = NULL;
+    }
 
     if(this->_representation)
     {
@@ -63,7 +71,9 @@ model_project_dependency_class_init(ModelProjectDependencyClass* class)
 
 static void
 model_project_dependency_init(ModelProjectDependency* this)
-{}
+{
+    this->_owner = NULL;
+}
 
 ModelProjectDependency*
 model_project_dependency_new(GString* representation, gint type)
@@ -151,7 +161,9 @@ model_project_dependency_get_includes(ModelProjectDependency* this)
     }
     else if(this->_type == CBS_PROJECT)
     {
-        ModelProject* dep = model_project_load_or_create_project(this->_representation);
+        GString* resolvedPath = model_project_resolve_path(this->_owner, this->_representation);
+
+        ModelProject* dep = model_project_load_or_create_project(resolvedPath);
 
         GString* loc = g_string_new(g_path_get_dirname(model_project_get_location(dep)->str));
 
@@ -202,7 +214,9 @@ model_project_dependency_get_links(ModelProjectDependency* this)
     }
     else if(this->_type == CBS_PROJECT)
     {
-        ModelProject* dep = model_project_load_or_create_project(this->_representation);
+        GString* resovledPath = model_project_resolve_path(this->_owner, this->_representation);
+
+        ModelProject* dep = model_project_load_or_create_project(resovledPath);
 
         ModelProjectConfiguration* conf = model_project_get_build_config(dep, NULL);
 
@@ -234,7 +248,7 @@ model_project_dependency_get_links(ModelProjectDependency* this)
                 libName = linkName;
             }
 
-            gchar* libPath = g_path_get_dirname(this->_representation->str);
+            gchar* libPath = g_path_get_dirname(resovledPath->str);
 
             GString* link = g_string_new("-L");
 
@@ -272,3 +286,29 @@ model_project_dependency_equals(const void* obj1, const void* obj2)
 
     return FALSE;
 }
+
+ModelProject*
+model_project_dependency_get_owner(ModelProjectDependency* this)
+{
+    g_assert(this);
+
+    if(this->_owner)
+        g_object_ref(this->_owner);
+
+    return this->_owner;
+}
+
+void
+model_project_dependency_set_owner(ModelProjectDependency* this, ModelProject* owner)
+{
+    g_assert(this);
+
+    if(this->_owner)
+        g_object_unref(this->_owner);
+
+    if(owner)
+        g_object_ref(owner);
+
+    this->_owner = owner;
+}
+

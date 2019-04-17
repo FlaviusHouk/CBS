@@ -19,8 +19,9 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef _MODEL_SOURCE_FILE_H_
 #define _MODEL_SOURCE_FILE_H_
 
+#include "Model.h"
+
 #include "stdio.h"
-#include "glib-object.h"
 
 #include "glib.h"
 #include "gmodule.h"
@@ -29,11 +30,6 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #include "libxml/xmlwriter.h"
 
 G_BEGIN_DECLS
-
-#define MODEL_TYPE_SOURCE_FILE model_source_file_get_type()
-
-///Type that represent one file that used in project.
-G_DECLARE_FINAL_TYPE(ModelSourceFile, model_source_file, MODEL, SOURCE_FILE, GObject);
 
 ///Constructor for SourceFile type.
 ///location - file location.

@@ -15,12 +15,14 @@ You should have received a copy of the GNU General Public License
 along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 ***********************************************************************/
 
+#include "ModelProject.h"
 
 #ifndef _MODEL_PROJECT_DEP_H_
 #define _MODEL_PROJECT_DEP_H_
 
+#include "Model.h"
+
 #include "stdio.h"
-#include "glib-object.h"
 
 #include "glib.h"
 #include "gmodule.h"
@@ -30,10 +32,6 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 
 G_BEGIN_DECLS
 
-#define MODEL_TYPE_PROJECT_DEPENDENCY model_project_dependency_get_type()
-
-///Type that represents project dependency
-G_DECLARE_FINAL_TYPE(ModelProjectDependency, model_project_dependency, MODEL, PROJECT_DEPENDENCY, GObject);
 
 ///Possible dependency types
 enum MODEL_PROJECT_DEPENDENCY_TYPES
@@ -83,6 +81,16 @@ model_project_dependency_get_dependency_type(ModelProjectDependency* this);
 ///Checks the equility of two ProjectConfiguration instances.
 int
 model_project_dependency_equals(const void* obj1, const void* obj2);
+
+///Getter for Owner property.
+///Increments reference counter of returned object.
+ModelProject*
+model_project_dependency_get_owner(ModelProjectDependency* this);
+
+///Setter for Owner property.
+///Increments counter of passed value.
+void
+model_project_dependency_set_owner(ModelProjectDependency* this, ModelProject* owner);
 
 G_END_DECLS
 

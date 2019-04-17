@@ -18,6 +18,8 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef _MODEL_PROJECT_CONFIGURATION_H_
 #define _MODEL_PROJECT_CONFIGURATION_H_
 
+#include "Model.h"
+
 #include "glib.h"
 #include "glib-object.h"
 
@@ -58,11 +60,6 @@ enum OutputType
 
     OUTPUT_TYPE_COUNT
 };
-
-#define MODEL_TYPE_PROJECT_CONFIGURATION model_project_configuration_get_type()
-
-///Type for storing basic build information (Output file name, optimization level and so on)
-G_DECLARE_FINAL_TYPE(ModelProjectConfiguration, model_project_configuration, MODEL, PROJECT_CONFIGURATION, GObject);
 
 ///Constructor for ProjectConfiguration type.
 ///name - config name

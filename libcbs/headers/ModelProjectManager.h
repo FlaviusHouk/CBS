@@ -19,8 +19,9 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef _MODEL_PROJECT_MANAGER_H_
 #define _MODEL_PROJECT_MANAGER_H_
 
+#include "Model.h"
+
 #include "stdio.h"
-#include "glib-object.h"
 
 #include "glib.h"
 #include "gmodule.h"
@@ -31,11 +32,6 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #include "ModelProject.h"
 
 G_BEGIN_DECLS
-
-#define MODEL_TYPE_PROJECT_MANAGER model_project_manager_get_type()
-
-///Type that performes operation on projects.
-G_DECLARE_FINAL_TYPE(ModelProjectManager, model_project_manager, MODEL, PROJECT_MANAGER, GObject);
 
 //Instance constructor for ProjectManager type.
 ModelProjectManager*

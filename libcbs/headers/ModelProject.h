@@ -19,24 +19,18 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef _MODEL_PROJECT_H_
 #define _MODEL_PROJECT_H_
 
+#include "Model.h"
+
 #include "stdio.h"
-#include "glib-object.h"
 
 #include "glib.h"
 #include "gmodule.h"
 
-#include "ModelSourceFile.h"
 #include "ModelProjectDependency.h"
+#include "ModelSourceFile.h"
 #include "ModelProjectConfiguration.h"
 
 G_BEGIN_DECLS
-
-#define MODEL_TYPE_PROJECT model_project_get_type()
-
-///Type that represents project as a set of source files, dependencies and 
-///resources
-G_DECLARE_FINAL_TYPE(ModelProject, model_project, MODEL, PROJECT, GObject);
-
 ///Function that loads project if it exists or creates new one with given location
 ///returns project from given location
 ///location - project location
@@ -123,6 +117,11 @@ model_project_get_active_build_config(ModelProject* this);
 ///Does not checks existance of config.
 void
 model_project_set_active_build_config(ModelProject* this, GString* configName);
+
+///Resoves a path relative to current working directory(one cbs is statred from)
+///and main project location. Alocates new string that should be freed.
+GString*
+model_project_resolve_path(ModelProject* this, GString* relPath);
 
 G_END_DECLS
 
