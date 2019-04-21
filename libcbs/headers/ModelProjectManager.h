@@ -51,7 +51,7 @@ model_project_manager_build_project(ModelProjectManager* this, ModelProject* toB
 
 ///Executes unit testing (not implemented)
 int
-model_project_run_tests(ModelProjectManager* this, ModelProject* toBuild);
+model_project_manager_run_tests(ModelProjectManager* this, ModelProject* toBuild);
 
 G_END_DECLS
 

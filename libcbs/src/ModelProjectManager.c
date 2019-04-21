@@ -21,7 +21,7 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #include "string.h"
 #include "Helper.h"
 
-#include "Interface.h"
+#include "TestRunner.h"
 
 struct _ModelProjectManager
 {
@@ -535,7 +535,7 @@ model_project_manager_build_project(ModelProjectManager* this,
 }
 
 int
-model_project_run_tests(ModelProjectManager* this, ModelProject* toTest)
+model_project_manager_run_tests(ModelProjectManager* this, ModelProject* toTest)
 {
     g_assert(this);
     g_assert(toTest);

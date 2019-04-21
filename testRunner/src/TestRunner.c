@@ -1,4 +1,4 @@
-#include "Interface.h"
+#include "TestRunner.h"
 
 #include "stdio.h"
 #include "stdarg.h"
@@ -37,10 +37,12 @@ test_runner_execute_tests(GString* fileLoc)
                 {
                     if(g_module_symbol(tests, toExecute[i], (gpointer*)&toRun))
                     {
-                        struct CMUnitTest unitTest = cmocka_unit_test(toRun);
+                        struct CMUnitTest unitTest = { toExecute[i], toRun, NULL, NULL, NULL };
                         cMockaTests[i] = unitTest;
                     }
                 }
+
+                _cmocka_run_group_tests("Tests", cMockaTests, testCount, NULL, NULL);
             }
         }
 

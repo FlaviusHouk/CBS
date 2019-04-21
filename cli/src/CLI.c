@@ -297,6 +297,31 @@ static void ProcessBuildCommand(CLICommandInfo* command)
 	g_object_unref(proj);
 }
 
+///Handler for Test command
+static void
+ProcessTestCommand(CLICommandInfo* command)
+{
+	GPtrArray* params = cli_command_info_get_args(command);
+	int expectedCount = cli_command_info_get_args_count(command);
+	if(expectedCount != params->len && expectedCount != params->len - 1)
+	{
+		g_print("Test command usage:\n\t--test projName\nprojName - path to project definition you want to test\n");
+		g_assert(FALSE);
+	}
+
+	GString* projLoc = g_ptr_array_index(params, 0);
+	g_ptr_array_remove(params, projLoc);
+
+	ModelProject* proj = model_project_load_or_create_project(projLoc);
+
+	ModelProjectManager* manager = model_project_manager_new();
+
+	model_project_manager_run_tests(manager, proj);
+
+	g_object_unref(manager);
+	g_object_unref(proj);
+}
+
 ///Help command handler
 static void
 ProcessHelpCommand(CLICommandInfo* command)
@@ -381,8 +406,14 @@ cli_command_parser_class_init(CLICommandParserClass* class)
 			cli_command_info_new(g_string_new("--help"),
 					HELP,
 					0,
-					8,
+					9,
 					ProcessHelpCommand));
+						g_ptr_array_add(AvailableCommands,
+	cli_command_info_new(g_string_new("--test"),
+					TEST,
+					1,
+					10,
+					ProcessTestCommand));
 }
 
 static void
@@ -442,6 +473,8 @@ static void cli_command_parser_parse_commands(gpointer data, gpointer userData)
 		cli_command_parser_set_input_state(REM_DEP);
 	else if(strcmp(str->str, "--build") == 0)
 		cli_command_parser_set_input_state(BUILD);
+	else if(strcmp(str->str, "--test") == 0)
+		cli_command_parser_set_input_state(TEST);
 	else
 		cli_command_parser_add_to_current_collection(str);
 }
