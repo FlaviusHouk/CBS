@@ -36,6 +36,7 @@ struct _ModelProject
     GPtrArray* _dependencies;
     GPtrArray* _buildConfigs;
     GString* _activeConfiguration;
+    GString* _unitTestsLocation;
 };
 
 G_DEFINE_TYPE(ModelProject, model_project, G_TYPE_OBJECT)
@@ -162,6 +163,7 @@ static void
 model_project_init(ModelProject* this)
 {
     this->_activeConfiguration = NULL;
+    this->_unitTestsLocation = NULL;
 
     this->_sourceFiles = g_ptr_array_new_with_free_func(g_object_unref);
     this->_headersFolders = g_ptr_array_new_with_free_func(g_string_clean_up);
@@ -285,6 +287,14 @@ model_project_read(xmlNodePtr root, ModelProject* this)
     }
 
     this->_activeConfiguration = g_string_new(xmlNodeGetContent(node));
+
+    //read path to project with unit tests
+    while(node != NULL && strcmp(node->name, "UnitTestsLocation") != 0)
+    {
+        node = node->next;
+    }
+
+    this->_unitTestsLocation = g_string_new(xmlNodeGetContent(node));
 }
 
 static void
@@ -461,6 +471,15 @@ model_project_write_project(ModelProject* this)
         activeConf = this->_activeConfiguration->str;
 
     rc = xmlTextWriterWriteElement(writer, "ActiveBuildConfig", activeConf);
+    g_assert(rc >= 0);
+
+    gchar* unitTests = NULL;
+    if(this->_unitTestsLocation == NULL)
+        unitTests = "";
+    else
+        unitTests = this->_unitTestsLocation->str;
+
+    rc = xmlTextWriterWriteElement(writer, "UnitTestsLocation", unitTests);
     g_assert(rc >= 0);
 
     rc = xmlTextWriterEndDocument(writer);
@@ -756,4 +775,23 @@ model_project_set_active_build_config(ModelProject* this, GString* configName)
         g_string_free(this->_activeConfiguration, TRUE);
 
     this->_activeConfiguration = configName;    
+}
+
+GString*
+model_project_get_unit_tests_project_location(ModelProject* this)
+{
+    g_assert(this);
+
+    return this->_unitTestsLocation;
+}
+
+void
+model_project_set_unit_tests_project_location(ModelProject* this, GString* location)
+{
+    g_assert(this);
+
+    if(this->_unitTestsLocation != NULL)
+        g_string_free(this->_unitTestsLocation, TRUE);
+
+    this->_unitTestsLocation = location;
 }

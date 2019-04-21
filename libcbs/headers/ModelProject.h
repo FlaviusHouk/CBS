@@ -123,6 +123,15 @@ model_project_set_active_build_config(ModelProject* this, GString* configName);
 GString*
 model_project_resolve_path(ModelProject* this, GString* relPath);
 
+///Getter for location of cbs project with unit tests
+GString*
+model_project_get_unit_tests_project_location(ModelProject* this);
+
+///Setter for location of cbs project with unit tests
+///Passed string should not be freed
+void
+model_project_set_unit_tests_project_location(ModelProject* this, GString* location);
+
 G_END_DECLS
 
 #endif
