@@ -21,7 +21,7 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #include "string.h"
 #include "Helper.h"
 
-#include "TestRunner.h"
+#include "ModelTestRunner.h"
 
 struct _ModelProjectManager
 {
@@ -562,6 +562,10 @@ model_project_manager_run_tests(ModelProjectManager* this, ModelProject* toTest)
 
         g_string_append_printf(pathToUnitTestLib, "/%s", unitTestFileName);
 
-        test_runner_execute_tests(pathToUnitTestLib);
+        ModelTestRunner* runner = model_test_runner_new();
+
+        model_test_runner_execute_tests(runner, pathToUnitTestLib);
+
+        g_object_unref(runner);
     }
 }

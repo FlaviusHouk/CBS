@@ -31,6 +31,11 @@ G_DECLARE_FINAL_TYPE(ModelProjectManager, model_project_manager, MODEL, PROJECT_
 ///Type that represent one file that used in project.
 G_DECLARE_FINAL_TYPE(ModelSourceFile, model_source_file, MODEL, SOURCE_FILE, GObject);
 
+#define MODEL_TYPE_TEST_RUNNER model_test_runner_get_type()
+
+///Type that incupsulates unit test framework and provides api for the rest of classes.
+G_DECLARE_FINAL_TYPE(ModelTestRunner, model_test_runner, MODEL, TEST_RUNNER, GObject);
+
 G_END_DECLS
 
 #endif
