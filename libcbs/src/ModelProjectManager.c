@@ -21,6 +21,8 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #include "string.h"
 #include "Helper.h"
 
+#include "Interface.h"
+
 struct _ModelProjectManager
 {
     GObject parent_object;
@@ -530,4 +532,36 @@ model_project_manager_build_project(ModelProjectManager* this,
     g_string_free(binFolder, TRUE);
     g_string_free(scriptFolder, TRUE);
     g_string_free(includes, TRUE);
+}
+
+int
+model_project_run_tests(ModelProjectManager* this, ModelProject* toTest)
+{
+    g_assert(this);
+    g_assert(toTest);
+
+    GString* unitTestProjectLoc = model_project_get_unit_tests_project_location(toTest); 
+
+    if(unitTestProjectLoc)
+    {   
+        GString* resolvedPath = model_project_resolve_path(toTest,
+                                                           unitTestProjectLoc);
+
+        ModelProject* unitTestProject = model_project_load_or_create_project(resolvedPath);
+
+        model_project_manager_build_project(this, unitTestProject, NULL);
+
+        GString* pathToUnitTestLib = model_project_manager_get_project_dir(unitTestProject, "bin");
+
+        gchar* unitTestFileName = NULL;
+        ModelProjectConfiguration* unitTestConfig = model_project_get_build_config(unitTestProject, NULL);
+        if(unitTestConfig)
+            unitTestFileName = g_strdup(model_project_configuration_get_output_name(unitTestConfig)->str);
+        else
+            unitTestFileName = g_path_get_basename(resolvedPath->str);
+
+        g_string_append_printf(pathToUnitTestLib, "/%s", unitTestFileName);
+
+        test_runner_execute_tests(pathToUnitTestLib);
+    }
 }
