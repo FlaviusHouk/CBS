@@ -5,6 +5,19 @@
 
 G_BEGIN_DECLS
 
+enum MODEL_GENERAL_CODES
+{
+    MODEL_PROJECT_CONFIG_NOT_FOUND,
+    
+    MODEL_PROJECT_MANAGER_CANNOT_CREATE,
+    MODEL_PROJECT_MANAGER_CANNOT_WRITE,
+    MODEL_PROJECT_MANAGER_CANNOT_OPEN,
+
+    MODEL_PROJECT_DEPENDENCY_FAILED_TO_PROCESS,
+
+    COUNT
+};
+
 #define MODEL_TYPE_PROJECT model_project_get_type()
 
 ///Type that represents project as a set of source files, dependencies and 

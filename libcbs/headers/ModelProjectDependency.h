@@ -66,13 +66,15 @@ model_project_dependency_get_representation(ModelProjectDependency* this);
 ///for each dependency. 
 ///retuns string with -I options for GCC. Should be cleaned.
 GString*
-model_project_dependency_get_includes(ModelProjectDependency* this);
+model_project_dependency_get_includes(ModelProjectDependency* this,
+                                      GError** error);
 
 ///Getter for Links property. Gets the string with information about linking for 
 ///each dependency.
 ///return string with linker options. 
 GString*
-model_project_dependency_get_links(ModelProjectDependency* this);
+model_project_dependency_get_links(ModelProjectDependency* this,
+                                   GError** error);
 
 ///Getter for Dependency type property.
 gint

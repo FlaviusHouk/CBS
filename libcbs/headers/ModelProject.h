@@ -34,8 +34,8 @@ G_BEGIN_DECLS
 ///Function that loads project if it exists or creates new one with given location
 ///returns project from given location
 ///location - project location
-ModelProject* 
-model_project_load_or_create_project(GString* location);
+gboolean
+model_project_load_or_create_project(GString* location, ModelProject** output);
 
 ///Getter for project location
 ///Value should not be cleaned manually

@@ -40,18 +40,23 @@ model_project_manager_new();
 ///Creates project in the provided location. 
 ///Also creates required folder hierachy.
 ///location - project location.
-int
-model_project_manager_create_project(GString* location);
+void
+model_project_manager_create_project(GString* location, GError** error);
 
 ///Builds project.
 ///toBuild - project user wishes to build.
 ///config - build config name to use.
-int
-model_project_manager_build_project(ModelProjectManager* this, ModelProject* toBuild, GString* config);
+void
+model_project_manager_build_project(ModelProjectManager* this, 
+                                    ModelProject* toBuild, 
+                                    GString* config,
+                                    GError** error);
 
 ///Executes unit testing (not implemented)
-int
-model_project_manager_run_tests(ModelProjectManager* this, ModelProject* toBuild);
+void
+model_project_manager_run_tests(ModelProjectManager* this, 
+                                ModelProject* toBuild,
+                                GError** error);
 
 G_END_DECLS
 

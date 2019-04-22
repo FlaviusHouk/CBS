@@ -175,36 +175,33 @@ model_project_manager_init_scripts_folder(ModelProject* proj)
     g_string_free(dirPath, TRUE);
 }
 
-int
-model_project_manager_create_project(GString* location)
+void
+model_project_manager_create_project(GString* location, GError** error)
 {
-    ModelProject* proj = model_project_load_or_create_project(location);
+    ModelProject* proj = NULL;
+    if(model_project_load_or_create_project(location, &proj))
+    {
+        g_set_error(error,
+                    g_type_qname(MODEL_TYPE_PROJECT_MANAGER),
+                    MODEL_PROJECT_MANAGER_CANNOT_CREATE,
+                    "Project already exists in %s.",
+                    g_strdup(location->str));
+        return;
+    }
 
     model_project_manager_init_src_folder(proj);
     model_project_manager_init_headers_folder(proj);
     model_project_manager_init_scripts_folder(proj);
     
     model_project_save(proj, location);
-
-    return 0;
-}
-
-static void 
-model_project_manager_process_system_deps(gpointer obj, gpointer data)
-{
-    ModelProjectDependency* dep = (ModelProjectDependency*)obj;
-    GString* includes = (GString*)data;
-    GString* depInclude =  model_project_dependency_get_includes(dep);
-    
-    depInclude = g_string_truncate(depInclude, depInclude->len - 1);
-    //added to prevent last space and make output looks consistent 
-
-    g_string_append(includes,depInclude->str);
 }
 
 static GString*
-model_project_manager_build_include_string(ModelProject* building, GString* projLoc)
+model_project_manager_build_include_string(ModelProject* building, 
+                                           GString* projLoc,
+                                           GError** error)
 {
+    GError* innerError = NULL;
     GString* includes = g_string_new("");
 
     GPtrArray* includeCollection = model_project_get_includes(building);
@@ -223,33 +220,54 @@ model_project_manager_build_include_string(ModelProject* building, GString* proj
         g_string_append_printf(includes, "-I%s ", copy->str);
     }
 
-    g_ptr_array_foreach(model_project_get_dependencies(building),
-                        model_project_manager_process_system_deps,
-                        includes);
+    GPtrArray* dependencyCollection = model_project_get_dependencies(building);
+
+    for(int i = 0; i<dependencyCollection->len; i++)
+    {
+        ModelProjectDependency* dep = (ModelProjectDependency*)g_ptr_array_index(dependencyCollection, i);
+        GString* depInclude =  model_project_dependency_get_includes(dep, &innerError);
+        if(innerError != NULL)
+        {
+            g_propagate_error(error, innerError);
+
+            return NULL;
+        }
+    
+        depInclude = g_string_truncate(depInclude, depInclude->len - 1);
+        //added to prevent last space and make output looks consistent 
+
+        g_string_append(includes,depInclude->str);
+    }
 
     return includes;
 }
 
-static void 
-model_project_manager_process_deps_to_link(gpointer obj, gpointer data)
-{
-    ModelProjectDependency* dep = (ModelProjectDependency*)obj;
-    GString* links = (GString*)data;
-   
-    GString* depLink = model_project_dependency_get_links(dep);
-    depLink = g_string_truncate(depLink, depLink->len-1);
-
-    g_string_append(links, depLink->str);
-}
-
 static GString*
-model_project_manager_build_link_string(ModelProject* building)
+model_project_manager_build_link_string(ModelProject* building,
+                                        GError** error)
 {
-    GString* link = g_string_new("");
+    GError* innerError = NULL;
+    GString* link = g_string_new(g_strdup(""));
 
-    g_ptr_array_foreach(model_project_get_dependencies(building),
-                        model_project_manager_process_deps_to_link,
-                        link);
+    GPtrArray* dependenciesCollection = model_project_get_dependencies(building);
+ 
+    for(int i = 0; i<dependenciesCollection->len; i++)
+    {
+        ModelProjectDependency* dep = 
+                (ModelProjectDependency*)g_ptr_array_index(dependenciesCollection, i);
+   
+        GString* depLink = model_project_dependency_get_links(dep, &innerError);
+        if(innerError != NULL)
+        {
+            g_propagate_error(error, innerError);
+
+            return NULL;
+        }
+
+        depLink = g_string_truncate(depLink, depLink->len-1);
+
+        g_string_append(link, depLink->str);
+    }
 
     return link;
 }
@@ -380,24 +398,13 @@ model_project_manager_process_code_file(ModelSourceFile* file,
     return objFile;
 }
 
-///Function for correct freing GError. Maybe flag for printing should be provided  
-static void
-model_project_manager_process_g_error(GError** error)
-{
-    if(*error != NULL)
-    {
-        //g_printerr(error->message);
-        g_error_free(*error);
-        *error = NULL;
-    }
-}
-
-int
+void
 model_project_manager_build_project(ModelProjectManager* this, 
                                     ModelProject* toBuild, 
-                                    GString* configName)
+                                    GString* configName,
+                                    GError** error)
 {
-    GError* error = NULL;
+    GError* innerError = NULL;
     GString* loc, *output;
     
     loc = g_string_new(model_project_manager_get_project_work_dir(model_project_get_location(toBuild)));
@@ -411,19 +418,24 @@ model_project_manager_build_project(ModelProjectManager* this,
 
     ModelProjectConfiguration* config = model_project_get_build_config(toBuild, configName);
 
-    GString* includes = model_project_manager_build_include_string(toBuild, loc);
+    GString* includes = model_project_manager_build_include_string(toBuild, loc, &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
 
-    GDir* objFold = g_dir_open(objFolder->str, 0, &error);
-    if(objFold)
-    {
-        g_dir_close(objFold);
-    }
-    else
-    {
-        g_mkdir_with_parents(objFolder->str, 8*8*7 + 8*6 + 4);
+        return;
     }
 
-    model_project_manager_process_g_error(&error);
+    if(g_mkdir_with_parents(objFolder->str, 8*8*7 + 8*6 + 4) == -1)
+    {
+        g_set_error(error,
+                    g_type_qname(MODEL_TYPE_PROJECT_MANAGER),
+                    MODEL_PROJECT_MANAGER_CANNOT_WRITE,
+                    "Cannot create folder %s\n",
+                    objFolder->str);
+
+        return;
+    }
 
     model_project_manager_run_script(scriptFolder, "preBuild.sh");
 
@@ -447,17 +459,16 @@ model_project_manager_build_project(ModelProjectManager* this,
     gint outputType = model_project_configuration_get_output_type(config);
     GPtrArray *args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
 
-    GDir *binFold = g_dir_open(binFolder->str, 0, &error);
-    if (binFold)
+    if(g_mkdir_with_parents(binFolder->str, 8*8*7 + 8*6 + 4) == -1)
     {
-        g_dir_close(binFold);
-    }
-    else
-    {
-        g_mkdir_with_parents(binFolder->str, 8 * 8 * 7 + 8 * 6 + 4);
-    }
+        g_set_error(error,
+                    g_type_qname(MODEL_TYPE_PROJECT_MANAGER),
+                    MODEL_PROJECT_MANAGER_CANNOT_WRITE,
+                    "Cannot create folder %s\n",
+                    binFolder->str);
 
-    model_project_manager_process_g_error(&error);
+        return;
+    }
 
     char *projName = g_path_get_basename(model_project_get_location(toBuild)->str);
     binFolder = g_string_append(binFolder, "/");
@@ -472,7 +483,15 @@ model_project_manager_build_project(ModelProjectManager* this,
 
     if (outputType != STATIC_LIB)
     {
-        GString *link = model_project_manager_build_link_string(toBuild);
+        GString *link = model_project_manager_build_link_string(toBuild, &innerError);
+
+        if(innerError != NULL)
+        {
+            g_propagate_error(error, innerError);
+
+            return;
+        }
+
         g_ptr_array_add(args, g_strdup("gcc"));
 
         if(outputType == DYNAMIC_LIB)
@@ -534,12 +553,15 @@ model_project_manager_build_project(ModelProjectManager* this,
     g_string_free(includes, TRUE);
 }
 
-int
-model_project_manager_run_tests(ModelProjectManager* this, ModelProject* toTest)
+void
+model_project_manager_run_tests(ModelProjectManager* this, 
+                                ModelProject* toTest,
+                                GError** error)
 {
     g_assert(this);
     g_assert(toTest);
 
+    GError* localError = NULL;
     GString* unitTestProjectLoc = model_project_get_unit_tests_project_location(toTest); 
 
     if(unitTestProjectLoc)
@@ -547,9 +569,25 @@ model_project_manager_run_tests(ModelProjectManager* this, ModelProject* toTest)
         GString* resolvedPath = model_project_resolve_path(toTest,
                                                            unitTestProjectLoc);
 
-        ModelProject* unitTestProject = model_project_load_or_create_project(resolvedPath);
+        ModelProject* unitTestProject = NULL;
+        if(!model_project_load_or_create_project(resolvedPath, &unitTestProject))
+        {
+            g_set_error(error,
+                        g_type_qname(MODEL_TYPE_PROJECT_MANAGER),
+                        MODEL_PROJECT_MANAGER_CANNOT_OPEN,
+                        "Project %s does not exist.\n",
+                        resolvedPath->str);
+            
+            return;
+        }
 
-        model_project_manager_build_project(this, unitTestProject, NULL);
+        model_project_manager_build_project(this, unitTestProject, NULL, &localError);
+        if(localError != NULL)
+        {
+            g_propagate_error(error, localError);
+
+            return;
+        }
 
         GString* pathToUnitTestLib = model_project_manager_get_project_dir(unitTestProject, "bin");
 

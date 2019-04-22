@@ -47,7 +47,13 @@ static void ProcessCreateCommand(CLICommandInfo* command)
 
 	GString* loc = (GString*) g_ptr_array_index(args, 0);
 
-	model_project_manager_create_project(loc);
+	GError* error = NULL;
+	model_project_manager_create_project(loc, &error);
+	if(error)
+	{
+		g_print(error->message);
+		return;
+	}
 
 	g_print("Project was successfully created!\n");
 
@@ -82,7 +88,12 @@ static void ProcessAddCommand(CLICommandInfo* command)
 	GString* projLoc = g_ptr_array_index(files, 0);
 	g_ptr_array_remove(files, projLoc);
 
-	ModelProject* proj = model_project_load_or_create_project(projLoc);
+	ModelProject* proj = NULL;
+	if(!model_project_load_or_create_project(projLoc, &proj))
+	{
+		g_print("Project does not exist\n");
+		return;
+	}
 
 	g_ptr_array_foreach(files, AddFileToProject, proj);
 
@@ -112,13 +123,18 @@ static void ProcessDeleteCommand(CLICommandInfo* command)
 	if(expectedCount != files->len)
 	{
 		g_print("Delete file command usage:\n\t--deleteFile projName file\nprojName - path to project definition, file - path to file you want to remove\n");
-		g_assert(FALSE);
+		return;
 	}
 
 	GString* projLoc = g_ptr_array_index(files, 0);
 	g_ptr_array_remove(files, projLoc);
 
-	ModelProject* proj = model_project_load_or_create_project(projLoc);
+	ModelProject* proj = NULL;
+	if(!model_project_load_or_create_project(projLoc, &proj))
+	{
+		g_print("Project does not exist\n");
+		return;
+	}
 
 	g_ptr_array_foreach(files, RemoveFileFromProject, proj);
 
@@ -155,7 +171,12 @@ ProcessAddInclCommand(CLICommandInfo* command)
 	GString* projLoc = g_ptr_array_index(args, 0);
 	g_ptr_array_remove(args, projLoc);
 
-	ModelProject* proj = model_project_load_or_create_project(projLoc);
+	ModelProject* proj = NULL;
+	if(!model_project_load_or_create_project(projLoc, &proj))
+	{
+		g_print("Project does not exist\n");
+		return;
+	}
 
 	g_ptr_array_foreach(args, AddIncludeFolder, proj);
 
@@ -192,7 +213,12 @@ ProcessDeleteInclCommand(CLICommandInfo* command)
 	GString* projLoc = g_ptr_array_index(args, 0);
 	g_ptr_array_remove(args, projLoc);
 
-	ModelProject* proj = model_project_load_or_create_project(projLoc);
+	ModelProject* proj = NULL;
+	if(!model_project_load_or_create_project(projLoc, &proj))
+	{
+		g_print("Project does not exist\n");
+		return;
+	}
 
 	g_ptr_array_foreach(args, DeleteIncludeFolder, proj);
 
@@ -215,7 +241,12 @@ static void ProcessAddDepCommand(CLICommandInfo* command)
 	GString* projLoc = g_ptr_array_index(dep, 0);
 	g_ptr_array_remove(dep, projLoc);
 
-	ModelProject* proj = model_project_load_or_create_project(projLoc);
+	ModelProject* proj = NULL;
+	if(!model_project_load_or_create_project(projLoc, &proj))
+	{
+		g_print("Project does not exist\n");
+		return;
+	}
 
 	g_assert(dep->len == 2);
 
@@ -260,7 +291,12 @@ static void ProcessRemDepCommand(CLICommandInfo* command)
 	GString* projLoc = g_ptr_array_index(deps, 0);
 	g_ptr_array_remove(deps, projLoc);
 
-	ModelProject* proj = model_project_load_or_create_project(projLoc);
+	ModelProject* proj = NULL;
+	if(!model_project_load_or_create_project(projLoc, &proj))
+	{
+		g_print("Project does not exist\n");
+		return;
+	}
 
 	g_ptr_array_foreach(deps, RemoveDependency, proj);
 
@@ -283,7 +319,12 @@ static void ProcessBuildCommand(CLICommandInfo* command)
 	GString* projLoc = g_ptr_array_index(params, 0);
 	g_ptr_array_remove(params, projLoc);
 
-	ModelProject* proj = model_project_load_or_create_project(projLoc);
+	ModelProject* proj = NULL;
+	if(!model_project_load_or_create_project(projLoc, &proj))
+	{
+		g_print("Project does not exist\n");
+		return;
+	}
 
 	ModelProjectManager* manager = model_project_manager_new();
 
@@ -291,7 +332,13 @@ static void ProcessBuildCommand(CLICommandInfo* command)
 	if(params->len > 0)
 		buildDef = g_ptr_array_index(params, 0);
 
-	model_project_manager_build_project(manager, proj, buildDef);
+	GError* error = NULL;
+	model_project_manager_build_project(manager, proj, buildDef, &error);
+	if(error)
+	{
+		g_print(error->message);
+		return;
+	}
 
 	g_object_unref(manager);
 	g_object_unref(proj);
@@ -312,11 +359,22 @@ ProcessTestCommand(CLICommandInfo* command)
 	GString* projLoc = g_ptr_array_index(params, 0);
 	g_ptr_array_remove(params, projLoc);
 
-	ModelProject* proj = model_project_load_or_create_project(projLoc);
+	ModelProject* proj = NULL;
+	if(!model_project_load_or_create_project(projLoc, &proj))
+	{
+		g_print("Project does not exist\n");
+		return;
+	}
 
 	ModelProjectManager* manager = model_project_manager_new();
 
-	model_project_manager_run_tests(manager, proj);
+	GError* error = NULL;
+	model_project_manager_run_tests(manager, proj, &error);
+	if(error != NULL)
+	{
+		g_print(error->message);
+		return;
+	}
 
 	g_object_unref(manager);
 	g_object_unref(proj);

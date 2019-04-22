@@ -61,7 +61,7 @@ model_project_get_build_config(ModelProject* this, GString* configName)
         if(this->_activeConfiguration != NULL)
             return model_project_get_build_config(this, this->_activeConfiguration);
         else
-            return g_ptr_array_index(defaultConfigs, 0);
+            return NULL;
     }
 
     ModelProjectConfiguration* seek = model_project_configuration_new(g_string_clone(configName));
@@ -491,8 +491,8 @@ model_project_write_project(ModelProject* this)
 }
 
 
-ModelProject*
-model_project_load_or_create_project(GString* location)
+gboolean
+model_project_load_or_create_project(GString* location, ModelProject** output)
 {
     FILE* proj = fopen(location->str, "r");
 
@@ -507,15 +507,19 @@ model_project_load_or_create_project(GString* location)
     {
         fclose(proj);
         model_project_read_project(toRet);
+
+        (*output) = toRet;
+        return TRUE;
     }
     else //not exists
     {
         proj = fopen(location->str, "w+");
         model_project_write_project(toRet);
         fclose(proj);
-    }
 
-    return toRet;
+        (*output) = toRet;
+        return FALSE;
+    }
 }
 
 void

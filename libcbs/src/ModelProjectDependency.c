@@ -140,7 +140,8 @@ model_project_dependency_get_representation(ModelProjectDependency* this)
 }
 
 GString*
-model_project_dependency_get_includes(ModelProjectDependency* this)
+model_project_dependency_get_includes(ModelProjectDependency* this,
+                                      GError ** error)
 {
     g_assert(this);
     if(this->_type == SYSTEM_DEP) //в майбутньому розширити для підтримки CBS залежності
@@ -163,7 +164,17 @@ model_project_dependency_get_includes(ModelProjectDependency* this)
     {
         GString* resolvedPath = model_project_resolve_path(this->_owner, this->_representation);
 
-        ModelProject* dep = model_project_load_or_create_project(resolvedPath);
+        ModelProject* dep = NULL;
+        if(!model_project_load_or_create_project(resolvedPath, &dep))
+        {
+            g_set_error(error,
+                        g_type_qname(MODEL_TYPE_PROJECT_DEPENDENCY),
+                        MODEL_PROJECT_DEPENDENCY_FAILED_TO_PROCESS,
+                        "Cannot locate project %s.\n",
+                        resolvedPath->str);
+
+            return NULL;
+        }
 
         GString* loc = g_string_new(g_path_get_dirname(model_project_get_location(dep)->str));
 
@@ -176,7 +187,8 @@ model_project_dependency_get_includes(ModelProjectDependency* this)
 }
 
 GString*
-model_project_dependency_get_links(ModelProjectDependency* this)
+model_project_dependency_get_links(ModelProjectDependency* this,
+                                   GError** error)
 {
     g_assert(this);
 
@@ -216,7 +228,17 @@ model_project_dependency_get_links(ModelProjectDependency* this)
     {
         GString* resovledPath = model_project_resolve_path(this->_owner, this->_representation);
 
-        ModelProject* dep = model_project_load_or_create_project(resovledPath);
+        ModelProject* dep = NULL;
+        if(!model_project_load_or_create_project(resovledPath, &dep))
+        {
+            g_set_error(error,
+                        g_type_qname(MODEL_TYPE_PROJECT_DEPENDENCY),
+                        MODEL_PROJECT_DEPENDENCY_FAILED_TO_PROCESS,
+                        "Cannot locate project %s./n",
+                        resovledPath->str);
+
+            return NULL;
+        }
 
         ModelProjectConfiguration* conf = model_project_get_build_config(dep, NULL);
 
@@ -227,7 +249,20 @@ model_project_dependency_get_links(ModelProjectDependency* this)
         {
             ModelProjectManager* manager = model_project_manager_new();
 
-            model_project_manager_build_project(manager, dep, NULL);
+            GError* innerError = NULL;
+            model_project_manager_build_project(manager, dep, NULL, &innerError);
+            if(innerError != NULL)
+            {
+                g_set_error(error,
+                            g_type_qname(MODEL_TYPE_PROJECT_DEPENDENCY),
+                            MODEL_PROJECT_DEPENDENCY_FAILED_TO_PROCESS,
+                            "Failed to builed dependency.\n%s",
+                            g_strdup(innerError->message));
+                
+                g_clear_error(&innerError);
+
+                return NULL;
+            }
 
             g_object_unref(manager);
 
