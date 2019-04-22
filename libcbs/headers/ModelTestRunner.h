@@ -6,7 +6,7 @@
 #include "glib.h"
 
 ModelTestRunner*
-model_test_runner_new();
+model_test_runner_new(void);
 
 gint
 model_test_runner_execute_tests(ModelTestRunner* this, GString* loc);

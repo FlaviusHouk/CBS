@@ -171,7 +171,7 @@ model_project_init(ModelProject* this)
     this->_buildConfigs = g_ptr_array_new_with_free_func(g_object_unref);
 }
 
-static ModelProject* 
+ModelProject* 
 model_project_new(GString* location)
 {
     ModelProject* this;

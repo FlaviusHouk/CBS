@@ -37,6 +37,9 @@ G_BEGIN_DECLS
 gboolean
 model_project_load_or_create_project(GString* location, ModelProject** output);
 
+ModelProject* 
+model_project_new(GString* location);
+
 ///Getter for project location
 ///Value should not be cleaned manually
 GString*

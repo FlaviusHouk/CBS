@@ -14,7 +14,7 @@ typedef void (*test)(void** state);
 
 typedef struct _ModelTestRunner
 {
-    GObject* parent_object;
+    GObject parent_object;
 
 
 } ModelTestRunner;
@@ -49,9 +49,11 @@ model_test_runner_init(ModelTestRunner* this)
 }
 
 ModelTestRunner*
-model_test_runner_new()
+model_test_runner_new(void)
 {
-    return g_object_new(MODEL_TYPE_TEST_RUNNER, NULL);
+    ModelTestRunner* this = g_object_new(MODEL_TYPE_TEST_RUNNER, NULL);
+    
+    return this; 
 }
 
 gint
