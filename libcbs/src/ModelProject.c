@@ -72,8 +72,6 @@ model_project_get_build_config(ModelProject* this, GString* configName)
         toRet = g_ptr_array_index(this->_buildConfigs, index);
     else if(g_ptr_array_find_with_equal_func(defaultConfigs, seek, model_project_configuration_equals, &index))
         toRet = g_ptr_array_index(defaultConfigs, index);
-    else
-        g_assert(FALSE);
 
     g_object_unref(seek);
 
@@ -522,7 +520,7 @@ model_project_load_or_create_project(GString* location, ModelProject** output)
     }
 }
 
-void
+gboolean
 model_project_add_source_file(ModelProject* this, ModelSourceFile* file)
 {
     g_assert(this);
@@ -532,12 +530,14 @@ model_project_add_source_file(ModelProject* this, ModelSourceFile* file)
     if(fileCheck)
         fclose(fileCheck);
     else
-        g_assert(FALSE);
+        return FALSE;
 
     if(g_ptr_array_find_with_equal_func(this->_sourceFiles, file, model_source_file_equals, NULL))
         return;
 
     g_ptr_array_add(this->_sourceFiles, file);
+
+    return TRUE;
 }
 
 void

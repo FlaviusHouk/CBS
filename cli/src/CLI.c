@@ -69,9 +69,10 @@ static void AddFileToProject(gpointer fileName, gpointer project)
 
 	ModelSourceFile* file = model_source_file_new(fileLoc);
 
-	model_project_add_source_file(proj, file);
-
-	g_print("%s was added.\n", fileLoc->str);
+	if(model_project_add_source_file(proj, file))
+		g_print("%s was added.\n", fileLoc->str);
+	else
+		g_print("Cannot locate file %s.\n", fileLoc->str);
 }
 
 ///Add file command handler

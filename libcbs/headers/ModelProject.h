@@ -48,8 +48,9 @@ model_project_get_location(ModelProject* this);
 ///Adds SourceFile to project. If there is one with the same name, duplicate 
 ///will not be added.
 ///file - file that added to the project. It should not be freed.
-void
-model_project_add_source_file(ModelProject* this, ModelSourceFile* file);
+gboolean
+model_project_add_source_file(ModelProject* this, 
+                              ModelSourceFile* file);
 
 ///Getter for source files collection
 GPtrArray*
