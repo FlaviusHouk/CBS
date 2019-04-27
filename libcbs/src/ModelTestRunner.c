@@ -10,6 +10,7 @@
 #include "gmodule.h"
 
 typedef char** (*TestDiscoverer)(void);
+typedef void** (*StateGenerator)(void* key);
 typedef void (*test)(void** state);
 
 typedef struct _ModelTestRunner
@@ -56,6 +57,24 @@ model_test_runner_new(void)
     return this; 
 }
 
+static struct CMUnitTest*
+model_test_runner_init_test(const char* name, 
+                            CMUnitTestFunction testFunc,
+                            CMFixtureFunction setup_func,
+                            CMFixtureFunction teardown_func,
+                            void* state)
+{
+    struct CMUnitTest* test = g_malloc(sizeof(struct CMUnitTest));
+
+    test->name = name;
+    test->test_func = testFunc;
+    test->setup_func = setup_func;
+    test->teardown_func = teardown_func;
+    test->initial_state = state;
+
+    return test;
+}
+
 gint
 model_test_runner_execute_tests(ModelTestRunner* this, GString* loc)
 {
@@ -70,24 +89,56 @@ model_test_runner_execute_tests(ModelTestRunner* this, GString* loc)
         if(tests)
         {
             TestDiscoverer discover;
-            if(g_module_symbol(tests, "get_available_tests", (gpointer *)&discover))
+            StateGenerator generator;
+            if(g_module_symbol(tests, "get_available_tests", (gpointer *)&discover) &&
+               g_module_symbol(tests, "get_states_for_test", (gpointer*)&generator))
             {
                 char** toExecute = discover();
 
                 int testCount = g_strv_length(toExecute);
-                struct CMUnitTest* cMockaTests = malloc(sizeof(struct CMUnitTest) * testCount); 
+                GPtrArray* cMockaTests = g_ptr_array_new(); 
 
                 test toRun;
                 for(int i = 0; i<testCount; i++)
                 {
                     if(g_module_symbol(tests, toExecute[i], (gpointer*)&toRun))
                     {
-                        struct CMUnitTest unitTest = { toExecute[i], toRun, NULL, NULL, NULL };
-                        cMockaTests[i] = unitTest;
+                        void** testCases = generator(toExecute[i]);
+                        int testCaseCount = g_strv_length((gchar**)testCases); //a little bit hacky way to determinate length of generic array
+                        
+                        if(testCaseCount != 0)
+                        {
+                            for(int j = 0; j<testCaseCount; j++)
+                            {
+                                g_ptr_array_add(cMockaTests, 
+                                                model_test_runner_init_test(toExecute[i], 
+                                                                            toRun, 
+                                                                            NULL, 
+                                                                            NULL, 
+                                                                            testCases[j]));
+                            }
+                        }
+                        else
+                        {
+                            g_ptr_array_add(cMockaTests, 
+                                            model_test_runner_init_test(toExecute[i], 
+                                                                        toRun,
+                                                                        NULL,
+                                                                        NULL,
+                                                                        NULL));
+                        }
                     }
                 }
 
-                _cmocka_run_group_tests("Tests", cMockaTests, testCount, NULL, NULL);
+                struct CMUnitTest* testArray = g_malloc(sizeof(struct CMUnitTest) * cMockaTests->len);
+                for(int i = 0; i<cMockaTests->len; i++)
+                    testArray[i] = *((struct CMUnitTest*)g_ptr_array_index(cMockaTests, i));
+
+                _cmocka_run_group_tests("Tests", 
+                                        testArray, 
+                                        cMockaTests->len, 
+                                        NULL, 
+                                        NULL);
             }
         }
 
