@@ -533,7 +533,7 @@ model_project_add_source_file(ModelProject* this, ModelSourceFile* file)
         return FALSE;
 
     if(g_ptr_array_find_with_equal_func(this->_sourceFiles, file, model_source_file_equals, NULL))
-        return;
+        return TRUE;
 
     g_ptr_array_add(this->_sourceFiles, file);
 
@@ -569,7 +569,7 @@ model_project_find_gstring(const void* obj1, const void* obj2)
     return g_string_equal(str1, str2);
 }
 
-void
+gboolean
 model_project_add_include_folder(ModelProject* this, GString* folder)
 {
     g_assert(this);
@@ -581,12 +581,14 @@ model_project_add_include_folder(ModelProject* this, GString* folder)
     if(test)
         g_dir_close(test);
     else
-        g_assert(test);
+        return FALSE;
 
     if(g_ptr_array_find_with_equal_func(this->_headersFolders, folder, model_project_find_gstring, NULL))
-        return;
+        return TRUE;;
 
     g_ptr_array_add(this->_headersFolders, folder);
+
+    return TRUE;
 }
 
 void

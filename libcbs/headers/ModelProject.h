@@ -88,7 +88,7 @@ model_project_remove_dependency_by_name(ModelProject* this, GString* depName);
 ///Adds include folder(path to it) to project. If there is one with the same name, 
 ///duplicate will not be added.
 ///folder - path to include folder. Should not be freed.
-void
+gboolean
 model_project_add_include_folder(ModelProject* this, GString* folder);
 
 ///Getter for collection of includes folder.
