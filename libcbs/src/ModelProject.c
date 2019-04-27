@@ -549,12 +549,7 @@ model_project_remove_source_file(ModelProject* this, ModelSourceFile* file)
     int index = -1;
 
     if(g_ptr_array_find_with_equal_func(this->_sourceFiles, file, model_source_file_equals, &index))
-    {
-        ModelSourceFile* removed = (ModelSourceFile*)g_ptr_array_remove_index(this->_sourceFiles, index);
-
-        if(removed)
-            g_object_unref(removed);
-    }
+        g_ptr_array_remove_index(this->_sourceFiles, index);
 
     g_object_unref(file);
 }
@@ -601,10 +596,7 @@ model_project_remove_include_folder(ModelProject* this, GString* folder)
     if(!g_ptr_array_find_with_equal_func(this->_headersFolders, folder, model_project_find_gstring, &index))
         return;
 
-    GString* removed = (GString*)g_ptr_array_remove_index(this->_headersFolders, index);
-
-    if(removed)
-        g_string_free(removed, TRUE);
+    g_ptr_array_remove_index(this->_headersFolders, index);
 }
 
 void
@@ -650,10 +642,7 @@ model_project_remove_dependency(ModelProject* this, ModelProjectDependency* depe
 
     //add validation here
 
-    ModelProjectDependency* removed = (ModelProjectDependency*)g_ptr_array_remove_index(this->_dependencies, index); 
-
-    if(removed)
-        g_object_unref(removed);
+    g_ptr_array_remove_index(this->_dependencies, index); 
 }
 
 void
@@ -671,7 +660,6 @@ model_project_remove_dependency_by_name(ModelProject* this, GString* depName)
         if(g_string_equal(depName, model_project_dependency_get_representation(curr)))
         {
             g_ptr_array_remove(this->_dependencies, curr);
-            g_object_unref(curr);
             return;
         }
     }

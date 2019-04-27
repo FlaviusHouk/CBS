@@ -314,7 +314,8 @@ model_project_dependency_equals(const void* obj1, const void* obj2)
     ModelProjectDependency* dep1 = (ModelProjectDependency*)obj1;
     ModelProjectDependency* dep2 = (ModelProjectDependency*)obj2;
 
-    if(dep1 != NULL && dep2 != NULL)
+    if(dep1 != NULL && dep2 != NULL && 
+       dep1->_representation != NULL && dep2->_representation != NULL)
     {
         return g_string_equal(dep1->_representation, dep2->_representation) && dep1->_type == dep2->_type;
     }
