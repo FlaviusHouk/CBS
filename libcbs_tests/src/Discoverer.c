@@ -1,5 +1,7 @@
 #include "Discoverer.h"
 
+#include "ModelProjectConfiguration.h"
+
 GHashTable* table;
 
 static void**
@@ -156,11 +158,9 @@ init_model_project_resolve_path_test_data()
     return g_ptr_array_free(testCases, FALSE);
 }
 
-char** 
-get_available_tests(void)
+static void
+initialize_model_project_tests(void)
 {
-    table = g_hash_table_new(g_str_hash, g_str_equal);
-
     g_hash_table_insert(table,
                         g_strdup("model_project_creation_test_positive_case"), 
                         init_model_project_creation_test_positive_case_data());
@@ -188,6 +188,154 @@ get_available_tests(void)
     g_hash_table_insert(table,
                         g_strdup("model_project_resolve_path_test"), 
                         init_model_project_resolve_path_test_data());
+}
+
+static void**
+init_model_project_configuration_creation_test(void)
+{
+    GPtrArray* testCases = g_ptr_array_new();
+
+    GHashTable* defaultTestCase = g_hash_table_new(g_str_hash, g_str_equal);
+
+    GString* configName = g_string_new(g_strdup("CustomConfig"));
+    g_hash_table_insert(defaultTestCase, "ConfigName", configName);
+
+    gboolean* isCorrect = g_malloc(sizeof(gboolean));
+    *isCorrect = TRUE;
+    g_hash_table_insert(defaultTestCase, "IsCorrectInputParameters", isCorrect);
+
+    g_ptr_array_add(testCases, defaultTestCase);
+
+    g_ptr_array_add(testCases, NULL);
+
+    return g_ptr_array_free(testCases, FALSE);
+}
+
+static void**
+init_model_project_configuration_equility_test(void)
+{
+    GPtrArray* testCases = g_ptr_array_new();
+
+    GHashTable* equalTestCase = g_hash_table_new(g_str_hash, g_str_equal);
+
+    GString* firstConfigName = g_string_new(g_strdup("Debug"));
+    g_hash_table_insert(equalTestCase, g_strdup("FirstConfigName"), firstConfigName);
+
+    GString* secondConfigName = g_string_new(g_strdup("Debug"));
+    g_hash_table_insert(equalTestCase, g_strdup("SecondConfigName"), secondConfigName);
+
+    gboolean* isEqual = g_malloc(sizeof(gboolean));
+    *isEqual = TRUE;
+    g_hash_table_insert(equalTestCase, g_strdup("AreEqual"), isEqual);
+
+    GHashTable* notEqualTestCase = g_hash_table_new(g_str_hash, g_str_equal);
+
+    firstConfigName = g_string_new(g_strdup("Debug"));
+    g_hash_table_insert(notEqualTestCase, g_strdup("FirstConfigName"), firstConfigName);
+
+    secondConfigName = g_string_new(g_strdup("Release"));
+    g_hash_table_insert(notEqualTestCase, g_strdup("SecondConfigName"), secondConfigName);
+
+    isEqual = g_malloc(sizeof(gboolean));
+    *isEqual = FALSE;
+    g_hash_table_insert(notEqualTestCase, g_strdup("AreEqual"), isEqual);
+
+    g_ptr_array_add(testCases, equalTestCase);
+    g_ptr_array_add(testCases, notEqualTestCase);
+    g_ptr_array_add(testCases, NULL);
+
+    return g_ptr_array_free(testCases, FALSE);
+}
+
+static void**
+init_model_project_configuration_config_string_test(void)
+{
+    GPtrArray* testCases = g_ptr_array_new();
+
+    GHashTable* complexTest1 = g_hash_table_new(g_str_hash, g_str_equal);
+
+    GString* configName = g_string_new(g_strdup("TestConfig"));
+    g_hash_table_insert(complexTest1, g_strdup("ConfigName"), configName);
+
+    GString* configString = g_string_new(g_strdup(" -std=c89 -fpic -O0 "));
+    g_hash_table_insert(complexTest1, g_strdup("ExpectedRezult"), configString);
+
+    gint* cstd = (gint*)g_malloc(sizeof(gint));
+    *cstd = C89;
+    g_hash_table_insert(complexTest1, g_strdup("CStandard"), cstd); 
+
+    gboolean* ignoreOptions = (gboolean*)g_malloc(sizeof(gboolean));
+    *ignoreOptions = FALSE;
+    g_hash_table_insert(complexTest1, g_strdup("IgnoreOptions"), ignoreOptions);
+
+    gint* optimization = (gint*)g_malloc(sizeof(gint));
+    *optimization = RELEASE_0;
+    g_hash_table_insert(complexTest1, g_strdup("OptimizationLevel"), optimization); 
+
+    GString* outputName = g_string_new(g_strdup("OldLib.so"));
+    g_hash_table_insert(complexTest1, g_strdup("OutputName"), outputName);
+
+    gint* outputType = (gint*)g_malloc(sizeof(gint));
+    *outputType = DYNAMIC_LIB;
+    g_hash_table_insert(complexTest1, g_strdup("OutputType"), outputType); 
+
+    GHashTable* ignoreOptionsTest = g_hash_table_new(g_str_hash, g_str_equal);
+
+    configName = g_string_new(g_strdup("TestConfig"));
+    g_hash_table_insert(ignoreOptionsTest, g_strdup("ConfigName"), configName);
+
+    configString = g_string_new(g_strdup(""));
+    g_hash_table_insert(ignoreOptionsTest, g_strdup("ExpectedRezult"), configString);
+
+    cstd = (gint*)g_malloc(sizeof(gint));
+    *cstd = C89;
+    g_hash_table_insert(ignoreOptionsTest, g_strdup("CStandard"), cstd); 
+
+    ignoreOptions = (gboolean*)g_malloc(sizeof(gboolean));
+    *ignoreOptions = TRUE;
+    g_hash_table_insert(ignoreOptionsTest, g_strdup("IgnoreOptions"), ignoreOptions);
+
+    optimization = (gint*)g_malloc(sizeof(gint));
+    *optimization = RELEASE_0;
+    g_hash_table_insert(ignoreOptionsTest, g_strdup("OptimizationLevel"), optimization); 
+
+    outputName = g_string_new(g_strdup("OldLib.so"));
+    g_hash_table_insert(ignoreOptionsTest, g_strdup("OutputName"), outputName);
+
+    outputType = (gint*)g_malloc(sizeof(gint));
+    *outputType = DYNAMIC_LIB;
+    g_hash_table_insert(ignoreOptionsTest, g_strdup("OutputType"), outputType); 
+
+    g_ptr_array_add(testCases, ignoreOptionsTest);
+    g_ptr_array_add(testCases, complexTest1);
+    g_ptr_array_add(testCases, NULL);
+
+    return g_ptr_array_free(testCases, FALSE);
+}
+
+static void
+initialize_model_project_configuration_tests(void)
+{
+    g_hash_table_insert(table,
+                        g_strdup("model_project_configuration_creation_test"),
+                        init_model_project_configuration_creation_test());
+
+    g_hash_table_insert(table,
+                        g_strdup("model_project_configuration_equility_test"),
+                        init_model_project_configuration_equility_test());
+
+    g_hash_table_insert(table,
+                        g_strdup("model_project_configuration_config_string_test"),
+                        init_model_project_configuration_config_string_test());
+}
+
+char** 
+get_available_tests(void)
+{
+    table = g_hash_table_new(g_str_hash, g_str_equal);
+
+    initialize_model_project_tests();
+    initialize_model_project_configuration_tests();
 
     guint size = g_hash_table_size(table);
 
