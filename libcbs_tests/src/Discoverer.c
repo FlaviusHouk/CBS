@@ -1,6 +1,9 @@
 #include "Discoverer.h"
 
 #include "ModelProjectConfiguration.h"
+#include "ModelProjectDependency.h"
+
+#include "unistd.h"
 
 GHashTable* table;
 
@@ -329,6 +332,202 @@ initialize_model_project_configuration_tests(void)
                         init_model_project_configuration_config_string_test());
 }
 
+static void**
+init_model_project_dependency_creation_test(void)
+{
+    GPtrArray* testCases = g_ptr_array_new();
+
+    GHashTable* defaultTestCase = g_hash_table_new(g_str_hash, g_str_equal);
+
+    GString* representation = g_string_new(g_strdup("glib-2.0"));
+    g_hash_table_insert(defaultTestCase, "Representation", representation);
+
+    gint* type = (gint*)g_malloc(sizeof(gint));
+    *type = SYSTEM_DEP;
+    g_hash_table_insert(defaultTestCase, "DepType", type);
+
+    g_ptr_array_add(testCases, defaultTestCase);
+    g_ptr_array_add(testCases, NULL);
+
+    return g_ptr_array_free(testCases, FALSE);
+}
+
+static void**
+init_model_project_dependency_include_string_test(void)
+{
+    GPtrArray* testCases = g_ptr_array_new();
+
+    GHashTable* systemLibTestCase = g_hash_table_new(g_str_hash, g_str_equal);
+
+    GString* representation = g_string_new(g_strdup("glib-2.0"));
+    g_hash_table_insert(systemLibTestCase, "Representation", representation);
+
+    gint* type = (gint*)g_malloc(sizeof(gint));
+    *type = SYSTEM_DEP;
+    g_hash_table_insert(systemLibTestCase, "DepType", type);
+
+    gboolean* shouldGenerateError = (gboolean*)g_malloc(sizeof(gboolean));
+    *shouldGenerateError = FALSE;
+    g_hash_table_insert(systemLibTestCase, "ShouldGenerateError", shouldGenerateError);
+
+    gchar* errorMsg = g_strdup("");
+    g_hash_table_insert(systemLibTestCase, "ErrorMsg", errorMsg);
+
+    GString* includeString = g_string_new(g_strdup("-I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include \n"));
+    g_hash_table_insert(systemLibTestCase, "IncludeString", includeString);
+
+    GHashTable* missingLibTestCase = g_hash_table_new(g_str_hash, g_str_equal);
+
+    representation = g_string_new(g_strdup("proj.cpd"));
+    g_hash_table_insert(missingLibTestCase, "Representation", representation);
+
+    type = (gint*)g_malloc(sizeof(gint));
+    *type = CBS_PROJECT;
+    g_hash_table_insert(missingLibTestCase, "DepType", type);
+
+    shouldGenerateError = (gboolean*)g_malloc(sizeof(gboolean));
+    *shouldGenerateError = TRUE;
+    g_hash_table_insert(missingLibTestCase, "ShouldGenerateError", shouldGenerateError);
+
+    errorMsg = g_strdup("Cannot locate project proj.cpd.\n");
+    g_hash_table_insert(missingLibTestCase, "ErrorMsg", errorMsg);
+
+    includeString = g_string_new(g_strdup(""));
+    g_hash_table_insert(missingLibTestCase, "IncludeString", includeString);
+
+    g_ptr_array_add(testCases, missingLibTestCase);
+    g_ptr_array_add(testCases, systemLibTestCase);
+    g_ptr_array_add(testCases, NULL);
+
+    return g_ptr_array_free(testCases, FALSE);
+}
+
+static void**
+init_model_project_dependency_link_string_test(void)
+{
+    GPtrArray* testCases = g_ptr_array_new();
+
+    GHashTable* systemLibTestCase = g_hash_table_new(g_str_hash, g_str_equal);
+
+    GString* representation = g_string_new(g_strdup("glib-2.0"));
+    g_hash_table_insert(systemLibTestCase, "Representation", representation);
+
+    gint* type = (gint*)g_malloc(sizeof(gint));
+    *type = SYSTEM_DEP;
+    g_hash_table_insert(systemLibTestCase, "DepType", type);
+
+    gboolean* shouldGenerateError = (gboolean*)g_malloc(sizeof(gboolean));
+    *shouldGenerateError = FALSE;
+    g_hash_table_insert(systemLibTestCase, "ShouldGenerateError", shouldGenerateError);
+
+    GString* errorMsg = g_string_new(g_strdup(""));
+    g_hash_table_insert(systemLibTestCase, "ErrorMsg", errorMsg);
+
+    GString* linkString = g_string_new(g_strdup("-lglib-2.0 \n"));
+    g_hash_table_insert(systemLibTestCase, "LinkString", linkString);
+
+    GHashTable* dynamicLibTestCase = g_hash_table_new(g_str_hash, g_str_equal);
+
+    representation = g_string_new(g_strdup("someLib.so"));
+    g_hash_table_insert(dynamicLibTestCase, "Representation", representation);
+
+    type = (gint*)g_malloc(sizeof(gint));
+    *type = EXTERNAL_DYNAMIC_LIB;
+    g_hash_table_insert(dynamicLibTestCase, "DepType", type);
+
+    shouldGenerateError = (gboolean*)g_malloc(sizeof(gboolean));
+    *shouldGenerateError = FALSE;
+    g_hash_table_insert(dynamicLibTestCase, "ShouldGenerateError", shouldGenerateError);
+
+    errorMsg = g_string_new(g_strdup(""));
+    g_hash_table_insert(dynamicLibTestCase, "ErrorMsg", errorMsg);
+
+    gchar* path = (gchar*)malloc(sizeof(gchar)*1024);
+    linkString = g_string_new(g_strdup("-L. -lsomeLib.so -Wl,-rpath="));
+    getcwd(path, 1024);
+    g_string_append_printf(linkString, "%s  ", path);
+
+    g_hash_table_insert(dynamicLibTestCase, "LinkString", linkString);
+
+    g_ptr_array_add(testCases, dynamicLibTestCase);
+    g_ptr_array_add(testCases, systemLibTestCase);
+    g_ptr_array_add(testCases, NULL);
+
+    return g_ptr_array_free(testCases, FALSE);
+}
+
+static void**
+init_model_project_dependency_equlity_test(void)
+{
+    GPtrArray* testCases = g_ptr_array_new();
+
+    GHashTable* equalTestCase = g_hash_table_new(g_str_hash, g_str_equal);
+
+    GString* representation = g_string_new(g_strdup("glib-2.0"));
+    g_hash_table_insert(equalTestCase, "FirstRepresentation", representation);
+
+    gint* type = (gint*)g_malloc(sizeof(gint));
+    *type = SYSTEM_DEP;
+    g_hash_table_insert(equalTestCase, "FirstDepType", type);
+
+    gboolean* isEqual = (gboolean*)g_malloc(sizeof(gboolean));
+    *isEqual = TRUE;
+    g_hash_table_insert(equalTestCase, "IsEqual", isEqual);
+
+    representation = g_string_new(g_strdup("glib-2.0"));
+    g_hash_table_insert(equalTestCase, "SecondRepresentation", representation);
+
+    type = (gint*)g_malloc(sizeof(gint));
+    *type = SYSTEM_DEP;
+    g_hash_table_insert(equalTestCase, "SecondDepType", type);
+
+    GHashTable* notEqualTestCase = g_hash_table_new(g_str_hash, g_str_equal);
+
+    representation = g_string_new(g_strdup("glib-2.0"));
+    g_hash_table_insert(notEqualTestCase, "FirstRepresentation", representation);
+
+    type = (gint*)g_malloc(sizeof(gint));
+    *type = SYSTEM_DEP;
+    g_hash_table_insert(notEqualTestCase, "FirstDepType", type);
+
+    isEqual = (gboolean*)g_malloc(sizeof(gboolean));
+    *isEqual = FALSE;
+    g_hash_table_insert(notEqualTestCase, "IsEqual", isEqual);
+
+    representation = g_string_new(g_strdup("gtk+-2.0"));
+    g_hash_table_insert(notEqualTestCase, "SecondRepresentation", representation);
+
+    type = (gint*)g_malloc(sizeof(gint));
+    *type = SYSTEM_DEP;
+    g_hash_table_insert(notEqualTestCase, "SecondDepType", type);
+
+    g_ptr_array_add(testCases, notEqualTestCase);
+    g_ptr_array_add(testCases, equalTestCase);
+    g_ptr_array_add(testCases, NULL);
+
+    return g_ptr_array_free(testCases, FALSE);
+}
+
+static void
+initialize_model_project_dependency_tests(void)
+{
+    g_hash_table_insert(table,
+                        g_strdup("model_project_dependency_creation_test"),
+                        init_model_project_dependency_creation_test());
+
+    g_hash_table_insert(table,
+                        g_strdup("model_project_dependency_include_string_test"),
+                        init_model_project_dependency_include_string_test());
+
+    g_hash_table_insert(table,
+                        g_strdup("model_project_dependency_link_string_test"),
+                        init_model_project_dependency_link_string_test());
+    
+    g_hash_table_insert(table,
+                        g_strdup("model_project_dependency_equlity_test"),
+                        init_model_project_dependency_equlity_test());
+}
+
 char** 
 get_available_tests(void)
 {
@@ -336,6 +535,7 @@ get_available_tests(void)
 
     initialize_model_project_tests();
     initialize_model_project_configuration_tests();
+    initialize_model_project_dependency_tests();
 
     guint size = g_hash_table_size(table);
 
