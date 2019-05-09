@@ -2,6 +2,7 @@
 
 #include "ModelProjectConfiguration.h"
 #include "ModelProjectDependency.h"
+#include "ModelSourceFile.h"
 
 #include "unistd.h"
 
@@ -528,6 +529,91 @@ initialize_model_project_dependency_tests(void)
                         init_model_project_dependency_equlity_test());
 }
 
+static void**
+init_model_source_file_creation_test(void)
+{
+    GPtrArray* testCases = g_ptr_array_new();
+
+    GHashTable* defaultTestCase = g_hash_table_new(g_str_hash, g_str_equal);
+
+    GString* location = g_string_new(g_strdup("file.c"));
+    g_hash_table_insert(defaultTestCase, "FileLoc", location);
+
+    g_ptr_array_add(testCases, defaultTestCase);
+    g_ptr_array_add(testCases, NULL);
+
+    return g_ptr_array_free(testCases, FALSE);
+}
+
+static void**
+init_model_source_file_type_test(void)
+{
+    GPtrArray* testCases = g_ptr_array_new();
+
+    GHashTable* defaultTestCase = g_hash_table_new(g_str_hash, g_str_equal);
+
+    GString* location = g_string_new(g_strdup("file.c"));
+    g_hash_table_insert(defaultTestCase, "FileLoc", location);
+
+    gint* type = (gint*)g_malloc(sizeof(gint));
+    *type = CODE;
+    g_hash_table_insert(defaultTestCase, "FileType", type);
+
+    GHashTable* resourceTestCase = g_hash_table_new(g_str_hash, g_str_equal);
+
+    location = g_string_new(g_strdup("file.res"));
+    g_hash_table_insert(resourceTestCase, "FileLoc", location);
+
+    type = (gint*)g_malloc(sizeof(gint));
+    *type = RESOURCE;
+    g_hash_table_insert(resourceTestCase, "FileType", type);
+
+    g_ptr_array_add(testCases, resourceTestCase);
+    g_ptr_array_add(testCases, defaultTestCase);
+    g_ptr_array_add(testCases, NULL);
+
+    return g_ptr_array_free(testCases, FALSE);
+}
+
+static void**
+init_model_source_file_equility_test(void)
+{
+    GPtrArray* testCases = g_ptr_array_new();
+    
+    GHashTable* defaultTestCase = g_hash_table_new(g_str_hash, g_str_equal);
+
+    GString* file = g_string_new(g_strdup("main.c"));
+    g_hash_table_insert(defaultTestCase, "FirstFileLoc", file);
+
+    file = g_string_new(g_strdup("main.c"));
+    g_hash_table_insert(defaultTestCase, "SecondFileLoc", file);
+
+    gboolean* isEqual = (gboolean*)g_malloc(sizeof(gboolean));
+    *isEqual = TRUE;
+    g_hash_table_insert(defaultTestCase, "IsEqual", isEqual);
+
+    g_ptr_array_add(testCases, defaultTestCase);
+    g_ptr_array_add(testCases, NULL);
+
+    return g_ptr_array_free(testCases, FALSE);
+}
+
+static void
+initialize_model_source_file_tests(void)
+{
+    g_hash_table_insert(table,
+                        g_strdup("model_source_file_creation_test"),
+                        init_model_source_file_creation_test());
+
+    g_hash_table_insert(table,
+                        g_strdup("model_source_file_type_test"),
+                        init_model_source_file_type_test());            
+                        
+    g_hash_table_insert(table,
+                        g_strdup("model_source_file_equility_test"),
+                        init_model_source_file_equility_test());                                    
+}
+
 char** 
 get_available_tests(void)
 {
@@ -536,6 +622,7 @@ get_available_tests(void)
     initialize_model_project_tests();
     initialize_model_project_configuration_tests();
     initialize_model_project_dependency_tests();
+    initialize_model_source_file_tests();
 
     guint size = g_hash_table_size(table);
 
