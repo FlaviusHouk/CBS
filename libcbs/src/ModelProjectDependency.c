@@ -34,6 +34,8 @@ struct _ModelProjectDependency
 
 G_DEFINE_TYPE(ModelProjectDependency, model_project_dependency, G_TYPE_OBJECT);
 
+static GParamSpec* obj_props[MODEL_PROJECT_DEPENDENCY_PROP_COUNT] = { NULL, };
+
 static void
 model_project_dependency_dispose(GObject* obj)
 {
@@ -61,12 +63,165 @@ model_project_dependency_finalize(GObject* obj)
 }
 
 static void
+model_project_dependency_set_property(GObject* obj,
+                                      guint propID,
+                                      const GValue* value,
+                                      GParamSpec* pspec)
+{
+    ModelProjectDependency* this = MODEL_PROJECT_DEPENDENCY(obj);
+
+    switch(propID)
+    {
+        case MODEL_PROJECT_DEPENDENCY_OWNER_PROR:
+        {
+            ModelProject* val = MODEL_PROJECT(g_value_get_object(value));
+            model_project_dependency_set_owner(this, val);
+            break;
+        }
+        case MODEL_PROJECT_DEPENDENCY_REPRESENTATION_PROP:
+        {
+            const gchar* val = g_value_get_string(value);
+
+            GString* stringValue = NULL;
+            if(val != NULL)
+                stringValue = g_string_new(g_strdup(val));
+
+            this->_representation = stringValue;
+            break;
+        }
+        case MODEL_PROJECT_DEPENDENCY_TYPE_PROP:
+        {
+            this->_type = g_value_get_int(value);
+            break;
+        }
+
+        default:
+        {
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(obj, propID, pspec);
+            break;
+        }
+    }
+}
+
+static void
+model_project_dependency_get_property(GObject* obj,
+                                      guint propID,
+                                      GValue* value,
+                                      GParamSpec* pspec)
+{
+    ModelProjectDependency* this = MODEL_PROJECT_DEPENDENCY(obj);
+
+    switch(propID)
+    {
+        case MODEL_PROJECT_DEPENDENCY_INCLUDE_STRING_PROP:
+        {
+            gchar* val = NULL;
+            GError* error = NULL;
+
+            GString* includes = model_project_dependency_get_includes(this, &error);
+
+            if(error == NULL)
+                val = includes->str;
+
+            g_value_set_string(value, val);
+            break;
+        }
+        case MODEL_PROJECT_DEPENDENCY_LINK_STRING_PROP:
+        {
+            gchar* val = NULL;
+            GError* error = NULL;
+
+            GString* includes = model_project_dependency_get_links(this, &error);
+
+            if(error == NULL)
+                val = includes->str;
+
+            g_value_set_string(value, val);
+            break;
+        }
+        case MODEL_PROJECT_DEPENDENCY_OWNER_PROR:
+        {
+            ModelProject* val = model_project_dependency_get_owner(this);
+            g_value_set_object(value, val);
+            break;
+        }
+        case MODEL_PROJECT_DEPENDENCY_REPRESENTATION_PROP:
+        {
+            gchar* val = NULL;
+            GString* representation = model_project_dependency_get_representation(this);
+
+            if(representation != NULL)
+                val = representation->str;
+
+            g_value_set_string(value, val);
+            break;
+        }
+        case MODEL_PROJECT_DEPENDENCY_TYPE_PROP:
+        {
+            gint val = model_project_dependency_get_dependency_type(this);
+            g_value_set_int(value, val);
+            break;
+        }
+
+        default:
+        {
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(obj, propID, pspec);
+            break;
+        }
+    }
+}
+
+static void
 model_project_dependency_class_init(ModelProjectDependencyClass* class)
 {
     GObjectClass* objectClass = G_OBJECT_CLASS(class);
 
     objectClass->dispose = model_project_dependency_dispose;
     objectClass->finalize = model_project_dependency_finalize;
+
+    objectClass->set_property = model_project_dependency_set_property;
+    objectClass->get_property = model_project_dependency_get_property;
+
+    obj_props[MODEL_PROJECT_DEPENDENCY_INCLUDE_STRING_PROP] = 
+        g_param_spec_string("includes",
+                            "IncludeString",
+                            "Set of folders to look for headers",
+                            NULL,
+                            G_PARAM_READABLE);
+
+    obj_props[MODEL_PROJECT_DEPENDENCY_LINK_STRING_PROP] = 
+        g_param_spec_string("links",
+                            "LinkString",
+                            "Set of library names and it's folders",
+                            NULL,
+                            G_PARAM_READABLE);
+
+    obj_props[MODEL_PROJECT_DEPENDENCY_OWNER_PROR] = 
+        g_param_spec_object("owner",
+                            "Owner",
+                            "Project that owns this dependency",
+                            MODEL_TYPE_PROJECT,
+                            G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+
+    obj_props[MODEL_PROJECT_DEPENDENCY_REPRESENTATION_PROP] = 
+        g_param_spec_string("representation",
+                            "Representation",
+                            "A string for dependency look up",
+                            NULL,
+                            G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+
+    obj_props[MODEL_PROJECT_DEPENDENCY_TYPE_PROP] = 
+        g_param_spec_int("type",
+                         "DependencyType",
+                         "Type of dependency",
+                         ELF,
+                         OUTPUT_TYPE_COUNT,
+                         0,
+                         G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+
+    g_object_class_install_properties(objectClass,
+                                      MODEL_PROJECT_DEPENDENCY_PROP_COUNT,
+                                      obj_props);
 }
 
 static void

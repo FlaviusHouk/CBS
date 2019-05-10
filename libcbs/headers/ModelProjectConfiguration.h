@@ -28,13 +28,28 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 
 G_BEGIN_DECLS
 
+enum MODEL_PROJECT_CONFIGURATION_PROPERTIES
+{
+    MODEL_PROJECT_CONFIGURATION_NAME_PROP = 1,
+    MODEL_PROJECT_CONFIGURATION_OUTPUT_NAME_PROP,
+    MODEL_PROJECT_CONFIGURATION_OPTIMIZATION_LEVEL_PROP,
+    MODEL_PROJECT_CONFIGURATION_C_STANDARD_PROP,
+    MODEL_PROJECT_CONFIGURATION_OUTPUT_TYPE_PROP,
+    MODEL_PROJECT_CONFIGURATION_IS_IGNORE_OPTIONS_PROP,
+    MODEL_PROJECT_CONFIGURATION_CUSTOM_CONFIG_PROP,    
+
+    MODEL_PROJECT_CONFIGURATION_PROP_COUNT
+};
+
 ///Enum with C standard versions
 enum CStandard
 {
     ANSI_C,
     C89,
     C99,
-    C11
+    C11,
+
+    CStandard_COUNT
 };
 
 ///Enum with GCC optimization levels
@@ -49,6 +64,8 @@ enum Optimization
     DEBUG_1, //-g1
     DEBUG_2, //-g
     DEBUG_3, //-g3
+
+    Optimization_COUNT
 };
 
 ///Enum with possible output files for project build.

@@ -31,6 +31,15 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #include "ModelProjectConfiguration.h"
 
 G_BEGIN_DECLS
+
+enum MODEL_PROJECT_PROPERTIES
+{
+    MODEL_PROJECT_ACTIVE_BUILD_CONFIG_PROP = 1,
+    MODEL_PROJECT_UNIT_TEST_PROJ_PROP,
+
+    MODEL_PROJECT_PROP_COUNT
+};
+
 ///Function that loads project if it exists or creates new one with given location
 ///returns project from given location
 ///location - project location

@@ -31,6 +31,14 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 
 G_BEGIN_DECLS
 
+enum MODEL_SOURCE_FILE_PROPERTIES
+{
+    MODEL_SOURCE_FILE_PATH_PROP = 1,
+    MODEL_SOURCE_FILE_TYPE_PROP,
+
+    MODEL_SOURCE_FILE_PROP_COUNT
+};
+
 ///Constructor for SourceFile type.
 ///location - file location.
 ModelSourceFile*
@@ -50,7 +58,9 @@ enum ModelSourceFileTypes
     CODE,
     HEADER,
     VIEW,
-    RESOURCE
+    RESOURCE,
+
+    ModelSourceFileTypesCOUNT
 };
 
 ///Getter for File type property(as ModelSourceFileTypes enum).

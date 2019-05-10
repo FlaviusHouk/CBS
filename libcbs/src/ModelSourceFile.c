@@ -50,6 +50,72 @@ model_source_file_finalize(GObject* obj)
     G_OBJECT_CLASS(model_source_file_parent_class)->finalize(obj);
 }
 
+static GParamSpec* obj_props[MODEL_SOURCE_FILE_PROP_COUNT] = { NULL, };
+
+static void
+model_source_file_set_property(GObject* obj,
+                               guint propID,
+                               const GValue* value,
+                               GParamSpec* pspec)
+{
+    ModelSourceFile* this = MODEL_SOURCE_FILE(obj);
+
+    switch(propID)
+    {
+        case MODEL_SOURCE_FILE_PATH_PROP:
+        {
+            const gchar* val = g_value_get_string(value);
+            GString* stringVal = NULL;
+
+            if(val != NULL)
+                stringVal = g_string_new(g_strdup(val));
+
+            this->_path = stringVal;
+            break;
+        }
+
+        default:
+        {
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(obj, propID, pspec);
+            break;
+        }
+    }
+}
+
+static void
+model_source_file_get_property(GObject* obj,
+                               guint propID,
+                               GValue* value,
+                               GParamSpec* pspec)
+{
+    ModelSourceFile* this = MODEL_SOURCE_FILE(obj);
+
+    switch(propID)
+    {
+        case MODEL_SOURCE_FILE_PATH_PROP:
+        {
+            gchar* val = NULL;
+
+            if(this->_path != NULL)
+                val = this->_path->str;
+
+            g_value_set_string(value, val);
+            break;
+        }
+        case MODEL_SOURCE_FILE_TYPE_PROP:
+        {
+            gint val = model_source_file_get_file_type(this);
+            g_value_set_int(value, val);
+            break;
+        }
+
+        default:
+        {
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(obj, propID, pspec);
+            break;
+        }
+    }
+}
 
 static void
 model_source_file_class_init(ModelSourceFileClass* class)
@@ -58,6 +124,29 @@ model_source_file_class_init(ModelSourceFileClass* class)
 
     objectClass->dispose = model_source_file_dispose;
     objectClass->finalize = model_source_file_finalize;
+
+    objectClass->set_property = model_source_file_set_property;
+    objectClass->get_property = model_source_file_get_property;
+
+    obj_props[MODEL_SOURCE_FILE_PATH_PROP] = 
+        g_param_spec_string("path",
+                            "Path",
+                            "Path to file",
+                            NULL,
+                            G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+
+    obj_props[MODEL_SOURCE_FILE_TYPE_PROP] = 
+        g_param_spec_int("type",
+                         "FileType",
+                         "File type that set according to it's extension",
+                         CODE,
+                         ModelSourceFileTypesCOUNT,
+                         RESOURCE,
+                         G_PARAM_READABLE);
+
+    g_object_class_install_properties(objectClass,
+                                      MODEL_SOURCE_FILE_PROP_COUNT,
+                                      obj_props);
 }
 
 static void

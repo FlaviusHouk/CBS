@@ -41,6 +41,79 @@ struct _ModelProject
 
 G_DEFINE_TYPE(ModelProject, model_project, G_TYPE_OBJECT)
 
+static GParamSpec* obj_properties[MODEL_PROJECT_PROP_COUNT] = { NULL, };
+
+static void
+model_project_set_property(GObject* obj,
+                           guint propID,
+                           const GValue* value,
+                           GParamSpec* psSpec)
+{
+    ModelProject* this = MODEL_PROJECT(obj);
+
+    switch(propID)
+    {
+        default:
+        {
+            case MODEL_PROJECT_ACTIVE_BUILD_CONFIG_PROP:
+            {
+                const gchar* val = g_value_get_string(value);
+                
+                GString* stringValue = NULL;
+                if(val != NULL)
+                    stringValue = g_string_new(g_strdup(val));
+
+                model_project_set_active_build_config(this, stringValue);
+                break;
+            }
+            case MODEL_PROJECT_UNIT_TEST_PROJ_PROP:
+            {
+                const gchar* val = g_value_get_string(value);
+
+                GString* stringValue = NULL;
+                if(val != NULL)
+                    stringValue = g_string_new(g_strdup(val));
+
+                model_project_set_unit_tests_project_location(this, stringValue);
+                break;
+            }
+
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(obj, propID, psSpec);
+            break;
+        }
+    }
+}
+
+static void
+model_project_get_property(GObject* obj,
+                           guint propID,
+                           GValue* value,
+                           GParamSpec* pspec)
+{
+    ModelProject* this = MODEL_PROJECT(obj);
+
+    switch(propID)
+    {
+        case MODEL_PROJECT_ACTIVE_BUILD_CONFIG_PROP:
+        {
+            GString* activeBuildConfig = model_project_get_active_build_config(this);
+            g_value_set_string(value, activeBuildConfig->str);
+            break;
+        }
+        case MODEL_PROJECT_UNIT_TEST_PROJ_PROP:
+        {
+            GString* unitTestProj = model_project_get_unit_tests_project_location(this);
+            g_value_set_string(value, unitTestProj->str);
+            break;
+        }
+
+        default:
+        {
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(obj, propID, pspec);
+        }
+    }
+}
+
 ///Function for handling xml error and providing information about it. Mostly for debug.
 static void
 model_project_handle_xml_error(void* userData, xmlErrorPtr error)
@@ -155,6 +228,26 @@ model_project_class_init(ModelProjectClass* class)
 
     class_object->dispose = model_project_dispose;
     class_object->finalize = model_project_finalize;
+    class_object->set_property = model_project_set_property;
+    class_object->get_property = model_project_get_property;
+
+    obj_properties[MODEL_PROJECT_ACTIVE_BUILD_CONFIG_PROP] = 
+        g_param_spec_string("active_build_config",
+                            "ActiveBuildConfig",
+                            "Config name used to build project",
+                            NULL,
+                            G_PARAM_READWRITE);
+
+    obj_properties[MODEL_PROJECT_UNIT_TEST_PROJ_PROP] = 
+        g_param_spec_string("unit_test_project",
+                            "UnitTestProject",
+                            "Location of project with unit tests",
+                            NULL,
+                            G_PARAM_READWRITE);
+
+    g_object_class_install_properties(class_object, 
+                                      MODEL_PROJECT_PROP_COUNT,
+                                      obj_properties);
 }
 
 static void
