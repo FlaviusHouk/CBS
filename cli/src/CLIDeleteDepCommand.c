@@ -30,8 +30,8 @@ cli_delete_dep_command_is_valid(CLICommandInfo* command)
     return this->_projLoc != NULL && this->_depName != NULL;
 }
 
-static void
-cli_delete_dep_command_handle_input(CLICommandInfo* command, GString* input, gboolean* breakInput)
+static gboolean
+cli_delete_dep_command_handle_input(CLICommandInfo* command, GString* input)
 {
     if(g_str_equal(input->str, "-projLoc"))
     {
@@ -64,17 +64,13 @@ cli_delete_dep_command_handle_input(CLICommandInfo* command, GString* input, gbo
                 }
                 else
                 {
-                    *breakInput = TRUE;
-                    return;
+                    return TRUE;
                 }
             }
             case CLI_DELETE_DEP_COMMAND_PROJ_LOC:
             {
                 if(this->_projLoc != NULL)
-                {
-                    *breakInput = TRUE;
-                    return;
-                }
+                    return TRUE;
 
                 this->_projLoc = input;
                 break;
@@ -82,16 +78,15 @@ cli_delete_dep_command_handle_input(CLICommandInfo* command, GString* input, gbo
             case CLI_DELETE_DEP_COMMAND_DEP_NAME:
             {
                 if(this->_depName != NULL)
-                {
-                    *breakInput = TRUE;
-                    return;
-                }
+                    return TRUE;
 
                 this->_depName = input;
                 break;
             }
         }
     }
+
+    return FALSE;
 }
 
 ///Delete dependency command handler

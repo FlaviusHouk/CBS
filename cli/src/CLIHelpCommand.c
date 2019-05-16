@@ -13,10 +13,10 @@ cli_help_command_is_valid(CLICommandInfo* command)
     return TRUE;
 }
 
-static void
-cli_help_command_handle_input(CLICommandInfo* command, GString* input, gboolean* breakInput)
+static gboolean
+cli_help_command_handle_input(CLICommandInfo* command, GString* input)
 {
-	*breakInput = TRUE;
+	return TRUE;
 }
 
 ///Help command handler

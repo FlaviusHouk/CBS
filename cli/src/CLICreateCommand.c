@@ -69,8 +69,8 @@ cli_create_command_execute(CLICommandInfo* command)
 	g_object_unref(manager);
 }
 
-static void
-cli_create_command_handle_input(CLICommandInfo* command, GString* input, gboolean* breakInput)
+static gboolean
+cli_create_command_handle_input(CLICommandInfo* command, GString* input)
 {
     if(g_str_equal(input->str, "-name"))
     {
@@ -92,23 +92,21 @@ cli_create_command_handle_input(CLICommandInfo* command, GString* input, gboolea
                 }
                 else
                 {
-                    *breakInput = TRUE;
-                    return;
+                    return TRUE;
                 }
             }
             case CREATE_COMMAND_NAME:
             {
                 if(this->_name != NULL)
-                {
-                    *breakInput = TRUE;
-                    return;
-                }
+                    return TRUE;
 
                 this->_name = input;
                 cli_command_info_set_input_state(command, CREATE_COMMAND_START);
             }
         }
     }
+
+    return FALSE;
 }
 
 static void

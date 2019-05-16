@@ -28,8 +28,8 @@ cli_add_include_command_is_valid(CLICommandInfo* command)
     return this->_projectLoc != NULL && this->_folders->len > 0;
 }
 
-static void
-cli_add_include_command_handle_input(CLICommandInfo* command, GString* input, gboolean* breakInput)
+static gboolean
+cli_add_include_command_handle_input(CLICommandInfo* command, GString* input)
 {
     if(g_str_equal(input->str, "-projLoc"))
     {
@@ -55,16 +55,15 @@ cli_add_include_command_handle_input(CLICommandInfo* command, GString* input, gb
             case CLI_ADD_INCLUDE_COMMAND_PROJ_LOC:
             {
                 if(this->_projectLoc != NULL)
-                {
-                    *breakInput = TRUE;
-                    return;
-                }
+                    return TRUE;
 
                 this->_projectLoc = input;
                 break;
             }
         }
     }
+
+    return FALSE;
 }
 
 ///Function for looping through GPtrArray and adding include folders 

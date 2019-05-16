@@ -40,7 +40,7 @@ struct _CLICommandInfoClass
 	GString* _standardErrorMSG;
 
 	void (*_execute)(CLICommandInfo* this);
-	void (*_handleInput)(CLICommandInfo* this, GString* input, gboolean* breakInput);
+	gboolean (*_handleInput)(CLICommandInfo* this, GString* input);
 	gboolean (*_isValid)(CLICommandInfo* this);
 
 	void (*_dispose)(GObject* obj);
@@ -74,9 +74,9 @@ void cli_command_info_process_command(CLICommandInfo* this);
 ///Method for handling input data for it
 ///CLI args passed here one by one and sets to according fields of object
 ///@arg - cli argument
-///@breakInput - flag that indicates 
-void 
-cli_command_info_handle_input(CLICommandInfo* this, GString* arg, gboolean* breakInput);
+///returns flag that indicates error on input processing 
+gboolean
+cli_command_info_handle_input(CLICommandInfo* this, GString* arg);
 
 ///Property that checks is there enough data to execute command.
 gboolean

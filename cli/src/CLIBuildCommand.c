@@ -29,8 +29,8 @@ cli_build_command_is_valid(CLICommandInfo* command)
     return this->_projLoc != NULL;
 }
 
-static void
-cli_build_command_handle_input(CLICommandInfo* command, GString* input, gboolean* breakInput)
+static gboolean
+cli_build_command_handle_input(CLICommandInfo* command, GString* input)
 {
     if(g_str_equal(input->str, "-projLoc"))
     {
@@ -62,17 +62,13 @@ cli_build_command_handle_input(CLICommandInfo* command, GString* input, gboolean
                 }
                 else
                 {
-                    *breakInput = TRUE;
-                    return;
+                    return TRUE;
                 }
             }
             case CLI_BUILD_COMMAND_PROJ_LOC:
             {
                 if(this->_projLoc != NULL)
-                {
-                    *breakInput = TRUE;
-                    return;
-                }
+                    return TRUE;
 
                 this->_projLoc = input;
                 break;
@@ -80,16 +76,15 @@ cli_build_command_handle_input(CLICommandInfo* command, GString* input, gboolean
             case CLI_BUILD_COMMAND_CONFIG_NAME:
             {
                 if(this->_configName != NULL)
-                {
-                    *breakInput = TRUE;
-                    return;
-                }
+                    return TRUE;
 
                 this->_configName = input;
                 break;
             }
         }
     }
+
+    return FALSE;
 }
 
 ///Build command handler

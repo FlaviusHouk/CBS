@@ -27,8 +27,8 @@ cli_test_command_is_valid(CLICommandInfo* command)
     return this->_projLoc != NULL;
 }
 
-static void
-cli_test_command_handle_input(CLICommandInfo* command, GString* input, gboolean* breakInput)
+static gboolean
+cli_test_command_handle_input(CLICommandInfo* command, GString* input)
 {
 	if(g_str_equal(input->str, "-projLoc"))
 	{
@@ -51,23 +51,21 @@ cli_test_command_handle_input(CLICommandInfo* command, GString* input, gboolean*
 				}
 				else
 				{
-					*breakInput = TRUE;
-					return;
+					return TRUE;
 				}
 			}
 			case CLI_TEST_COMMAND_PROJ_LOC:
 			{
 				if(this->_projLoc != NULL)
-				{
-					*breakInput = TRUE;
-					return;
-				}
+					return TRUE;
 
 				this->_projLoc = input;
 				break;
 			}
 		}
 	}
+
+	return FALSE;
 }
 
 ///Handler for Test command

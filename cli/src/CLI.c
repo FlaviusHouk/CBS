@@ -108,7 +108,7 @@ cli_command_parser_parse_commands(gpointer data, gpointer userData)
 			return;
 		}
 		
-		cli_command_info_handle_input(this->_command, str, &(this->_wrongInput));
+		this->_wrongInput = cli_command_info_handle_input(this->_command, str);
 	}
 }
 
@@ -125,13 +125,11 @@ CLICommandParser* cli_command_parser_new(char** args, int argn)
 					    cli_command_parser_parse_commands, 
 						this);
 
-	if(this->_wrongInput)
-	{}
-
 	return this;
 }
 
 void cli_command_parser_execute(CLICommandParser* this)
 {
-	cli_command_info_process_command(this->_command);
+	if(!this->_wrongInput)
+		cli_command_info_process_command(this->_command);
 }

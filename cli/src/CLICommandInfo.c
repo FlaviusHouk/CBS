@@ -68,14 +68,14 @@ void cli_command_info_process_command(CLICommandInfo* this)
 	class->_execute(this);
 }
 
-void 
-cli_command_info_handle_input(CLICommandInfo* this, GString* arg, gboolean* breakInput)
+gboolean
+cli_command_info_handle_input(CLICommandInfo* this, GString* arg)
 {
 	g_assert(this);
 	CLICommandInfoClass* class = CLI_COMMAND_INFO_GET_CLASS(this);
 
 	g_assert(class->_handleInput);
-	class->_handleInput(this, arg, breakInput);	
+	return class->_handleInput(this, arg);	
 }
 
 

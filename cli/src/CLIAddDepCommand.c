@@ -33,8 +33,8 @@ cli_add_dep_command_is_valid(CLICommandInfo* command)
            this->_depRepresentation != NULL;
 }
 
-static void
-cli_add_dep_command_handle_input(CLICommandInfo* command, GString* input, gboolean* breakInput)
+static gboolean
+cli_add_dep_command_handle_input(CLICommandInfo* command, GString* input)
 {
     if(g_str_equal(input->str, "-projLoc"))
     {
@@ -77,17 +77,13 @@ cli_add_dep_command_handle_input(CLICommandInfo* command, GString* input, gboole
                 }
                 else
                 {
-                    *breakInput = TRUE;
-                    return;
+                    return TRUE;
                 }
             }
             case CLI_ADD_DEP_COMMAND_PROJ_LOC:
             {
                 if(this->_projLoc != NULL)
-                {
-                    *breakInput = TRUE;
-                    return;
-                }
+                    return TRUE;
 
                 this->_projLoc = input;
                 break;
@@ -95,10 +91,7 @@ cli_add_dep_command_handle_input(CLICommandInfo* command, GString* input, gboole
             case CLI_ADD_DEP_COMMAND_DEP_TYPE:
             {
                 if(this->_depType != NULL)
-                {
-                    *breakInput = TRUE;
-                    return;
-                }
+                    return TRUE;
 
                 this->_depType = (gint*)g_malloc(sizeof(gint));
                 *(this->_depType) = atoi(input->str);
@@ -107,16 +100,15 @@ cli_add_dep_command_handle_input(CLICommandInfo* command, GString* input, gboole
             case CLI_ADD_DEP_COMMAND_DEP_REPRESENTATION:
             {
                 if(this->_depRepresentation != NULL)
-                {
-                    *breakInput = TRUE;
-                    return;
-                }
+                    return TRUE;
 
                 this->_depRepresentation = input;
                 break;
             }
         }
     }
+
+    return FALSE;
 }
 
 ///Add dependency command handler
