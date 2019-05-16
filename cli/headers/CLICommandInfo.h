@@ -29,9 +29,26 @@ G_BEGIN_DECLS
 
 #define CLI_TYPE_COMMAND_INFO cli_command_info_get_type()
 
-///Type with information about some predefined command (representation, order, argNum, funcion
-///execute and so on)
-G_DECLARE_FINAL_TYPE(CLICommandInfo, cli_command_info, CLI, COMMAND_INFO, GObject);
+///Type with information about some command for execution
+G_DECLARE_DERIVABLE_TYPE(CLICommandInfo, cli_command_info, CLI, COMMAND_INFO, GObject);
+
+///Class definition with static class members and virtual methods
+struct _CLICommandInfoClass
+{
+	GObjectClass parentClass;
+
+	GString* _standardErrorMSG;
+
+	void (*_execute)(CLICommandInfo* this);
+	void (*_handleInput)(CLICommandInfo* this, GString* input, gboolean* breakInput);
+	gboolean (*_isValid)(CLICommandInfo* this);
+
+	void (*_dispose)(GObject* obj);
+	void (*_finalize)(GObject* obj);
+
+	gpointer padding[4];
+};
+
 
 ///Enum with all predefined commands
 enum CLI_COMMAND_PARSER_INPUT_STATES
@@ -51,41 +68,29 @@ enum CLI_COMMAND_PARSER_INPUT_STATES
 	COMMANDS_COUNT
 };
 
-///Constructor for CommandInfo type
-///command - command representation ("--create" for example)
-///commandType - command identifier according to CLI_COMMAND_PARSER_INPUT_STATES enum
-///argsCount - desired number of arguments for it
-///order - executing order in case of executing multiple commands
-///action - function to call when command is given
-CLICommandInfo* cli_command_info_new(GString* command, 
-                                     int commandType, 
-                                     int argsCount, 
-                                     int order, 
-                                     void (*action)(CLICommandInfo* com));
-
-///Getter for command representation
-GString* cli_command_info_get_command(CLICommandInfo* this);
-
-///Setter for command representation
-void cli_command_info_set_command(CLICommandInfo* this, GString* value);
-
-///Getter for arguments count
-int cli_command_info_get_args_count(CLICommandInfo* this);
-
-///Setter for arguments count
-void cli_command_info_set_args_count(CLICommandInfo* this, int value);
-
-///Getter for execution order 
-int cli_command_info_get_order(CLICommandInfo* this);
-
-///Setter for execution order
-void cli_command_info_set_order(CLICommandInfo* this, int value);
-
-///Getter for collection with provided args
-GPtrArray* cli_command_info_get_args(CLICommandInfo* this);
-
 ///Method for actual command invoking
 void cli_command_info_process_command(CLICommandInfo* this);
+
+///Method for handling input data for it
+///CLI args passed here one by one and sets to according fields of object
+///@arg - cli argument
+///@breakInput - flag that indicates 
+void 
+cli_command_info_handle_input(CLICommandInfo* this, GString* arg, gboolean* breakInput);
+
+///Property that checks is there enough data to execute command.
+gboolean
+cli_command_info_is_valid(CLICommandInfo* info);
+
+///Getter for InputState property.
+///Needed for cli arguments parsing.
+gint
+cli_command_info_get_input_state(CLICommandInfo* this);
+
+///Setter for InputState property.
+///Needed for cli arguments parsing.
+void
+cli_command_info_set_input_state(CLICommandInfo* this, gint state);
 
 G_END_DECLS
 

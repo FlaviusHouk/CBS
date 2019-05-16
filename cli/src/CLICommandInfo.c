@@ -18,27 +18,32 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "CLICommandInfo.h"
 
-struct _CLICommandInfo
+typedef struct
 {
-	GObject parent_instance;
-	
-    GString* _command;
-	int _commandType;
-	int _argsCount;
-	int _order;
+	gint _inputState;
+} CLICommandInfoPrivate;
 
-	GPtrArray* _args;
-	void (*_action)(CLICommandInfo* com);
+G_DEFINE_TYPE_WITH_PRIVATE (CLICommandInfo, cli_command_info, G_TYPE_OBJECT)
 
-	void* data;
-};
+static void
+cli_command_info_dispose(GObject* obj)
+{
+	CLICommandInfoClass* class = CLI_COMMAND_INFO_GET_CLASS(obj);
+	class->_dispose(obj);
 
-G_DEFINE_TYPE(CLICommandInfo, cli_command_info, G_TYPE_OBJECT)
+	G_OBJECT_CLASS(cli_command_info_parent_class)->dispose(obj);
+}
 
 static void
 cli_command_info_class_init(CLICommandInfoClass* class)
 {
+	GObjectClass* baseClass = G_OBJECT_CLASS(class);
 
+	class->_execute = NULL;
+	class->_handleInput = NULL;
+	class->_isValid = NULL;
+	class->_dispose = NULL;
+	class->_finalize = NULL;
 }
 
 static void
@@ -47,62 +52,59 @@ cli_command_info_init(CLICommandInfo* this)
 
 }
 
-CLICommandInfo* cli_command_info_new(GString* command, 
-									int commandType,
-									int argsCount, 
-									int order, 
-									void (*action)(CLICommandInfo* com))
-{
-	CLICommandInfo* this;
-	this = g_object_new(CLI_TYPE_COMMAND_INFO, NULL);
-
-	this->_command = command;
-	this->_argsCount = argsCount;
-	this->_order = order;
-
-	this->_args = g_ptr_array_new();
-	this->_action = action;
-
-	return this;
-}
-
-GString* cli_command_info_get_command(CLICommandInfo* this)
-{
-	return this->_command;
-}
-
-void cli_command_info_set_command(CLICommandInfo* this, GString* value)
-{
-	this->_command = value;
-}
-
-int cli_command_info_get_args_count(CLICommandInfo* this)
-{
-	return this->_argsCount;
-}
-
-void cli_command_info_set_args_count(CLICommandInfo* this, int value)
-{
-	this->_argsCount = value;
-}
-
-int cli_command_info_get_order(CLICommandInfo* this)
-{
-	return this->_order;
-}
-
-void cli_command_info_set_order(CLICommandInfo* this, int value)
-{
-	this->_order = value;
-}
-
-GPtrArray* cli_command_info_get_args(CLICommandInfo* this)
-{
-	return this->_args;
-}
-
 void cli_command_info_process_command(CLICommandInfo* this)
 {
-	if(this->_action != NULL)
-		this->_action(this);
+	g_assert(this);
+	CLICommandInfoClass* class = CLI_COMMAND_INFO_GET_CLASS(this);
+
+	gboolean isValid = cli_command_info_is_valid(this);
+	if(!isValid)
+	{
+		g_print("%s\n", class->_standardErrorMSG->str);
+		return;
+	}
+
+	g_assert(class->_execute);
+	class->_execute(this);
+}
+
+void 
+cli_command_info_handle_input(CLICommandInfo* this, GString* arg, gboolean* breakInput)
+{
+	g_assert(this);
+	CLICommandInfoClass* class = CLI_COMMAND_INFO_GET_CLASS(this);
+
+	g_assert(class->_handleInput);
+	class->_handleInput(this, arg, breakInput);	
+}
+
+
+gboolean
+cli_command_info_is_valid(CLICommandInfo* this)
+{
+	g_assert(this);
+	CLICommandInfoClass* class = CLI_COMMAND_INFO_GET_CLASS(this);
+
+	g_assert(class->_isValid);
+	return class->_isValid(this);	
+}
+
+gint
+cli_command_info_get_input_state(CLICommandInfo* this)
+{
+	g_assert(this);
+	
+	CLICommandInfoPrivate* data = cli_command_info_get_instance_private(this);
+
+	return data->_inputState;
+}
+
+void
+cli_command_info_set_input_state(CLICommandInfo* this, gint state)
+{
+	g_assert(this);
+
+	CLICommandInfoPrivate* data = cli_command_info_get_instance_private(this);
+
+	data->_inputState = state;	
 }
