@@ -53,31 +53,31 @@ model_project_set_property(GObject* obj,
 
     switch(propID)
     {
+        case MODEL_PROJECT_ACTIVE_BUILD_CONFIG_PROP:
+        {
+            const gchar* val = g_value_get_string(value);
+            
+            GString* stringValue = NULL;
+            if(val != NULL)
+                stringValue = g_string_new(g_strdup(val));
+
+            model_project_set_active_build_config(this, stringValue);
+            break;
+        }
+        case MODEL_PROJECT_UNIT_TEST_PROJ_PROP:
+        {
+            const gchar* val = g_value_get_string(value);
+
+            GString* stringValue = NULL;
+            if(val != NULL)
+                stringValue = g_string_new(g_strdup(val));
+
+            model_project_set_unit_tests_project_location(this, stringValue);
+            break;
+        }
+
         default:
         {
-            case MODEL_PROJECT_ACTIVE_BUILD_CONFIG_PROP:
-            {
-                const gchar* val = g_value_get_string(value);
-                
-                GString* stringValue = NULL;
-                if(val != NULL)
-                    stringValue = g_string_new(g_strdup(val));
-
-                model_project_set_active_build_config(this, stringValue);
-                break;
-            }
-            case MODEL_PROJECT_UNIT_TEST_PROJ_PROP:
-            {
-                const gchar* val = g_value_get_string(value);
-
-                GString* stringValue = NULL;
-                if(val != NULL)
-                    stringValue = g_string_new(g_strdup(val));
-
-                model_project_set_unit_tests_project_location(this, stringValue);
-                break;
-            }
-
             G_OBJECT_WARN_INVALID_PROPERTY_ID(obj, propID, psSpec);
             break;
         }
