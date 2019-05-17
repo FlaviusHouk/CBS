@@ -4,7 +4,7 @@ LIB_LINK = $(shell pkg-config --libs glib-2.0 gmodule-2.0 gobject-2.0 libxml-2.0
 $cc = gcc
 
 Main: main.o CLI.o helper.o CLICommandInfo.o CLIAddDepCommand.o CLIAddFileCommand.o CLIAddIncludeCommand.o CLIBuildCommand.o CLICreateCommand.o CLIDeleteDepCommand.o CLIDeleteFileCommand.o CLIDeleteIncludeCommand.o CLIHelpCommand.o CLITestCommand.o libcbs.so
-	cc -g  main.o helper.o CLI.o CLICommandInfo.o CLIAddDepCommand.o CLIAddFileCommand.o CLIAddIncludeCommand.o CLIBuildCommand.o CLICreateCommand.o CLIDeleteDepCommand.o CLIDeleteFileCommand.o CLIDeleteIncludeCommand.o CLIHelpCommand.o CLITestCommand.o -Wl,/home/Flavius/C/CBS/CBS/old_build/libcbs.so -L/home/Flavius/C/CBS/CBS/old_build/ $(LIB_LINK) -o cbs
+	cc -g  main.o helper.o CLI.o CLICommandInfo.o CLIAddDepCommand.o CLIAddFileCommand.o CLIAddIncludeCommand.o CLIBuildCommand.o CLICreateCommand.o CLIDeleteDepCommand.o CLIDeleteFileCommand.o CLIDeleteIncludeCommand.o CLIHelpCommand.o CLITestCommand.o -lcbs $(LIB_LINK) -o cbs
 
 main.o:
 	cc -g -c main.c -o main.o $(LIB_INCLUDE)
