@@ -85,7 +85,7 @@ cli_create_command_handle_input(CLICommandInfo* command, GString* input)
         {
             case CREATE_COMMAND_START:
             {
-                if(this->_name != NULL)
+                if(this->_name == NULL)
                 {
                     this->_name = input;
                     break;
