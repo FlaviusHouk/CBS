@@ -73,11 +73,13 @@ cli_delete_file_command_delete_file(gpointer fileName, gpointer project)
 	GString* fileLoc = (GString*)fileName;
 	ModelProject* proj = (ModelProject*) project;
 
+    GString* copy = g_string_new(fileLoc->str);
 	ModelSourceFile* file = model_source_file_new(fileLoc);
 
 	model_project_remove_source_file(proj, file);
 
-	g_print("%s was removed.\n", fileLoc->str);
+	g_print("%s was removed.\n", copy->str);
+    g_string_free(copy, TRUE);
 }
 
 ///Delete command handler

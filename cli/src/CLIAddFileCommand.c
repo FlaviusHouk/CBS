@@ -45,7 +45,7 @@ cli_add_file_command_handle_input(CLICommandInfo* command, GString* input)
         {
             case CLI_ADD_FILE_COMMAND_START:
             {
-                if(this->_projectLoc != NULL)
+                if(this->_projectLoc == NULL)
                     this->_projectLoc = input;
                 else
                     g_ptr_array_add(this->_files, input);
