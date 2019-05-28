@@ -12,6 +12,7 @@
 typedef char** (*TestDiscoverer)(void);
 typedef void** (*StateGenerator)(void* key);
 typedef void (*test)(void** state);
+typedef void (*cleanUp)(void);
 
 typedef struct _ModelTestRunner
 {
@@ -139,6 +140,12 @@ model_test_runner_execute_tests(ModelTestRunner* this, GString* loc)
                                         cMockaTests->len, 
                                         NULL, 
                                         NULL);
+            }
+
+            cleanUp cleaner;
+            if(g_module_symbol(tests, "clean_up", (gpointer *)&cleaner))
+            {
+                cleaner();
             }
         }
 

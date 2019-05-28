@@ -636,6 +636,12 @@ get_available_tests(void)
     return (char**)toRet->pdata;
 }
 
+void
+clean_up()
+{
+    g_hash_table_destroy(table);
+}
+
 void**
 get_states_for_test(void* key)
 {
