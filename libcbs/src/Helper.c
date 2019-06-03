@@ -201,8 +201,29 @@ xml_text_writer_write_ptr_array(xmlTextWriter* writer,
     return rc >= 0;
 }
 
+gboolean
+xml_text_writer_write_hash_table(xmlTextWriter* writer,
+                                 char* tagName, 
+                                 GHashTable* table,
+                                 void (*content_writer)(gpointer, gpointer, gpointer))
+{
+    int rc = -1;
+    rc = xmlTextWriterStartElement(writer, BAD_CAST tagName);
+    
+    if(rc < 0)
+        return FALSE;
+
+    g_hash_table_foreach(table, 
+                         content_writer,
+                         writer);
+
+    rc = xmlTextWriterEndElement(writer);
+    
+    return rc >= 0;
+}
+
 void
-xml_node_read_ptr_array(xmlNodePtr node,
+xml_node_read_collection(xmlNodePtr node,
                         char* collectionName,
                         char* elementName,
                         void (*deserializer)(xmlNodePtr, gpointer),
@@ -234,4 +255,55 @@ xml_node_read_g_string(xmlNodePtr node, char* name)
         node = node->next;
 
     return g_string_new(xmlNodeGetContent(node));
+}
+
+///Converting input for right xml encoding.
+xmlChar*
+xml_convert_input(char* string, char* enc)
+{
+    xmlChar *out;
+    int ret;
+    int size;
+    int out_size;
+    int temp;
+    xmlCharEncodingHandlerPtr handler;
+
+    if (string == NULL)
+        return NULL;
+
+    handler = xmlFindCharEncodingHandler(enc);
+
+    if (!handler) {
+        printf("ConvertInput: no encoding handler found for '%s'\n",
+               enc ? enc : "");
+        return 0;
+    }
+
+    size = (int) strlen(string) + 1;
+    out_size = size * 2 - 1;
+    out = (unsigned char *) xmlMalloc((size_t) out_size);
+
+    if (out != 0) {
+        temp = size - 1;
+        ret = handler->input(out, &out_size, (const xmlChar *) string, &temp);
+        if ((ret < 0) || (temp - size + 1)) {
+            if (ret < 0) {
+                printf("ConvertInput: conversion wasn't successful.\n");
+            } else {
+                printf
+                    ("ConvertInput: conversion wasn't successful. converted: %i octets.\n",
+                     temp);
+            }
+
+            xmlFree(out);
+            out = 0;
+        } else {
+            out = (unsigned char *) xmlRealloc(out, out_size + 1);
+            out[out_size] = 0;  /*null terminating out */
+        }
+    } else {
+        printf("ConvertInput: no mem\n");
+    }
+
+    return out;
 }

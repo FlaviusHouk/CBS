@@ -66,8 +66,14 @@ xml_text_writer_write_ptr_array(xmlTextWriter* writer,
                                  GPtrArray* array,
                                  void (*content_writer)(gpointer, gpointer));
 
+gboolean
+xml_text_writer_write_hash_table(xmlTextWriter* writer,
+                                 char* tagName, 
+                                 GHashTable* table,
+                                 void (*content_writer)(gpointer, gpointer, gpointer));
+
 void
-xml_node_read_ptr_array(xmlNodePtr node,
+xml_node_read_collection(xmlNodePtr node,
                         char* collectionName,
                         char* elementName,
                         void (*deserializer)(xmlNodePtr, gpointer),
@@ -75,3 +81,6 @@ xml_node_read_ptr_array(xmlNodePtr node,
 
 GString*
 xml_node_read_g_string(xmlNodePtr node, char* name);
+
+xmlChar*
+xml_convert_input(char* string, char* enc);

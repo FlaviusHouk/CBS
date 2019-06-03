@@ -35,6 +35,7 @@ struct _ModelProject
     GPtrArray* _headersFolders;
     GPtrArray* _dependencies;
     GPtrArray* _buildConfigs;
+    GHashTable* _projData;
     GString* _activeConfiguration;
     GString* _unitTestsLocation;
 };
@@ -204,6 +205,12 @@ model_project_dispose(GObject* obj)
         this->_buildConfigs = NULL;
     }
 
+    if(this->_projData)
+    {
+        g_hash_table_destroy(this->_projData);
+        this->_projData = NULL;
+    }
+
     G_OBJECT_CLASS(model_project_parent_class)->dispose(obj);
 }
 
@@ -260,6 +267,7 @@ model_project_init(ModelProject* this)
     this->_headersFolders = g_ptr_array_new_with_free_func(g_string_clean_up);
     this->_dependencies = g_ptr_array_new_with_free_func(g_object_unref);
     this->_buildConfigs = g_ptr_array_new_with_free_func(g_object_unref);
+    this->_projData = g_hash_table_new(g_str_hash, g_str_equal);
 }
 
 ModelProject* 
@@ -316,33 +324,50 @@ model_project_read_build_config(xmlNodePtr node, gpointer user_data)
 }
 
 static void
+model_project_read_data_entry(xmlNodePtr node, gpointer user_data)
+{
+    ModelProject* this = MODEL_PROJECT(user_data);
+
+    gchar* key = xmlGetProp(node, "Key");
+    gchar* value = xmlGetProp(node, "Value");
+
+    g_hash_table_insert(this->_projData, key, value);
+}
+
+static void
 model_project_read(xmlNodePtr root, ModelProject* this)
 {
     xmlNodePtr node = root->children;
 
-    xml_node_read_ptr_array(node,
+    xml_node_read_collection(node,
                             "SourceFiles",
                             "SourceFile",
                             model_project_read_source_file,
                             this);
 
-    xml_node_read_ptr_array(node,
+    xml_node_read_collection(node,
                             "IncludeFolders",
                             "string",
                             model_project_read_header,
                             this);
 
-    xml_node_read_ptr_array(node,
+    xml_node_read_collection(node,
                             "SystemDependencies",
                             "Dependency",
                             model_project_read_project_dependency,
                             this);
 
-    xml_node_read_ptr_array(node,
+    xml_node_read_collection(node,
                             "BuildConfigs",
                             "Configuration",
                             model_project_read_build_config,
                             this);
+
+    xml_node_read_collection(node,
+                             "ProjectData",
+                             "DataEntry",
+                             model_project_read_data_entry,
+                             this);
 
     this->_activeConfiguration = xml_node_read_g_string(node, "ActiveBuildConfig");
     this->_unitTestsLocation = xml_node_read_g_string(node, "UnitTestsLocation");
@@ -362,58 +387,6 @@ model_project_read_project(ModelProject* this)
 
     xmlFreeDoc(doc);
 }
-
-///Converting input for right xml encoding. Should be moved into helpers file
-static xmlChar*
-xml_convert_input(char* string, char* enc)
-{
-    xmlChar *out;
-    int ret;
-    int size;
-    int out_size;
-    int temp;
-    xmlCharEncodingHandlerPtr handler;
-
-    if (string == NULL)
-        return NULL;
-
-    handler = xmlFindCharEncodingHandler(enc);
-
-    if (!handler) {
-        printf("ConvertInput: no encoding handler found for '%s'\n",
-               enc ? enc : "");
-        return 0;
-    }
-
-    size = (int) strlen(string) + 1;
-    out_size = size * 2 - 1;
-    out = (unsigned char *) xmlMalloc((size_t) out_size);
-
-    if (out != 0) {
-        temp = size - 1;
-        ret = handler->input(out, &out_size, (const xmlChar *) string, &temp);
-        if ((ret < 0) || (temp - size + 1)) {
-            if (ret < 0) {
-                printf("ConvertInput: conversion wasn't successful.\n");
-            } else {
-                printf
-                    ("ConvertInput: conversion wasn't successful. converted: %i octets.\n",
-                     temp);
-            }
-
-            xmlFree(out);
-            out = 0;
-        } else {
-            out = (unsigned char *) xmlRealloc(out, out_size + 1);
-            out[out_size] = 0;  /*null terminating out */
-        }
-    } else {
-        printf("ConvertInput: no mem\n");
-    }
-
-    return out;
-}
-
 
 static void
 model_project_write_source_files(gpointer obj, gpointer data)
@@ -452,6 +425,20 @@ model_project_write_build_configs(gpointer obj, gpointer data)
 }
 
 static void
+model_project_write_data(gpointer key, gpointer value, gpointer data)
+{
+    xmlTextWriterPtr writer = (xmlTextWriterPtr)data;
+
+    gchar* strKey = (gchar*)key;
+    gchar* strVal = (gchar*)value;
+
+    xmlTextWriterStartElement(writer, "DataEntry");
+    xmlTextWriterWriteAttribute(writer, "Key", strKey);
+    xmlTextWriterWriteAttribute(writer, "Value", strVal);
+    xmlTextWriterEndElement(writer);
+}
+
+static void
 model_project_write_project(ModelProject* this)
 {
     int rc;
@@ -464,7 +451,6 @@ model_project_write_project(ModelProject* this)
     rc = xmlTextWriterStartDocument(writer, NULL, "UTF-8", NULL);
     g_assert(rc >= 0);
 
-    //tmp = xml_convert_input("Project", "ASCII");
     rc = xmlTextWriterStartElement(writer, "Project");
     g_assert(rc >= 0);
 
@@ -487,6 +473,11 @@ model_project_write_project(ModelProject* this)
                                    "BuildConfigs", 
                                    this->_buildConfigs, 
                                    model_project_write_build_configs);
+
+    xml_text_writer_write_hash_table(writer,
+                                     "ProjectData",
+                                     this->_projData,
+                                     model_project_write_data);
 
     gchar* activeConf = NULL;
     if(this->_activeConfiguration == NULL)
