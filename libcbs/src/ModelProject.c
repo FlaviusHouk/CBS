@@ -274,118 +274,78 @@ model_project_new(GString* location)
 }
 
 static void
+model_project_read_source_file(xmlNodePtr node, gpointer user_data)
+{
+    ModelProject* this = MODEL_PROJECT(user_data);
+    ModelSourceFile* file = model_source_file_new_from_xml(node);
+        
+    if(file != NULL)
+        g_ptr_array_add(this->_sourceFiles, file);
+}
+
+static void
+model_project_read_header(xmlNodePtr node, gpointer user_data)
+{
+    ModelProject* this = MODEL_PROJECT(user_data);
+    GString* data = g_string_new(xmlNodeGetContent(node));
+    g_ptr_array_add(this->_headersFolders, data);
+}
+
+static void
+model_project_read_project_dependency(xmlNodePtr node, gpointer user_data)
+{
+    ModelProject* this = MODEL_PROJECT(user_data);
+
+    ModelProjectDependency* dep = model_project_dependency_new_from_xml(node);
+
+    if(dep != NULL)
+    {
+        model_project_dependency_set_owner(dep, this);
+        g_ptr_array_add(this->_dependencies, dep);
+    }
+}
+
+static void
+model_project_read_build_config(xmlNodePtr node, gpointer user_data)
+{
+    ModelProject* this = MODEL_PROJECT(user_data);
+    ModelProjectConfiguration* conf = model_project_configuration_new_from_xml(node);
+
+    if(conf != NULL)
+        g_ptr_array_add(this->_buildConfigs, conf);
+}
+
+static void
 model_project_read(xmlNodePtr root, ModelProject* this)
 {
     xmlNodePtr node = root->children;
 
-    //read SourceFiles list
-    while(node != NULL && strcmp(node->name, "SourceFiles") != 0)
-    {
-        node = node->next;
-    }
+    xml_node_read_ptr_array(node,
+                            "SourceFiles",
+                            "SourceFile",
+                            model_project_read_source_file,
+                            this);
 
-    xmlNodePtr sourceFiles = node->children;
+    xml_node_read_ptr_array(node,
+                            "IncludeFolders",
+                            "string",
+                            model_project_read_header,
+                            this);
 
-    while(sourceFiles != NULL)
-    {
-        while(sourceFiles != NULL && strcmp(sourceFiles->name, "SourceFile") != 0)
-        {
-            sourceFiles = sourceFiles->next;
-        }
+    xml_node_read_ptr_array(node,
+                            "SystemDependencies",
+                            "Dependency",
+                            model_project_read_project_dependency,
+                            this);
 
-        ModelSourceFile* file = model_source_file_new_from_xml(sourceFiles);
-        
-        if(file != NULL)
-            g_ptr_array_add(this->_sourceFiles, file);
+    xml_node_read_ptr_array(node,
+                            "BuildConfigs",
+                            "Configuration",
+                            model_project_read_build_config,
+                            this);
 
-        if(sourceFiles != NULL)
-            sourceFiles = sourceFiles->next;
-    }
-
-    //read IncludeForders list
-    while(node != NULL && strcmp(node->name, "IncludeFolders") != 0)
-    {
-        node = node->next;
-    }
-
-    xmlNodePtr includeFolder = node->children;
-
-    while(includeFolder != NULL)
-    {
-        while(includeFolder != NULL && strcmp(includeFolder->name, "string") != 0)
-        {
-            includeFolder = includeFolder->next;
-        }
-
-        GString* data = g_string_new(xmlNodeGetContent(includeFolder));
-        g_ptr_array_add(this->_headersFolders, data);
-        includeFolder = includeFolder->next;
-    }
-
-    //read Dependencies list
-    while(node != NULL && strcmp(node->name, "SystemDependencies") != 0)
-    {
-        node = node->next;
-    }
-
-    xmlNodePtr deps = node->children;
-
-    while(deps != NULL)
-    {
-        while(deps != NULL && strcmp(deps->name, "Dependency") != 0)
-        {
-            deps = deps->next;
-        }
-
-        ModelProjectDependency* dep = model_project_dependency_new_from_xml(deps);
-
-        if(dep != NULL)
-        {
-            model_project_dependency_set_owner(dep, this);
-            g_ptr_array_add(this->_dependencies, dep);
-        }
-
-        deps = deps->next;
-    }
-
-    //read Build configurations
-    while(node != NULL && strcmp(node->name, "BuildConfigs") != 0)
-    {
-        node = node->next;
-    }
-
-    xmlNodePtr configs = node->children;
-
-    while(configs != NULL)
-    {
-        while(configs != NULL && strcmp(configs->name, "Configuration") != 0)
-        {
-            configs = configs->next;
-        }
-
-        ModelProjectConfiguration* conf = model_project_configuration_new_from_xml(configs);
-
-        if(conf != NULL)
-            g_ptr_array_add(this->_buildConfigs, conf);
-
-        configs = configs->next;
-    }
-
-    //read active build definition
-    while(node != NULL && strcmp(node->name, "ActiveBuildConfig") != 0)
-    {
-        node = node->next;
-    }
-
-    this->_activeConfiguration = g_string_new(xmlNodeGetContent(node));
-
-    //read path to project with unit tests
-    while(node != NULL && strcmp(node->name, "UnitTestsLocation") != 0)
-    {
-        node = node->next;
-    }
-
-    this->_unitTestsLocation = g_string_new(xmlNodeGetContent(node));
+    this->_activeConfiguration = xml_node_read_g_string(node, "ActiveBuildConfig");
+    this->_unitTestsLocation = xml_node_read_g_string(node, "UnitTestsLocation");
 }
 
 static void
@@ -496,7 +456,6 @@ model_project_write_project(ModelProject* this)
 {
     int rc;
     xmlTextWriterPtr writer;
-    xmlChar *tmp = NULL;
     xmlDocPtr doc;
 
     writer = xmlNewTextWriterDoc(&doc, 0);
@@ -508,52 +467,26 @@ model_project_write_project(ModelProject* this)
     //tmp = xml_convert_input("Project", "ASCII");
     rc = xmlTextWriterStartElement(writer, "Project");
     g_assert(rc >= 0);
-    if(tmp)
-        g_free(tmp);
 
-    //write files collection
-    rc = xmlTextWriterStartElement(writer, BAD_CAST "SourceFiles");
-    g_assert(rc >= 0);
+    xml_text_writer_write_ptr_array(writer, 
+                                    "SourceFiles", 
+                                    this->_sourceFiles, 
+                                    model_project_write_source_files);
 
-    g_ptr_array_foreach(this->_sourceFiles, 
-                        model_project_write_source_files,
-                        writer);
+    xml_text_writer_write_ptr_array(writer, 
+                                   "IncludeFolders", 
+                                   this->_headersFolders, 
+                                   model_project_write_include_folders);    
 
-    rc = xmlTextWriterEndElement(writer);
-    g_assert(rc >= 0);
+    xml_text_writer_write_ptr_array(writer, 
+                                   "SystemDependencies", 
+                                   this->_dependencies, 
+                                   model_project_write_system_dependencies);
 
-    //write include folders collection
-    rc = xmlTextWriterStartElement(writer, BAD_CAST "IncludeFolders");
-    g_assert(rc >= 0);
-
-    g_ptr_array_foreach(this->_headersFolders, 
-                        model_project_write_include_folders,
-                        writer);
-
-    rc = xmlTextWriterEndElement(writer);
-    g_assert(rc >= 0);
-
-    //write dependencies collection
-    rc = xmlTextWriterStartElement(writer, BAD_CAST "SystemDependencies");
-    g_assert(rc >= 0);
-
-    g_ptr_array_foreach(this->_dependencies, 
-                        model_project_write_system_dependencies,
-                        writer);
-
-    rc = xmlTextWriterEndElement(writer);
-    g_assert(rc >= 0);
-
-    //write build configuration collection
-    rc = xmlTextWriterStartElement(writer, BAD_CAST "BuildConfigs");
-    g_assert(rc >= 0);
-
-    g_ptr_array_foreach(this->_buildConfigs, 
-                        model_project_write_build_configs,
-                        writer);
-
-    rc = xmlTextWriterEndElement(writer);
-    g_assert(rc >= 0);
+    xml_text_writer_write_ptr_array(writer, 
+                                   "BuildConfigs", 
+                                   this->_buildConfigs, 
+                                   model_project_write_build_configs);
 
     gchar* activeConf = NULL;
     if(this->_activeConfiguration == NULL)
@@ -561,8 +494,7 @@ model_project_write_project(ModelProject* this)
     else
         activeConf = this->_activeConfiguration->str;
 
-    rc = xmlTextWriterWriteElement(writer, "ActiveBuildConfig", activeConf);
-    g_assert(rc >= 0);
+    xml_text_writer_write_string(writer, "ActiveBuildConfig", activeConf);
 
     gchar* unitTests = NULL;
     if(this->_unitTestsLocation == NULL)
@@ -570,8 +502,7 @@ model_project_write_project(ModelProject* this)
     else
         unitTests = this->_unitTestsLocation->str;
 
-    rc = xmlTextWriterWriteElement(writer, "UnitTestsLocation", unitTests);
-    g_assert(rc >= 0);
+    xml_text_writer_write_string(writer, "UnitTestsLocation", unitTests);
 
     rc = xmlTextWriterEndDocument(writer);
     g_assert(rc >= 0);

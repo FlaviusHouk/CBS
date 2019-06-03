@@ -25,22 +25,6 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #include <sys/types.h>
 #include <sys/wait.h>
 
-gboolean g_string_compare(GString* str1, GString* str2)
-{
-    if(str1->len != str2->len)
-        return FALSE;
-
-    return strncmp(str1->str, str2->str, str1->len);
-}
-
-gboolean g_string_starts_with(GString* str, GString* startsWith)
-{
-    if(startsWith->len > str->len)
-        return FALSE;
-
-    return strncmp(str->str, startsWith->str, startsWith->len);
-}
-
 gchar* g_str_substr(const gchar* src, int offset, int len)
 {
     g_assert(src);
@@ -176,4 +160,78 @@ g_string_clone(GString* string)
     g_assert(string);
 
     return g_string_new(g_strdup(string->str));
+}
+
+gboolean
+xml_text_writer_write_string(xmlTextWriter* writer, char* tagName, char* value)
+{
+    int rc = -1;
+    rc = xmlTextWriterWriteElement(writer, BAD_CAST tagName, value);
+    return rc >= 0;
+}
+
+gboolean
+xml_text_writer_write_int(xmlTextWriter* writer, char* tagName, int value)
+{
+    int rc = -1;
+    char num[16];
+    sprintf(num, "%d", value);
+    rc = xmlTextWriterWriteElement(writer, BAD_CAST tagName, num);
+    return rc >= 0;
+}
+
+gboolean
+xml_text_writer_write_ptr_array(xmlTextWriter* writer,
+                                 char* tagName, 
+                                 GPtrArray* array,
+                                 void (*content_writer)(gpointer, gpointer))
+{
+    int rc = -1;
+    rc = xmlTextWriterStartElement(writer, BAD_CAST tagName);
+    
+    if(rc < 0)
+        return FALSE;
+
+    g_ptr_array_foreach(array, 
+                        content_writer,
+                        writer);
+
+    rc = xmlTextWriterEndElement(writer);
+    
+    return rc >= 0;
+}
+
+void
+xml_node_read_ptr_array(xmlNodePtr node,
+                        char* collectionName,
+                        char* elementName,
+                        void (*deserializer)(xmlNodePtr, gpointer),
+                        gpointer user_data)
+{
+    while(node != NULL && strcmp(node->name, collectionName) != 0)
+        node = node->next;
+
+    xmlNodePtr arrayItems = node->children;
+
+    while(arrayItems != NULL)
+    {
+        while(arrayItems != NULL && strcmp(arrayItems->name, elementName) != 0)
+        {
+            arrayItems = arrayItems->next;
+        }
+
+        deserializer(arrayItems, user_data);
+
+        if(arrayItems != NULL)
+            arrayItems = arrayItems->next;
+    }
+}
+
+GString*
+xml_node_read_g_string(xmlNodePtr node, char* name)
+{
+    while(node != NULL && strcmp(node->name, name) != 0)
+        node = node->next;
+
+    return g_string_new(xmlNodeGetContent(node));
 }

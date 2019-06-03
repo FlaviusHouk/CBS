@@ -19,12 +19,8 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #include "stdio.h"
 #include "glib.h"
 
-///Extension for GString comparison (will be removed)
-gboolean g_string_compare(GString* str1, GString* str2);
-
-///Extension for GString to check that string (str) starts with 
-///something(startsWith)
-gboolean g_string_starts_with(GString* str, GString* startsWith);
+#include "libxml/xmlreader.h"
+#include "libxml/xmlwriter.h"
 
 ///Extension for C str to make substrings (allocates new memory)
 ///src - source str
@@ -57,3 +53,25 @@ g_string_clean_up(void* string);
 
 GString*
 g_string_clone(GString* string);
+
+gboolean
+xml_text_writer_write_string(xmlTextWriter* writer, char* tagName, char* value);
+
+gboolean
+xml_text_writer_write_int(xmlTextWriter* writer, char* tagName, int value);
+
+gboolean
+xml_text_writer_write_ptr_array(xmlTextWriter* writer,
+                                 char* tagName, 
+                                 GPtrArray* array,
+                                 void (*content_writer)(gpointer, gpointer));
+
+void
+xml_node_read_ptr_array(xmlNodePtr node,
+                        char* collectionName,
+                        char* elementName,
+                        void (*deserializer)(xmlNodePtr, gpointer),
+                        gpointer user_data);
+
+GString*
+xml_node_read_g_string(xmlNodePtr node, char* name);
