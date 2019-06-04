@@ -232,6 +232,9 @@ xml_node_read_collection(xmlNodePtr node,
     while(node != NULL && strcmp(node->name, collectionName) != 0)
         node = node->next;
 
+    if(!node)
+        return;
+
     xmlNodePtr arrayItems = node->children;
 
     while(arrayItems != NULL)
