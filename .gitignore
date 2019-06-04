@@ -3,10 +3,15 @@
 *.elf
 *.so
 
+config.h
+
 libcbs/bin
 libcbs/obj
 
 cli/bin
 cli/obj
+
+libcbs_tests/bin
+libcbs_tests/obj
 
 .vscode

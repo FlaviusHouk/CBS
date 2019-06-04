@@ -150,6 +150,13 @@ model_project_configuration_equals(const void* first, const void* second);
 GString*
 model_project_configuration_build_config_string(ModelProjectConfiguration* this);
 
+///Adds macro to macros collection.
+///If there already was such macro it won't be added.
+///Passed string should not be cleaned.
+void
+model_project_configuration_define_macro(ModelProjectConfiguration* this,
+                                         GString* macro);
+
 G_END_DECLS
 
 #endif

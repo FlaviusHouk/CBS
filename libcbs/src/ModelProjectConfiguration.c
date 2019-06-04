@@ -557,8 +557,7 @@ model_project_configuration_append_macros(gpointer obj, gpointer data)
     GString* macro = (GString*)obj;
     GString* string = (GString*)data;
 
-    g_string_append(string, macro->str);
-    g_string_append(string, g_strdup(" "));
+    g_string_append_printf(string, "-D%s ", macro->str);
 }
 
 GString*
@@ -679,4 +678,21 @@ model_project_configuration_build_config_string(ModelProjectConfiguration* this)
 
         return toRet;
     }
+}
+
+void
+model_project_configuration_define_macro(ModelProjectConfiguration* this,
+                                         GString* macro)
+{
+    g_assert(this);
+    g_assert(macro);
+
+    gint index;
+    if(g_ptr_array_find_with_equal_func(this->_macrosToDefine, 
+                                        macro, 
+                                        (GEqualFunc)g_string_equal, 
+                                        &index))
+        return;
+
+    g_ptr_array_add(this->_macrosToDefine, macro);
 }

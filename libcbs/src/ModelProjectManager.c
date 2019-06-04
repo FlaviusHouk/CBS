@@ -23,6 +23,8 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "ModelTestRunner.h"
 
+#include "glib/gstdio.h"
+
 struct _ModelProjectManager
 {
     GObject parent_object;
@@ -398,6 +400,42 @@ model_project_manager_process_code_file(ModelSourceFile* file,
     return objFile;
 }
 
+static void
+model_project_manager_generate_config_header(ModelProject* toBuild)
+{
+    GHashTable* data = model_project_get_data(toBuild);
+
+    if(g_hash_table_size(data) > 0)
+    {
+        GError *error = NULL;
+        GString* configHeader = model_project_manager_get_project_dir(toBuild, "headers");
+
+        g_string_append(configHeader, "/config.h");
+
+        if(g_file_test(configHeader->str, G_FILE_TEST_EXISTS))
+            g_remove(configHeader->str);
+
+        GString* headerContent = g_string_new("");
+        GHashTableIter iter;
+        gpointer key, value;
+        
+        g_hash_table_iter_init(&iter, data);
+        while(g_hash_table_iter_next(&iter, &key, &value))
+            g_string_append_printf(headerContent, "#define %s \"%s\"\n", (gchar*)key, (gchar*)value);
+
+        g_file_set_contents(configHeader->str,
+                            headerContent->str,
+                            headerContent->len,
+                            &error);
+
+        g_string_free(configHeader, TRUE);
+        g_string_free(headerContent, TRUE);
+
+        ModelProjectConfiguration* buildConfig = model_project_get_build_config(toBuild, NULL);
+        model_project_configuration_define_macro(buildConfig, g_string_new("_HAVE_CONFIG_H_"));
+    }
+}
+
 void
 model_project_manager_build_project(ModelProjectManager* this, 
                                     ModelProject* toBuild, 
@@ -415,6 +453,8 @@ model_project_manager_build_project(ModelProjectManager* this,
 
     if(configName != NULL)
         model_project_set_active_build_config(toBuild, configName);
+
+    model_project_manager_generate_config_header(toBuild);
 
     ModelProjectConfiguration* config = model_project_get_build_config(toBuild, configName);
 

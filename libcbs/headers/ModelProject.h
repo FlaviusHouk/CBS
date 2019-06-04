@@ -145,6 +145,11 @@ model_project_get_unit_tests_project_location(ModelProject* this);
 void
 model_project_set_unit_tests_project_location(ModelProject* this, GString* location);
 
+///Getter for data hash table
+///Increments reference counter for GHashTable.
+GHashTable*
+model_project_get_data(ModelProject* this);
+
 G_END_DECLS
 
 #endif

@@ -804,3 +804,13 @@ model_project_set_unit_tests_project_location(ModelProject* this, GString* locat
 
     this->_unitTestsLocation = location;
 }
+
+GHashTable*
+model_project_get_data(ModelProject* this)
+{
+    g_assert(this);
+
+    g_hash_table_ref(this->_projData);
+
+    return this->_projData;
+}
