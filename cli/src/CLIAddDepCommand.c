@@ -59,18 +59,18 @@ cli_add_dep_command_handle_input(CLICommandInfo* command, GString* input)
         {
             case CLI_ADD_DEP_COMMAND_START:
             {
-                if(this->_projLoc != NULL)
+                if(this->_projLoc == NULL)
                 {
                     this->_projLoc = input;
                     break;
                 }
-                else if (this->_depType != NULL)
+                else if (this->_depType == NULL)
                 {
                     this->_depType = (gint*)g_malloc(sizeof(gint));
                     *(this->_depType) = atoi(input->str);
                     break;
                 }
-                else if(this->_depRepresentation != NULL)
+                else if(this->_depRepresentation == NULL)
                 {
                     this->_depRepresentation = input;
                     break;
