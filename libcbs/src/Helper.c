@@ -25,6 +25,8 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include "gio/gio.h"
+
 gchar* g_str_substr(const gchar* src, int offset, int len)
 {
     g_assert(src);
@@ -309,4 +311,110 @@ xml_convert_input(char* string, char* enc)
     }
 
     return out;
+}
+
+void
+copy_directory_recursive(GString* source,
+                         GString* dest,
+                         GPtrArray* toSkip,
+                         GError** error)
+{
+    GError* innerError = NULL;
+
+    if(!g_file_test(source->str, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_DIR))
+       return;
+
+    if(!g_file_test(dest->str, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_DIR))
+        g_mkdir_with_parents(dest->str, 8*8*7 + 8*6 + 4);
+
+    GFile* file = g_file_new_for_path(source->str);
+    GFileEnumerator* enumerator = g_file_enumerate_children(file,
+                                                            "*",
+                                                            G_FILE_QUERY_INFO_NONE,
+                                                            NULL,
+                                                            &innerError);
+
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
+
+    GFileInfo* info = NULL;
+    while(g_file_enumerator_iterate(enumerator, &info, NULL, NULL, &innerError))
+    {
+        if(info == NULL || innerError != NULL)
+        {
+            if(innerError != NULL)
+                g_propagate_error(error, innerError);
+
+            break;
+        }
+
+        gboolean skip = FALSE;
+        const gchar* fileName = g_file_info_get_name(info);
+        if(toSkip)
+        {
+            for(int i = 0; i<toSkip->len; i++)
+            {
+                gchar* condition = (gchar*)toSkip->pdata[i];
+                if(g_str_has_prefix(fileName, condition))
+                {
+                    skip = TRUE;
+                    break;
+                }
+            }
+
+            if(skip)
+                continue;
+        }
+
+        GString* recSource = g_string_clone(source);
+        g_string_append_printf(recSource, "/%s", fileName);
+
+        GString* recDest = g_string_clone(dest);
+        g_string_append_printf(recDest, "/%s", fileName);
+
+        if(g_file_info_get_file_type(info) == G_FILE_TYPE_DIRECTORY)
+        {
+            copy_directory_recursive(recSource,
+                                     recDest,
+                                     toSkip,
+                                     &innerError);
+
+            g_string_free(recSource, TRUE);
+            g_string_free(recDest, TRUE);
+
+            if(innerError != NULL)
+            {
+                g_propagate_error(error, innerError);
+                break;
+            }
+        }
+        else
+        {
+            GFile* sourceFile = g_file_new_for_path(recSource->str);
+            GFile* destFile = g_file_new_for_path(recDest->str);
+
+            g_file_copy(sourceFile,
+                        destFile,
+                        G_FILE_COPY_NONE,
+                        NULL,
+                        NULL,
+                        NULL,
+                        &innerError);
+            
+            g_object_unref(sourceFile);
+            g_object_unref(destFile);
+
+            if(innerError != NULL)
+            {
+                g_propagate_error(error, innerError);
+                break;
+            }
+        }
+    }
+
+    g_object_unref(enumerator);
+    g_object_unref(file);
 }

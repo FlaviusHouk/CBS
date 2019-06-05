@@ -41,7 +41,9 @@ model_project_manager_new();
 ///Also creates required folder hierachy.
 ///location - project location.
 void
-model_project_manager_create_project(GString* location, GError** error);
+model_project_manager_create_project(GString* location, 
+                                     GString* templateName, /* = NULL */
+                                     GError** error);
 
 ///Builds project.
 ///toBuild - project user wishes to build.

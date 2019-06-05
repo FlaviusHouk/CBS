@@ -6,6 +6,7 @@ enum CLI_CREATE_COMMAND_INPUT_STATES
 {
     CREATE_COMMAND_START,
     CREATE_COMMAND_NAME,
+    CREATE_COMMAND_TEMPLATE_NAME,
 
     CLI_CREATE_COMMAND_INPUT_STATES_COUNT
 };
@@ -15,6 +16,7 @@ typedef struct _CLICreateCommand
     CLICommandInfo parent_class;
 
     GString* _name;
+    GString* _templateName;
 } CLICreateCommand;
 
 G_DEFINE_TYPE(CLICreateCommand, cli_create_command, CLI_TYPE_COMMAND_INFO);
@@ -28,6 +30,11 @@ cli_create_command_dispose(GObject* obj)
     {
         g_string_free(this->_name, TRUE);
         this->_name = NULL;
+    }
+    if(this->_templateName != NULL)
+    {
+        g_string_free(this->_templateName, TRUE);
+        this->_templateName = NULL;
     }
 
     G_OBJECT_CLASS(cli_create_command_parent_class)->dispose(obj);   
@@ -57,7 +64,7 @@ cli_create_command_execute(CLICommandInfo* command)
 	GString* loc = this->_name;
 
 	GError* error = NULL;
-	model_project_manager_create_project(loc, &error);
+	model_project_manager_create_project(loc, this->_templateName, &error);
 	if(error)
 	{
 		g_print(error->message);
@@ -76,6 +83,10 @@ cli_create_command_handle_input(CLICommandInfo* command, GString* input)
     {
         cli_command_info_set_input_state(command, CREATE_COMMAND_NAME);
     }
+    else if (g_str_equal(input->str, "-templateName"))
+    {
+        cli_command_info_set_input_state(command, CREATE_COMMAND_TEMPLATE_NAME);
+    }
     else
     {
         gint state = cli_command_info_get_input_state(command);
@@ -90,6 +101,11 @@ cli_create_command_handle_input(CLICommandInfo* command, GString* input)
                     this->_name = input;
                     break;
                 }
+                else if(this->_templateName == NULL)
+                {
+                    this->_templateName = input;
+                    break;
+                }
                 else
                 {
                     return TRUE;
@@ -101,6 +117,14 @@ cli_create_command_handle_input(CLICommandInfo* command, GString* input)
                     return TRUE;
 
                 this->_name = input;
+                cli_command_info_set_input_state(command, CREATE_COMMAND_START);
+            }
+            case CREATE_COMMAND_TEMPLATE_NAME:
+            {
+                if(this->_templateName != NULL)
+                    return TRUE;
+
+                this->_templateName = input;
                 cli_command_info_set_input_state(command, CREATE_COMMAND_START);
             }
         }

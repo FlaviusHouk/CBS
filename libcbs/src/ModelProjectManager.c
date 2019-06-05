@@ -24,6 +24,7 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #include "ModelTestRunner.h"
 
 #include "glib/gstdio.h"
+#include "gio/gio.h"
 
 struct _ModelProjectManager
 {
@@ -178,10 +179,61 @@ model_project_manager_init_scripts_folder(ModelProject* proj)
 }
 
 void
-model_project_manager_create_project(GString* location, GError** error)
+model_project_manager_create_project(GString* location,
+                                     GString* templateName,
+                                     GError** error)
 {
     ModelProject* proj = NULL;
-    if(model_project_load_or_create_project(location, &proj))
+    if(templateName != NULL)
+    {
+        const gchar* dataDir = g_getenv("XDG_DATA_HOME");
+        GString* templateLocation = g_string_new(dataDir);
+        g_string_append_printf(templateLocation, 
+                               "/cbs/templates/%s", 
+                               g_strdup(templateName->str));
+
+        if(!g_file_test(templateLocation->str, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_DIR))
+        {
+            g_set_error(error,
+                    g_type_qname(MODEL_TYPE_PROJECT_MANAGER),
+                    MODEL_PROJECT_MANAGER_CANNOT_CREATE,
+                    "There is no template named %s\n",
+                    g_strdup(templateName->str));
+
+            return;
+        }
+
+        GString* templateProjectLocation = g_string_append(g_string_clone(templateLocation), "/name.cpd");
+        ModelProject* proj = NULL;
+        model_project_load_or_create_project(templateProjectLocation, &proj);
+
+        model_project_save(proj, location);
+
+        model_project_manager_init_src_folder(proj);
+        model_project_manager_init_headers_folder(proj);
+        model_project_manager_init_scripts_folder(proj);
+
+        GError* innerError = NULL;
+
+        GPtrArray* toSkip = g_ptr_array_new();
+        g_ptr_array_add(toSkip, g_strdup("name.cpd"));
+        g_ptr_array_add(toSkip, g_strdup("."));
+
+        GString* projDir = g_string_new(g_path_get_dirname(g_path_get_absolute(location->str)));
+
+        copy_directory_recursive(templateLocation,
+                                 projDir,
+                                 toSkip,
+                                 &innerError);
+
+        if(innerError != NULL)
+            g_propagate_error(error, innerError);
+
+        g_ptr_array_free(toSkip, TRUE);
+
+        return;
+    }
+    else if(model_project_load_or_create_project(location, &proj))
     {
         g_set_error(error,
                     g_type_qname(MODEL_TYPE_PROJECT_MANAGER),

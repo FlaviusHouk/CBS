@@ -84,3 +84,9 @@ xml_node_read_g_string(xmlNodePtr node, char* name);
 
 xmlChar*
 xml_convert_input(char* string, char* enc);
+
+void
+copy_directory_recursive(GString* source,
+                         GString* dest,
+                         GPtrArray* toSkip,
+                         GError** error);
