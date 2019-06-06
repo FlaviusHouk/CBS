@@ -299,7 +299,7 @@ model_project_dependency_get_includes(ModelProjectDependency* this,
                                       GError ** error)
 {
     g_assert(this);
-    if(this->_type == SYSTEM_DEP) //в майбутньому розширити для підтримки CBS залежності
+    if(this->_type == SYSTEM_DEP)
     {
         char** args = (char**)malloc(sizeof(char*) * 4);
         args[0] = g_strdup("pkgconf");

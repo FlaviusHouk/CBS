@@ -281,6 +281,7 @@ model_project_new(GString* location)
     return this;
 }
 
+///Function for XML SourceFile object deserialization.
 static void
 model_project_read_source_file(xmlNodePtr node, gpointer user_data)
 {
@@ -291,6 +292,7 @@ model_project_read_source_file(xmlNodePtr node, gpointer user_data)
         g_ptr_array_add(this->_sourceFiles, file);
 }
 
+///Function for XML Header folder deserialization.
 static void
 model_project_read_header(xmlNodePtr node, gpointer user_data)
 {
@@ -299,6 +301,7 @@ model_project_read_header(xmlNodePtr node, gpointer user_data)
     g_ptr_array_add(this->_headersFolders, data);
 }
 
+///Function for XML Dependency object deserialization.
 static void
 model_project_read_project_dependency(xmlNodePtr node, gpointer user_data)
 {
@@ -313,6 +316,7 @@ model_project_read_project_dependency(xmlNodePtr node, gpointer user_data)
     }
 }
 
+///Function for XML ProjectConfiguration object deserialization.
 static void
 model_project_read_build_config(xmlNodePtr node, gpointer user_data)
 {
@@ -323,6 +327,7 @@ model_project_read_build_config(xmlNodePtr node, gpointer user_data)
         g_ptr_array_add(this->_buildConfigs, conf);
 }
 
+///Function for XML DataEntry object deserialization.
 static void
 model_project_read_data_entry(xmlNodePtr node, gpointer user_data)
 {
@@ -334,6 +339,7 @@ model_project_read_data_entry(xmlNodePtr node, gpointer user_data)
     g_hash_table_insert(this->_projData, key, value);
 }
 
+///Function for XML Project object deserialization.
 static void
 model_project_read(xmlNodePtr root, ModelProject* this)
 {
@@ -711,6 +717,7 @@ model_project_resolve_path(ModelProject* this, GString* relPath)
     g_assert(relPath);
     g_assert(relPath->len != 0);
     
+    ///If string starts with '/' it is already absoulte path.
     if(g_str_has_prefix(relPath->str, "/"))
         return g_string_clone(relPath);
 

@@ -486,6 +486,8 @@ model_project_manager_generate_config_header(ModelProject* toBuild)
         ModelProjectConfiguration* buildConfig = model_project_get_build_config(toBuild, NULL);
         model_project_configuration_define_macro(buildConfig, g_string_new("_HAVE_CONFIG_H_"));
     }
+
+    g_hash_table_unref(data);
 }
 
 void

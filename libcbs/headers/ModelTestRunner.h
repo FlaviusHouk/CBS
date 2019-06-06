@@ -22,9 +22,12 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "glib.h"
 
+///Constructor for TestRunner.
 ModelTestRunner*
 model_test_runner_new(void);
 
+///Executes unit tests.
+///@loc - location of binary with all tests.
 gint
 model_test_runner_execute_tests(ModelTestRunner* this, GString* loc);
 

@@ -30,9 +30,10 @@ G_BEGIN_DECLS
 #define CLI_TYPE_COMMAND_INFO cli_command_info_get_type()
 
 ///Type with information about some command for execution
+///Base class for all commands that might be executed with cli.
 G_DECLARE_DERIVABLE_TYPE(CLICommandInfo, cli_command_info, CLI, COMMAND_INFO, GObject);
 
-///Class definition with static class members and virtual methods
+///Class definition with static members and virtual methods
 struct _CLICommandInfoClass
 {
 	GObjectClass parentClass;
@@ -69,17 +70,20 @@ enum CLI_COMMAND_PARSER_INPUT_STATES
 };
 
 ///Method for actual command invoking
-void cli_command_info_process_command(CLICommandInfo* this);
+/*virtual*/ void 
+cli_command_info_process_command(CLICommandInfo* this);
 
-///Method for handling input data for it
-///CLI args passed here one by one and sets to according fields of object
+///Method for handling input data for command.
+///CLI args passed here one by one. They might be set in default order or
+///according to names.
 ///@arg - cli argument
-///returns flag that indicates error on input processing 
-gboolean
+///returns flag that indicates error on input processing. TRUE means processing
+///should be stoped.
+/*virtual*/ gboolean
 cli_command_info_handle_input(CLICommandInfo* this, GString* arg);
 
 ///Property that checks is there enough data to execute command.
-gboolean
+/*virtual*/ gboolean
 cli_command_info_is_valid(CLICommandInfo* info);
 
 ///Getter for InputState property.

@@ -39,7 +39,8 @@ model_project_manager_new();
 
 ///Creates project in the provided location. 
 ///Also creates required folder hierachy.
-///location - project location.
+///@location - project location.
+///@error - inner exception
 void
 model_project_manager_create_project(GString* location, 
                                      GString* templateName, /* = NULL */
@@ -48,13 +49,16 @@ model_project_manager_create_project(GString* location,
 ///Builds project.
 ///toBuild - project user wishes to build.
 ///config - build config name to use.
+///@error - inner exception
 void
 model_project_manager_build_project(ModelProjectManager* this, 
                                     ModelProject* toBuild, 
                                     GString* config,
                                     GError** error);
 
-///Executes unit testing (not implemented)
+///Executes unit tests.
+///@toBuild - unit test project.
+///@error - inner exception
 void
 model_project_manager_run_tests(ModelProjectManager* this, 
                                 ModelProject* toBuild,

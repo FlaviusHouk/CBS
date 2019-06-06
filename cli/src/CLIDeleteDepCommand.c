@@ -74,7 +74,7 @@ cli_delete_dep_command_handle_input(CLICommandInfo* command, GString* input)
                     this->_projLoc = input;
                     break;
                 }
-                else if(this->_depName = input)
+                else if(this->_depName == input)
                 {
                     this->_depName = input;
                     break;

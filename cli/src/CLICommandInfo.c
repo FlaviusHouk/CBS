@@ -20,7 +20,7 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 
 typedef struct
 {
-	gint _inputState;
+	gint _inputState; //Indicates what kind of input is expected. 
 } CLICommandInfoPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (CLICommandInfo, cli_command_info, G_TYPE_OBJECT)
@@ -52,11 +52,13 @@ cli_command_info_init(CLICommandInfo* this)
 
 }
 
-void cli_command_info_process_command(CLICommandInfo* this)
+/*virtual*/ void 
+cli_command_info_process_command(CLICommandInfo* this)
 {
 	g_assert(this);
 	CLICommandInfoClass* class = CLI_COMMAND_INFO_GET_CLASS(this);
 
+	//check for correctness is common for all commands.
 	gboolean isValid = cli_command_info_is_valid(this);
 	if(!isValid)
 	{
@@ -68,7 +70,15 @@ void cli_command_info_process_command(CLICommandInfo* this)
 	class->_execute(this);
 }
 
-gboolean
+/*
+Every command should handle it's input manualy. There is two available options for handling:
+Direct and named. In first case parameters will be set according to predefined order.
+Params will be parsed if neccesary. In case of named handling it is possible to use parameter
+name. It will look like this --command -par1 val1 -par2 val 2. "-par1" and "-par2" should be
+handled with setting appropriate input state.
+*/
+
+/*virtual*/ gboolean
 cli_command_info_handle_input(CLICommandInfo* this, GString* arg)
 {
 	g_assert(this);
@@ -79,7 +89,7 @@ cli_command_info_handle_input(CLICommandInfo* this, GString* arg)
 }
 
 
-gboolean
+/*virtual*/ gboolean
 cli_command_info_is_valid(CLICommandInfo* this)
 {
 	g_assert(this);

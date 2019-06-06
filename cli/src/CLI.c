@@ -39,17 +39,19 @@ struct _CLICommandParser
 {
 	GObject parent_instance;
 
-	CLICommandInfo* _command; 
-	gboolean _wrongInput;
+	CLICommandInfo* _command; //command that will be invoked.
+	gboolean _wrongInput; //flag that indicates error on arguments processing.
 };
 
 G_DEFINE_TYPE(CLICommandParser, cli_command_parser, G_TYPE_OBJECT)
 
-///Static constructor for CommandParser class. Fills AvailableCommands collection
+///Static constructor for CommandParser class.
 static void
 cli_command_parser_class_init(CLICommandParserClass* class)
 {}
 
+///For now only one command per call might be executed.
+///This setter checks is there any command set, if it is, error is raised.
 static void
 cli_command_parser_set_command(CLICommandParser* this, CLICommandInfo* command)
 {
@@ -70,7 +72,7 @@ static void
 cli_command_parser_init(CLICommandParser* this)
 {}
 
-///Loops through all transered params and loads command or add string as a parameter.
+///Loops through all transfered params and loads command or add string as a parameter.
 static void 
 cli_command_parser_parse_commands(gpointer data, gpointer userData)
 {

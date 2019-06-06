@@ -46,6 +46,7 @@ enum MODEL_PROJECT_PROPERTIES
 gboolean
 model_project_load_or_create_project(GString* location, ModelProject** output);
 
+///Constructor for Project class. Used for unit testing or for internal object creation.
 ModelProject* 
 model_project_new(GString* location);
 

@@ -33,11 +33,12 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(CLICommandParser, cli_command_parser, CLI, COMMAND_PARSER, GObject)
 
 ///Constructor for CommandParser type
+///Parses passed commands.
 ///args - array of input strings
 ///argn - number of input strings
 CLICommandParser* cli_command_parser_new(char** args, int argn);
 
-///Execute parsed commans
+///Execute parsed command.
 void cli_command_parser_execute(CLICommandParser* this);
 
 G_END_DECLS

@@ -15,6 +15,10 @@ You should have received a copy of the GNU General Public License
 along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 ***********************************************************************/
 
+/*
+Header with all MODEL types. Used to resolve cirlular header referances.
+*/
+
 #ifndef _MODEL_H_
 #define _MODEL_H_
 
