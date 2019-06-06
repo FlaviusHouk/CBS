@@ -656,7 +656,8 @@ model_project_manager_run_tests(ModelProjectManager* this,
     GError* localError = NULL;
     GString* unitTestProjectLoc = model_project_get_unit_tests_project_location(toTest); 
 
-    if(unitTestProjectLoc)
+    if(unitTestProjectLoc != NULL &&
+       unitTestProjectLoc->len > 0)
     {   
         GString* resolvedPath = model_project_resolve_path(toTest,
                                                            unitTestProjectLoc);
@@ -697,5 +698,12 @@ model_project_manager_run_tests(ModelProjectManager* this,
         model_test_runner_execute_tests(runner, pathToUnitTestLib);
 
         g_object_unref(runner);
+    }
+    else
+    {
+        g_set_error(error,
+                    g_type_qname(MODEL_TYPE_PROJECT_MANAGER),
+                    MODEL_PROJECT_MANAGER_CANNOT_OPEN,
+                    "Unit test project location isn't set.\n");
     }
 }
