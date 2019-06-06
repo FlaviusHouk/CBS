@@ -40,7 +40,7 @@ cli_help_command_handle_input(CLICommandInfo* command, GString* input)
 static void
 cli_help_command_execute(CLICommandInfo* command)
 {
-	g_print("Usage (argument in [] is optional): %s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
+	g_print("Usage (argument in [] is optional): %s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
 			"--create projName [templateName]",
 			"--addFile projName file1 file2 ... fileN",
 			"--deleteFile projName file1 file2 ... fileN",
