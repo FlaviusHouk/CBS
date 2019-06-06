@@ -1,13 +1,9 @@
 # CBS Project roadmap
 
-Currently the main target is to become self hosted tool and start to build itself without any internal scripts and autoconf tools. 
+Currently the main target is providing checks for novelty of object files and code updates to reduce compile time. 
 
-For now version 0.0.1 is released. 
+For now version 0.0.3 is released. 
 
-For the next version there are plans for improoving support of diffrent types of dependencies (currently quite stable is only system dependencies), build-in pre- and post- build scripts and basic compilation parameters. 
+For the next version there are plans for improoving XML formatting and versioning of XML definition, dependency checking and error checking from other tools.
 
-For the 0.0.2 version bigger part of the code should be covered with comments(brief description of every function and some inner parts of big ones). Dependency management was imroved and some serious defect was fixed. 
-
-In future there is plans for providing Unit test for project and general support of unit testing for build system. To do it some existing solution will be taken and adopted. 
-
-Also file checking for changes will be provided to reduce compile time and make build only for changed parts. 
+After version 0.0.4 or 0.0.5 (depending on the number of features that will be added) to milestone vesion 0.1.0 will be released. After it a bunch of documents will be provided. "public" API will be stabilized and XML definition description will be added. 
