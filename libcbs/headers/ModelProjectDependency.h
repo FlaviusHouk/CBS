@@ -81,9 +81,11 @@ model_project_dependency_get_includes(ModelProjectDependency* this,
 
 ///Getter for Links property. Gets the string with information about linking for 
 ///each dependency.
-///return string with linker options. 
+///return string with linker options.
+///@includeRPath - flag that indicates rpath including in library 
 GString*
 model_project_dependency_get_links(ModelProjectDependency* this,
+                                   gboolean includeRPath,
                                    GError** error);
 
 ///Getter for Dependency type property.

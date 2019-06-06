@@ -47,13 +47,15 @@ model_project_manager_create_project(GString* location,
                                      GError** error);
 
 ///Builds project.
-///toBuild - project user wishes to build.
-///config - build config name to use.
+///@toBuild - project user wishes to build.
+///@config - build config name to use.
+///@isPublishing - flag that indicates rpath including in executable.
 ///@error - inner exception
 void
 model_project_manager_build_project(ModelProjectManager* this, 
                                     ModelProject* toBuild, 
                                     GString* config,
+                                    gboolean isPublishing,
                                     GError** error);
 
 ///Executes unit tests.

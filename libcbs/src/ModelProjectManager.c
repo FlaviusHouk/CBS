@@ -298,6 +298,7 @@ model_project_manager_build_include_string(ModelProject* building,
 
 static GString*
 model_project_manager_build_link_string(ModelProject* building,
+                                        gboolean includeRPath,
                                         GError** error)
 {
     GError* innerError = NULL;
@@ -310,7 +311,9 @@ model_project_manager_build_link_string(ModelProject* building,
         ModelProjectDependency* dep = 
                 (ModelProjectDependency*)g_ptr_array_index(dependenciesCollection, i);
    
-        GString* depLink = model_project_dependency_get_links(dep, &innerError);
+        GString* depLink = model_project_dependency_get_links(dep,
+                                                              includeRPath,
+                                                              &innerError);
         if(innerError != NULL)
         {
             g_propagate_error(error, innerError);
@@ -494,6 +497,7 @@ void
 model_project_manager_build_project(ModelProjectManager* this, 
                                     ModelProject* toBuild, 
                                     GString* configName,
+                                    gboolean isPublishing,
                                     GError** error)
 {
     GError* innerError = NULL;
@@ -577,7 +581,9 @@ model_project_manager_build_project(ModelProjectManager* this,
 
     if (outputType != STATIC_LIB)
     {
-        GString *link = model_project_manager_build_link_string(toBuild, &innerError);
+        GString *link = model_project_manager_build_link_string(toBuild, 
+                                                                !isPublishing, 
+                                                                &innerError);
 
         if(innerError != NULL)
         {
@@ -676,7 +682,11 @@ model_project_manager_run_tests(ModelProjectManager* this,
             return;
         }
 
-        model_project_manager_build_project(this, unitTestProject, NULL, &localError);
+        model_project_manager_build_project(this, 
+                                            unitTestProject, 
+                                            NULL,
+                                            FALSE,
+                                            &localError);
         if(localError != NULL)
         {
             g_propagate_error(error, localError);

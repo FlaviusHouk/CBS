@@ -83,7 +83,8 @@ model_project_dependency_link_string_test(void** state)
     ModelProjectDependency* dep = model_project_dependency_new(representation, type);
 
     GError* err = NULL;
-    GString* linkString = model_project_dependency_get_links(dep, &err);
+    gboolean isPublishing = *((gboolean*)g_hash_table_lookup(table, "IsPublishing"));
+    GString* linkString = model_project_dependency_get_links(dep, !isPublishing, &err);
 
     gboolean shouldGenerateError = *((gboolean*)g_hash_table_lookup(table, "ShouldGenerateError"));
     if(shouldGenerateError)

@@ -434,6 +434,10 @@ init_model_project_dependency_link_string_test(void)
     *type = SYSTEM_DEP;
     g_hash_table_insert(systemLibTestCase, "DepType", type);
 
+    gboolean* isPublishing = (gboolean*)g_malloc(sizeof(gboolean));
+    *isPublishing = FALSE;
+    g_hash_table_insert(systemLibTestCase, "IsPublishing", isPublishing);
+
     gboolean* shouldGenerateError = (gboolean*)g_malloc(sizeof(gboolean));
     *shouldGenerateError = FALSE;
     g_hash_table_insert(systemLibTestCase, "ShouldGenerateError", shouldGenerateError);
@@ -452,6 +456,10 @@ init_model_project_dependency_link_string_test(void)
     type = (gint*)g_malloc(sizeof(gint));
     *type = EXTERNAL_DYNAMIC_LIB;
     g_hash_table_insert(dynamicLibTestCase, "DepType", type);
+
+    isPublishing = (gboolean*)g_malloc(sizeof(gboolean));
+    *isPublishing = FALSE;
+    g_hash_table_insert(dynamicLibTestCase, "IsPublishing", isPublishing);
 
     shouldGenerateError = (gboolean*)g_malloc(sizeof(gboolean));
     *shouldGenerateError = FALSE;

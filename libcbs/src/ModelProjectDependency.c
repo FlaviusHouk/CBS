@@ -131,7 +131,7 @@ model_project_dependency_get_property(GObject* obj,
             gchar* val = NULL;
             GError* error = NULL;
 
-            GString* includes = model_project_dependency_get_links(this, &error);
+            GString* includes = model_project_dependency_get_links(this, TRUE, &error);
 
             if(error == NULL)
                 val = includes->str;
@@ -343,6 +343,7 @@ model_project_dependency_get_includes(ModelProjectDependency* this,
 
 GString*
 model_project_dependency_get_links(ModelProjectDependency* this,
+                                   gboolean includeRPath,
                                    GError** error)
 {
     g_assert(this);
@@ -375,7 +376,10 @@ model_project_dependency_get_links(ModelProjectDependency* this,
 
         GString* link = g_string_new("-L");
 
-        g_string_append_printf(link, "%s -l%s -Wl,-rpath=%s  ", libPath, libName, absPath);
+        g_string_append_printf(link, "%s -l%s  ", libPath, libName);
+
+        if(includeRPath)
+            g_string_append_printf(link, "-Wl,-rpath=%s  ", absPath);
 
         return link;
     }
@@ -405,7 +409,11 @@ model_project_dependency_get_links(ModelProjectDependency* this,
             ModelProjectManager* manager = model_project_manager_new();
 
             GError* innerError = NULL;
-            model_project_manager_build_project(manager, dep, NULL, &innerError);
+            model_project_manager_build_project(manager,
+                                                dep,
+                                                NULL,
+                                                !includeRPath, 
+                                                &innerError);
             if(innerError != NULL)
             {
                 g_set_error(error,
@@ -444,7 +452,10 @@ model_project_dependency_get_links(ModelProjectDependency* this,
 
             gchar* absPath = g_path_get_absolute(libPath);
 
-            g_string_append_printf(link, "%s/bin -l%s -Wl,-rpath=%s/bin  ", libPath, libName, absPath);
+            g_string_append_printf(link, "%s/bin -l%s  ", libPath, libName);
+
+            if(includeRPath)
+                g_string_append_printf(link, "-Wl,-rpath=%s/bin  ", absPath);
 
             return link;
         }

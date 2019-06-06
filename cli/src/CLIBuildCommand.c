@@ -25,6 +25,7 @@ typedef struct _CLIBuildCommand
 
     GString* _projLoc;
     GString* _configName;
+    gboolean _isPublishing;
 } CLIBuildCommand;
 
 enum CLI_BUILD_COMMAND_INPUT_STATES
@@ -56,6 +57,11 @@ cli_build_command_handle_input(CLICommandInfo* command, GString* input)
     else if(g_str_equal(input->str, "-config"))
     {
         cli_command_info_set_input_state(command, CLI_BUILD_COMMAND_CONFIG_NAME);
+    }
+    else if(g_str_equal(input->str, "-publish"))
+    {
+        CLIBuildCommand* this = CLI_BUILD_COMMAND(command);
+        this->_isPublishing = TRUE;
     }
     else
     {
@@ -120,7 +126,11 @@ cli_build_command_execute(CLICommandInfo* command)
 	ModelProjectManager* manager = model_project_manager_new();
 
 	GError* error = NULL;
-	model_project_manager_build_project(manager, proj, this->_configName, &error);
+	model_project_manager_build_project(manager,
+                                        proj,
+                                        this->_configName,
+                                        this->_isPublishing,
+                                        &error);
 	if(error)
 	{
 		g_print(error->message);
@@ -177,6 +187,7 @@ cli_build_command_init(CLIBuildCommand* this)
 {
     this->_projLoc = NULL;
     this->_configName = NULL;
+    this->_isPublishing = FALSE;
 }
 
 CLIBuildCommand*
