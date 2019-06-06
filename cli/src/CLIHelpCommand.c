@@ -40,15 +40,16 @@ cli_help_command_handle_input(CLICommandInfo* command, GString* input)
 static void
 cli_help_command_execute(CLICommandInfo* command)
 {
-	g_print("Usage: %s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
-			"--create projName",
+	g_print("Usage (argument in [] is optional): %s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
+			"--create projName [templateName]",
 			"--addFile projName file1 file2 ... fileN",
-			"--deleteFile projName file",
+			"--deleteFile projName file1 file2 ... fileN",
 			"--addInclude projName fold1 fold2 ... foldN",
-			"--deleteInclude projName fold",
+			"--deleteInclude projName fold1 fold2 ... foldN",
 			"--addDependency projName depType depName",
 			"--deleteDependency projName depName",
-			"--build projName",
+			"--build projName [configName]",
+			"--test projName"
 			"--help");
 }
 
