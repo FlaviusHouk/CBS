@@ -20,12 +20,14 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #include "libxml/xmlreader.h"
 #include "libxml/xmlwriter.h"
 
+#include "Helper.h"
 
 struct _ModelSourceFile
 {
     GObject parent_object;
 
     GString* _path;
+    GPtrArray* _dependsOn;
 };
 
 G_DEFINE_TYPE(ModelSourceFile, model_source_file, G_TYPE_OBJECT);
@@ -39,6 +41,11 @@ model_source_file_dispose(GObject* obj)
     {
         g_string_free(this->_path, TRUE);
         this->_path = NULL;
+    }
+    if(this->_dependsOn)
+    {
+        g_ptr_array_free(this->_dependsOn, TRUE);
+        this->_dependsOn = NULL;
     }
 
     G_OBJECT_CLASS(model_source_file_parent_class)->dispose(obj);
@@ -152,7 +159,7 @@ model_source_file_class_init(ModelSourceFileClass* class)
 static void
 model_source_file_init(ModelSourceFile* this)
 {
-
+    this->_dependsOn = g_ptr_array_new_with_free_func(g_string_clean_up);
 }
 
 ModelSourceFile*
@@ -165,25 +172,36 @@ model_source_file_new(GString* location)
     return this;
 }
 
+static void
+model_source_file_deserialize_dependency(xmlNodePtr node, gpointer user_data)
+{
+    ModelSourceFile* this = MODEL_SOURCE_FILE(user_data);
+
+    g_ptr_array_add(this->_dependsOn, g_string_new(xmlNodeGetContent(node)));
+}
+
 ModelSourceFile*
 model_source_file_new_from_xml(xmlNodePtr node)
 {
     xmlNodePtr file = node->children;
-    ModelSourceFile* this = NULL; 
+    ModelSourceFile* this = model_source_file_new(xml_node_read_g_string(file, "Path")); 
 
-    while(file != NULL)
-    {
-        if(strcmp(file->name, "Path") == 0)
-        {
-            this = g_object_new(MODEL_TYPE_SOURCE_FILE, NULL);
-            this->_path = g_string_new(xmlNodeGetContent(file));
-            return this;
-        }
-
-        file = file->next;
-    }
+    xml_node_read_collection(file,
+                             "DependsOn",
+                             "Dependency",
+                             model_source_file_deserialize_dependency,
+                             this);
 
     return this;
+}
+
+static void
+model_source_file_write_dependencies(gpointer dependency, gpointer user_data)
+{
+    GString* dep = (GString*)dependency;
+    xmlTextWriter* writer = (xmlTextWriter*)user_data;
+
+    xml_text_writer_write_string(writer, "Dependency", dep->str);
 }
 
 void
@@ -197,7 +215,12 @@ model_source_file_write_xml(ModelSourceFile* file, xmlTextWriterPtr writer)
     rc = xmlTextWriterStartElement(writer, BAD_CAST "SourceFile");
     g_assert(rc >= 0);
 
-    xmlTextWriterWriteElement(writer, "Path", file->_path->str);
+    xml_text_writer_write_string(writer, "Path", file->_path->str);
+
+    xml_text_writer_write_ptr_array(writer,
+                                    "DependsOn",
+                                    file->_dependsOn,
+                                    model_source_file_write_dependencies);
 
     rc = xmlTextWriterEndElement(writer);
     g_assert(rc >= 0);
@@ -241,4 +264,12 @@ model_source_file_get_path(ModelSourceFile* this)
     g_assert(this);
 
     return this->_path;
+}
+
+GPtrArray*
+model_source_file_get_deps(ModelSourceFile* this)
+{
+    g_assert(this);
+
+    return this->_dependsOn;
 }

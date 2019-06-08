@@ -411,13 +411,85 @@ model_project_manager_split_and_add_to(GPtrArray *toAdd, GString *string)
     }
 }
 
+static gboolean
+model_project_is_output_up_to_date(GString* output,
+                                   GPtrArray* objFiles)
+{
+    GStatBuf outputStat;
+    GStatBuf objStat;
+
+    if(!g_file_test(output->str, G_FILE_TEST_EXISTS))
+        return FALSE;
+
+    for(int i = 0; i<objFiles->len;i++)
+    {
+        GString* objFile = g_ptr_array_index(objFiles, i);
+        
+        if(g_stat(objFile->str, &objStat) != 0)
+            return FALSE;
+
+        if(objStat.st_mtime > outputStat.st_mtime)
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+static gboolean
+model_project_manager_is_object_file_up_to_date(ModelProject* toBuild,
+                                                ModelSourceFile* file,
+                                                GString* objFile)
+{
+    if(!g_file_test(objFile->str, G_FILE_TEST_EXISTS))
+        return FALSE;
+
+    GStatBuf objFileStat;
+    if(g_stat(objFile->str, &objFileStat) != 0)
+        return FALSE;
+
+    GString* filePath = model_source_file_get_path(file);
+    filePath = model_project_resolve_path(toBuild, filePath);
+
+    GStatBuf fileStat;
+    if(g_stat(filePath->str, &fileStat) != 0)
+        return FALSE;
+
+    if(fileStat.st_mtime > objFileStat.st_mtime)
+        return FALSE;
+
+    GPtrArray* dependsOn = model_source_file_get_deps(file);
+
+    for(int i = 0; i<dependsOn->len; i++)
+    {
+        GString* dep = g_ptr_array_index(dependsOn, i);
+        
+        if(g_stat(dep->str, &fileStat) != 0)
+            return FALSE;
+
+        if(fileStat.st_mtime > objFileStat.st_mtime)
+            return FALSE;
+    }
+    
+    return TRUE;
+}
+
 static GString *
-model_project_manager_process_code_file(ModelSourceFile* file, 
+model_project_manager_process_code_file(ModelProject* toBuild,
+                                        ModelSourceFile* file, 
                                         GString* objFolder, 
                                         GString* configString,
                                         GString* includes,
                                         GString* projLoc)
 {
+    GString *objFile = g_string_clone(objFolder);
+    g_string_append_printf(objFile, "/%s.o", g_path_get_basename(model_source_file_get_path(file)->str));
+
+    if(model_project_manager_is_object_file_up_to_date(toBuild, file, objFile))
+    {
+        g_print("File %s is up to date.\n", objFile->str);
+        return objFile;
+    }
+
     GPtrArray *args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
     g_ptr_array_add(args, g_strdup("gcc"));
 
@@ -433,9 +505,6 @@ model_project_manager_process_code_file(ModelSourceFile* file,
     g_ptr_array_add(args, g_strdup("-c"));
     g_ptr_array_add(args, g_strdup(loc->str));
     g_ptr_array_add(args, g_strdup("-o"));
-
-    GString *objFile = g_string_new(g_strdup(objFolder->str));
-    g_string_append_printf(objFile, "/%s.o", g_path_get_basename(model_source_file_get_path(file)->str));
 
     g_ptr_array_add(args, g_strdup(objFile->str));
 
@@ -547,7 +616,7 @@ model_project_manager_build_project(ModelProjectManager* this,
 {
     GError* innerError = NULL;
     GString* loc, *output;
-    
+
     loc = g_string_new(model_project_manager_get_project_work_dir(model_project_get_location(toBuild)));
 
     GString* objFolder = model_project_manager_get_project_dir(toBuild, "obj");
@@ -592,7 +661,8 @@ model_project_manager_build_project(ModelProjectManager* this,
         ModelSourceFile* file = (ModelSourceFile*)g_ptr_array_index(sources, i);
 
         if(model_source_file_get_file_type(file) == CODE)        
-            g_ptr_array_add(objFiles, model_project_manager_process_code_file(file,
+            g_ptr_array_add(objFiles, model_project_manager_process_code_file(toBuild,
+                                                                              file,
                                                                               objFolder,
                                                                               configString,
                                                                               includes,
@@ -626,11 +696,11 @@ model_project_manager_build_project(ModelProjectManager* this,
 
     if (outputType != STATIC_LIB)
     {
-        GString *link = model_project_manager_build_link_string(toBuild, 
-                                                                !isPublishing, 
+        GString *link = model_project_manager_build_link_string(toBuild,
+                                                                !isPublishing,
                                                                 &innerError);
 
-        if(innerError != NULL)
+        if (innerError != NULL)
         {
             g_propagate_error(error, innerError);
 
@@ -639,7 +709,7 @@ model_project_manager_build_project(ModelProjectManager* this,
 
         g_ptr_array_add(args, g_strdup("gcc"));
 
-        if(outputType == DYNAMIC_LIB)
+        if (outputType == DYNAMIC_LIB)
             g_ptr_array_add(args, g_strdup("-shared"));
 
         //I think there are no build options for linking stage

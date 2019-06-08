@@ -75,6 +75,9 @@ model_source_file_equals(const void* this, const void* that);
 GString*
 model_source_file_get_path(ModelSourceFile* this);
 
+GPtrArray*
+model_source_file_get_deps(ModelSourceFile* this);
+
 G_END_DECLS
 
 #endif
