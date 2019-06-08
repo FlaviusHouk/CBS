@@ -493,6 +493,51 @@ model_project_manager_generate_config_header(ModelProject* toBuild)
     g_hash_table_unref(data);
 }
 
+static void
+model_project_manager_copy_binaries(GPtrArray* deps,
+                                    GString* projBinaryFolder,
+                                    GError** error)
+{
+    GError* innerError = NULL;
+
+    for(int i = 0; i<deps->len; i++)
+    {
+        ModelProjectDependency* dep = g_ptr_array_index(deps, i);
+        gint depType = model_project_dependency_get_dependency_type(dep);
+
+        if(depType == SYSTEM_DEP)
+            continue;
+
+        if(depType == CBS_PROJECT)
+        {
+            GString* pathToProj = model_project_dependency_get_representation(dep);
+            GString* projFolder = g_string_new(g_path_get_dirname(pathToProj->str));
+            g_string_append_printf(projFolder, "/%s", "bin");
+
+            copy_directory_recursive(projFolder,
+                                     projBinaryFolder,
+                                     NULL,
+                                     &innerError);
+        }
+        else
+        {
+            GString* pathToLib = model_project_dependency_get_representation(dep);
+
+            GString* destination = g_string_clone(projBinaryFolder);
+            gchar* libName = g_path_get_basename(pathToLib->str);
+            g_string_append_printf(destination, "/%s", libName);
+
+            copy_file(pathToLib, destination, &innerError);
+        }
+
+        if(innerError != NULL)
+        {
+            g_propagate_error(error, innerError);
+            break;
+        }
+    }
+}
+
 void
 model_project_manager_build_project(ModelProjectManager* this, 
                                     ModelProject* toBuild, 
@@ -640,6 +685,22 @@ model_project_manager_build_project(ModelProjectManager* this,
 
         if (output->len > 0)
             g_print("%s\n", output->str);
+    }
+
+    if(isPublishing)
+    {
+        GPtrArray* dependencies = model_project_get_dependencies(toBuild);
+        GString* binaryFolder = g_string_new(g_path_get_dirname(binFolder->str));
+
+        model_project_manager_copy_binaries(dependencies, binaryFolder, &innerError);
+
+        g_string_free(binaryFolder, TRUE);
+
+        if(innerError != NULL)
+        {
+            g_propagate_error(error, innerError);
+            return;
+        }
     }
 
     model_project_manager_run_script(scriptFolder, "postBuild.sh");

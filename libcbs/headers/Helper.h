@@ -136,3 +136,8 @@ copy_directory_recursive(GString* source,
                          GString* dest,
                          GPtrArray* toSkip,
                          GError** error);
+
+void
+copy_file(GString* sourcePath,
+          GString* destPath,
+          GError** error);

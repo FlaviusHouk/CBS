@@ -398,7 +398,7 @@ copy_directory_recursive(GString* source,
 
             g_file_copy(sourceFile,
                         destFile,
-                        G_FILE_COPY_NONE,
+                        G_FILE_COPY_OVERWRITE,
                         NULL,
                         NULL,
                         NULL,
@@ -417,4 +417,36 @@ copy_directory_recursive(GString* source,
 
     g_object_unref(enumerator);
     g_object_unref(file);
+}
+
+void
+copy_file(GString* sourcePath,
+          GString* destPath,
+          GError** error)
+{
+    if(!g_file_test(sourcePath->str, G_FILE_TEST_EXISTS))
+    {
+        g_set_error(error,
+                    g_quark_from_string("Helper"),
+                    1,
+                    "Cannot locate source file.");
+        
+        return;
+    }
+
+    GError* innerError = NULL;
+
+    GFile* source = g_file_new_for_path(sourcePath->str);
+    GFile* dest = g_file_new_for_path(destPath->str);
+
+    g_file_copy(source, 
+                dest, 
+                G_FILE_COPY_OVERWRITE,
+                NULL,
+                NULL,
+                NULL,
+                &innerError);
+
+    if(innerError != NULL)
+        g_propagate_error(error, innerError);
 }
