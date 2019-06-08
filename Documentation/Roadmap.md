@@ -2,7 +2,7 @@
 
 Currently the main target is providing checks for novelty of object files and code updates to reduce compile time. 
 
-For now version 0.0.3 is released. 
+For now version 0.0.3.1 is released. 
 
 For the next version there are plans for improoving XML formatting and versioning of XML definition, dependency checking and error checking from other tools.
 

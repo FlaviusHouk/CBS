@@ -137,6 +137,10 @@ copy_directory_recursive(GString* source,
                          GPtrArray* toSkip,
                          GError** error);
 
+///Incapsulates copying file
+///@sourcePath - path to shource file. It has to exist and be readable.
+///@destPath - path should be available for writing.
+///@error - exception.
 void
 copy_file(GString* sourcePath,
           GString* destPath,

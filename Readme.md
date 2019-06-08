@@ -9,7 +9,7 @@ To link dynamic library rpath should be provided, so add following parameters in
 
 ## Usage
 
-For the 0.0.3 version there is a few supported basic commands. 
+For the 0.0.3.1 version there is a few supported basic commands. 
 
 ### Create
 
@@ -98,7 +98,7 @@ Deletes the first dependency with the same depName that was found.
 ### Build
 
 ```
-cbs --build projName [buildConfigName]
+cbs --build projName [-publish] [buildConfigName]
 ```
 
 When build starts, two additional folders will be created if they do not exist: obj and bin. First one contains object file for each processed source file and the second one contains compiled binary file - build artifact. 
@@ -108,6 +108,8 @@ While executing build procedure all compiler output and build commands for each 
 By default gcc compiler is used. 
 
 In this version there are two default build definitions: Debug and Release. Both will build elf executable with c11 language standard. Debug config uses -g option to produce debug info and Release uses -O1. Currently there is no opportunity to add build build definition with cli interface and you have to edit "BuildConfigurations" section in cpd file.
+
+If publish flag is set rpath won't be included in binary. All dependencies, except for system one, will be copied (override if exists) to binary folder of project that building.
 
 ### Test
 
