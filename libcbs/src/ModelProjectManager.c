@@ -479,12 +479,14 @@ model_project_manager_process_code_file(ModelProject* toBuild,
                                         GString* objFolder, 
                                         GString* configString,
                                         GString* includes,
-                                        GString* projLoc)
+                                        GString* projLoc,
+                                        gboolean rebuild)
 {
     GString *objFile = g_string_clone(objFolder);
     g_string_append_printf(objFile, "/%s.o", g_path_get_basename(model_source_file_get_path(file)->str));
 
-    if(model_project_manager_is_object_file_up_to_date(toBuild, file, objFile))
+    if(model_project_manager_is_object_file_up_to_date(toBuild, file, objFile) &&
+       !rebuild)
     {
         g_print("File %s is up to date.\n", objFile->str);
         return objFile;
@@ -611,11 +613,13 @@ void
 model_project_manager_build_project(ModelProjectManager* this, 
                                     ModelProject* toBuild, 
                                     GString* configName,
-                                    gboolean isPublishing,
+                                    ProjectBuildOption options,
                                     GError** error)
 {
     GError* innerError = NULL;
     GString* loc, *output;
+    gboolean isPublishing = options & PUBLISH;
+    gboolean forceRebuild = options & REBUILD;
 
     loc = g_string_new(model_project_manager_get_project_work_dir(model_project_get_location(toBuild)));
 
@@ -666,7 +670,8 @@ model_project_manager_build_project(ModelProjectManager* this,
                                                                               objFolder,
                                                                               configString,
                                                                               includes,
-                                                                              loc));
+                                                                              loc,
+                                                                              forceRebuild));
     }
 
     gint outputType = model_project_configuration_get_output_type(config);

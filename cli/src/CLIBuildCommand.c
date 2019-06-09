@@ -25,7 +25,7 @@ typedef struct _CLIBuildCommand
 
     GString* _projLoc;
     GString* _configName;
-    gboolean _isPublishing;
+    ProjectBuildOption _options;
 } CLIBuildCommand;
 
 enum CLI_BUILD_COMMAND_INPUT_STATES
@@ -61,7 +61,12 @@ cli_build_command_handle_input(CLICommandInfo* command, GString* input)
     else if(g_str_equal(input->str, "-publish"))
     {
         CLIBuildCommand* this = CLI_BUILD_COMMAND(command);
-        this->_isPublishing = TRUE;
+        this->_options = this->_options | PUBLISH;
+    }
+    else if(g_str_equal(input->str, "-rebuild"))
+    {
+        CLIBuildCommand* this = CLI_BUILD_COMMAND(command);
+        this->_options = this->_options | REBUILD;
     }
     else
     {
@@ -129,7 +134,7 @@ cli_build_command_execute(CLICommandInfo* command)
 	model_project_manager_build_project(manager,
                                         proj,
                                         this->_configName,
-                                        this->_isPublishing,
+                                        this->_options,
                                         &error);
 	if(error)
 	{
@@ -187,7 +192,7 @@ cli_build_command_init(CLIBuildCommand* this)
 {
     this->_projLoc = NULL;
     this->_configName = NULL;
-    this->_isPublishing = FALSE;
+    this->_options = 0;
 }
 
 CLIBuildCommand*

@@ -31,6 +31,14 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "ModelProject.h"
 
+typedef gint ProjectBuildOption;
+
+enum PROJECT_BUILD_OPTIONS
+{
+    PUBLISH = 1,
+    REBUILD = 2
+};
+
 G_BEGIN_DECLS
 
 //Instance constructor for ProjectManager type.
@@ -55,7 +63,7 @@ void
 model_project_manager_build_project(ModelProjectManager* this, 
                                     ModelProject* toBuild, 
                                     GString* config,
-                                    gboolean isPublishing,
+                                    ProjectBuildOption options,
                                     GError** error);
 
 ///Executes unit tests.
