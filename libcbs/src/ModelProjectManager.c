@@ -609,6 +609,61 @@ model_project_manager_copy_binaries(GPtrArray* deps,
     }
 }
 
+static void
+model_project_manager_build_dependencies(ModelProjectManager* this,
+                                         ModelProject* toBuild,
+                                         ProjectBuildOption buildOptions,
+                                         GError ** error)
+{
+    GPtrArray* deps = model_project_get_dependencies(toBuild);
+
+    for(int i = 0; i<deps->len; i++)
+    {
+        ModelProjectDependency* dep = MODEL_PROJECT_DEPENDENCY(g_ptr_array_index(deps, i));
+        gint type = model_project_dependency_get_dependency_type(dep);
+        if(type == CBS_PROJECT)
+        {
+            GString* representation = model_project_dependency_get_representation(dep);
+            GString* resovledPath = model_project_resolve_path(toBuild, representation);
+
+            ModelProject* projDep = NULL;
+            if(!model_project_load_or_create_project(resovledPath, &projDep))
+            {
+                g_set_error(error,
+                        g_type_qname(MODEL_TYPE_PROJECT_MANAGER),
+                        MODEL_PROJECT_DEPENDENCY_FAILED_TO_PROCESS,
+                        "Cannot locate project %s./n",
+                        resovledPath->str);
+            }
+
+            ModelProjectConfiguration* conf = model_project_get_build_config(projDep, NULL);
+
+            gint outputType = model_project_configuration_get_output_type(conf);
+            g_assert(outputType != ELF);
+
+            GError* innerError = NULL;
+            model_project_manager_build_project(this,
+                                                projDep,
+                                                NULL,
+                                                buildOptions,
+                                                &innerError);
+
+            g_object_unref(projDep);
+
+            if(innerError != NULL)
+            {
+                g_set_error(error,
+                            g_type_qname(MODEL_TYPE_PROJECT_MANAGER),
+                            MODEL_PROJECT_DEPENDENCY_FAILED_TO_PROCESS,
+                            "Failed to build dependency.\n%s",
+                            g_strdup(innerError->message));
+                
+                g_clear_error(&innerError);
+            }
+        }
+    }
+}
+
 void
 model_project_manager_build_project(ModelProjectManager* this, 
                                     ModelProject* toBuild, 
@@ -696,6 +751,11 @@ model_project_manager_build_project(ModelProjectManager* this,
         binFolder = g_string_append(binFolder, g_strdup(outputName->str));
     else
         binFolder = g_string_append(binFolder, projName);
+
+    model_project_manager_build_dependencies(this,
+                                             toBuild,
+                                             options,
+                                             &innerError);
 
     g_print("Linking...\n");
 

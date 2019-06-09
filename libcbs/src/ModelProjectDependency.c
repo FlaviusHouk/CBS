@@ -406,29 +406,6 @@ model_project_dependency_get_links(ModelProjectDependency* this,
 
         if(outputType == DYNAMIC_LIB)
         {
-            ModelProjectManager* manager = model_project_manager_new();
-
-            GError* innerError = NULL;
-            model_project_manager_build_project(manager,
-                                                dep,
-                                                NULL,
-                                                !includeRPath, 
-                                                &innerError);
-            if(innerError != NULL)
-            {
-                g_set_error(error,
-                            g_type_qname(MODEL_TYPE_PROJECT_DEPENDENCY),
-                            MODEL_PROJECT_DEPENDENCY_FAILED_TO_PROCESS,
-                            "Failed to builed dependency.\n%s",
-                            g_strdup(innerError->message));
-                
-                g_clear_error(&innerError);
-
-                return NULL;
-            }
-
-            g_object_unref(manager);
-
             gchar* libName = g_path_get_basename(this->_representation->str);
 
             if(g_str_has_prefix(libName, "lib") && g_str_has_suffix(libName, ".cpd"))
