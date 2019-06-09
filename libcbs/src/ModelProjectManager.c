@@ -412,14 +412,17 @@ model_project_manager_split_and_add_to(GPtrArray *toAdd, GString *string)
 }
 
 static gboolean
-model_project_is_output_up_to_date(GString* output,
-                                   GPtrArray* objFiles)
+model_project_manager_is_output_up_to_date(GString* output,
+                                           GPtrArray* objFiles)
 {
     GStatBuf outputStat;
     GStatBuf objStat;
 
     if(!g_file_test(output->str, G_FILE_TEST_EXISTS))
         return FALSE;
+
+    if(g_stat(output->str, &outputStat) != 0)
+            return FALSE;
 
     for(int i = 0; i<objFiles->len;i++)
     {
@@ -759,67 +762,70 @@ model_project_manager_build_project(ModelProjectManager* this,
 
     g_print("Linking...\n");
 
-    if (outputType != STATIC_LIB)
+    if (!model_project_manager_is_output_up_to_date(binFolder, objFiles) || forceRebuild)
     {
-        GString *link = model_project_manager_build_link_string(toBuild,
-                                                                !isPublishing,
-                                                                &innerError);
-
-        if (innerError != NULL)
+        if (outputType != STATIC_LIB)
         {
-            g_propagate_error(error, innerError);
+            GString *link = model_project_manager_build_link_string(toBuild,
+                                                                    !isPublishing,
+                                                                    &innerError);
 
-            return;
+            if (innerError != NULL)
+            {
+                g_propagate_error(error, innerError);
+
+                return;
+            }
+
+            g_ptr_array_add(args, g_strdup("gcc"));
+
+            if (outputType == DYNAMIC_LIB)
+                g_ptr_array_add(args, g_strdup("-shared"));
+
+            //I think there are no build options for linking stage
+            //model_project_manager_split_and_add_to(args, configString);
+
+            for (int i = 0; i < objFiles->len; i++)
+            {
+                GString *file = (GString *)g_ptr_array_index(objFiles, i);
+                g_ptr_array_add(args, g_strdup(file->str));
+            }
+
+            g_ptr_array_add(args, g_strdup("-o"));
+
+            g_ptr_array_add(args, g_strdup(binFolder->str));
+
+            model_project_manager_split_and_add_to(args, link);
+
+            g_ptr_array_add(args, NULL);
+
+            model_project_manager_print_command(args);
+            output = run_tool("/usr/bin/gcc", (char **)args->pdata);
+
+            if (output->len > 0)
+                g_print("%s\n", output->str);
         }
-
-        g_ptr_array_add(args, g_strdup("gcc"));
-
-        if (outputType == DYNAMIC_LIB)
-            g_ptr_array_add(args, g_strdup("-shared"));
-
-        //I think there are no build options for linking stage
-        //model_project_manager_split_and_add_to(args, configString);
-
-        for (int i = 0; i < objFiles->len; i++)
+        else
         {
-            GString *file = (GString *)g_ptr_array_index(objFiles, i);
-            g_ptr_array_add(args, g_strdup(file->str));
+            g_ptr_array_add(args, g_strdup("ar"));
+            g_ptr_array_add(args, g_strdup("rcs"));
+
+            g_ptr_array_add(args, g_strdup(binFolder->str));
+
+            for (int i = 0; i < objFiles->len; i++)
+            {
+                GString *file = (GString *)g_ptr_array_index(objFiles, i);
+                g_ptr_array_add(args, g_strdup(file->str));
+            }
+
+            g_ptr_array_add(args, NULL);
+
+            model_project_manager_print_command(args);
+            output = run_tool("/usr/bin/ar", (char **)args->pdata);
+
+            if (output->len > 0)
+                g_print("%s\n", output->str);
         }
-
-        g_ptr_array_add(args, g_strdup("-o"));
-
-        g_ptr_array_add(args, g_strdup(binFolder->str));
-
-        model_project_manager_split_and_add_to(args, link);
-
-        g_ptr_array_add(args, NULL);
-
-        model_project_manager_print_command(args);
-        output = run_tool("/usr/bin/gcc", (char **)args->pdata);
-
-        if (output->len > 0)
-            g_print("%s\n", output->str);
-    }
-    else
-    {
-        g_ptr_array_add(args, g_strdup("ar"));
-        g_ptr_array_add(args, g_strdup("rcs"));
-
-        g_ptr_array_add(args, g_strdup(binFolder->str));
-
-        for (int i = 0; i < objFiles->len; i++)
-        {
-            GString *file = (GString *)g_ptr_array_index(objFiles, i);
-            g_ptr_array_add(args, g_strdup(file->str));
-        }
-
-        g_ptr_array_add(args, NULL);
-
-        model_project_manager_print_command(args);
-        output = run_tool("/usr/bin/ar", (char **)args->pdata);
-
-        if (output->len > 0)
-            g_print("%s\n", output->str);
     }
 
     if(isPublishing)
