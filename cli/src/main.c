@@ -22,9 +22,12 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #include "CLI.h"
 
 #include "ModelProject.h"
+#include "locale.h"
 
 int main(int argc, char** argv)
 {
+	setlocale(LC_ALL, "");
+	
 	CLICommandParser* p = cli_command_parser_new(argv, argc);
 	
 	cli_command_parser_execute(p);
