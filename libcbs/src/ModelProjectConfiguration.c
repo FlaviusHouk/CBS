@@ -19,6 +19,7 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #include "ModelProjectConfiguration.h"
 
 #include "Helper.h"
+#include "Helpers/XMLHelpers.h"
 
 struct _ModelProjectConfiguration
 {

@@ -22,6 +22,7 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #include "libxml/xmlerror.h"
 
 #include "Helper.h"
+#include "Helpers/XMLHelpers.h"
 
 struct _ModelProject
 {

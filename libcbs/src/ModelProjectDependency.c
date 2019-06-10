@@ -20,6 +20,7 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #include "ModelProjectManager.h"
 
 #include "Helper.h"
+#include "Helpers/XMLHelpers.h"
 #include "string.h"
 
 struct _ModelProjectDependency
