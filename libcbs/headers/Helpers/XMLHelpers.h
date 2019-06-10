@@ -80,6 +80,9 @@ xml_node_read_collection(xmlNodePtr node,
 GString*
 xml_node_read_g_string(xmlNodePtr node, char* name);
 
+gint
+xml_node_read_int(xmlNodePtr node, char* name);
+
 ///Function to converting string from ASCII encoding to @enc
 ///@string - string to encode.
 ///@enc - encoding name.

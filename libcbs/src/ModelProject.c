@@ -24,6 +24,10 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #include "Helper.h"
 #include "Helpers/XMLHelpers.h"
 
+#ifdef _HAVE_CONFIG_H_
+#include "config.h"
+#endif
+
 struct _ModelProject
 {
     GObject parent_object;
@@ -32,6 +36,7 @@ struct _ModelProject
     GString* _location;
 
     //storable fields
+    gint _xmlDocVersion;
     GPtrArray* _sourceFiles;
     GPtrArray* _headersFolders;
     GPtrArray* _dependencies;
@@ -269,6 +274,7 @@ model_project_init(ModelProject* this)
     this->_dependencies = g_ptr_array_new_with_free_func(g_object_unref);
     this->_buildConfigs = g_ptr_array_new_with_free_func(g_object_unref);
     this->_projData = g_hash_table_new(g_str_hash, g_str_equal);
+    this->_xmlDocVersion = 0;
 }
 
 ModelProject* 
@@ -345,6 +351,10 @@ static void
 model_project_read(xmlNodePtr root, ModelProject* this)
 {
     xmlNodePtr node = root->children;
+
+    gint ver = xml_node_read_int(node, "Version");
+    if(ver > 0)
+        this->_xmlDocVersion = ver;
 
     xml_node_read_collection(node,
                             "SourceFiles",
@@ -461,6 +471,10 @@ model_project_write_project(ModelProject* this)
     rc = xmlTextWriterStartElement(writer, "Project");
     g_assert(rc >= 0);
 
+    xml_text_writer_write_int(writer,
+                              "Version",
+                              this->_xmlDocVersion);
+
     xml_text_writer_write_ptr_array(writer, 
                                     "SourceFiles", 
                                     this->_sourceFiles, 
@@ -534,6 +548,10 @@ model_project_load_or_create_project(GString* location, ModelProject** output)
     else //not exists
     {
         proj = fopen(location->str, "w+");
+
+        gint ver = atoi(DEFAULT_PROJECT_VERSION);
+        toRet->_xmlDocVersion = ver;
+
         model_project_write_project(toRet);
         fclose(proj);
 

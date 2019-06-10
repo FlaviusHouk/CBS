@@ -115,6 +115,20 @@ xml_node_read_g_string(xmlNodePtr node, char* name)
     return g_string_new(xmlNodeGetContent(node));
 }
 
+gint
+xml_node_read_int(xmlNodePtr node, char* name)
+{
+    while(node != NULL && strcmp(node->name, name) != 0)
+        node = node->next;
+
+    if(node == NULL)
+        return -1;
+
+    gchar* content = xmlNodeGetContent(node);
+
+    return atoi(content);
+}
+
 ///Converting input for right xml encoding.
 xmlChar*
 xml_convert_input(char* string, char* enc)
