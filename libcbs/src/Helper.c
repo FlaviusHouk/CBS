@@ -47,13 +47,20 @@ gchar* g_str_substr(const gchar* src, int offset, int len)
 gchar* g_path_get_absolute(gchar* relPath)
 {
     //Cannot include realpath function, so realpath tool is called
+    GError* innerError;
 
     GPtrArray* args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
     g_ptr_array_add(args, g_strdup("realpath"));
     g_ptr_array_add(args, strdup(relPath));
     g_ptr_array_add(args, NULL);
 
-    GString* output = run_tool("/usr/bin/realpath", (char**)args->pdata);
+    GString* output = run_tool("/usr/bin/realpath", (char**)args->pdata, &innerError);
+    if(innerError != NULL)
+    {
+        g_ptr_array_free(args, TRUE);        
+        return NULL;
+    }
+
     g_string_erase(output, output->len - 1, 1);
 
     gchar* absPath = output->str;
@@ -100,46 +107,42 @@ read_from_pipe (int file)
 }
 
 GString*
-run_tool(char* tool, char** args)
+run_tool(char* tool, char** args, GError** error)
 {
-    int link[2];
-    pid_t pid;
-    GString* toRet = NULL;
+    gchar *stdoutput = NULL, *stderror = NULL;
+    gint exitStatus;
+    GError* innerError = NULL;
 
-    int rc = pipe(link); //creates pipe to read STDOUT of child process
-    g_assert(rc != -1);
+    g_spawn_sync(NULL,
+                 args,
+                 NULL,
+                 G_SPAWN_SEARCH_PATH,
+                 NULL,
+                 NULL,
+                 &stdoutput,
+                 &stderror,
+                 &exitStatus,
+                 &innerError);
 
-    pid = fork(); //creates a copy of current process.
-    g_assert(pid != -1);
-
-    if(pid == 0) // flow for child process
+    if(innerError != NULL)
     {
-        //redirecting STDOUT and STDERR
-        dup2 (link[1], STDOUT_FILENO); 
-        dup2 (link[1], STDERR_FILENO);
-
-        //In a lot of examples links closed before actual executing
-        close(link[0]);
-        close(link[1]);
-
-        //executing command
-        int status = execv (tool, args);
+        g_propagate_error(error, innerError);
+        return NULL;
+    }
+    else if(exitStatus != 0)
+    {
+        g_set_error(error,
+                    g_quark_from_string(tool),
+                    exitStatus,
+                    stderror);
         
-        if(status == -1)
-        {
-            g_print("%d\n", errno);
-            g_print("%s\n", strerror(errno));
-        }
-
-        exit(0); //suspending process as it done it's job.
-    } 
-    else
-    {
-        close(link[1]);
-        toRet = read_from_pipe(link[0]);
+        return NULL;
     }
 
-    return toRet;
+    if(stderror != NULL && strlen(stderror) > 0)
+        g_printerr(stderror);
+
+    return g_string_new(stdoutput);
 }
 
 void

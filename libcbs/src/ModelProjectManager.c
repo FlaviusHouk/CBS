@@ -360,8 +360,11 @@ model_project_manager_print_command(GPtrArray* args)
 
 //script is freed inside so a copy should be pased.
 static void
-model_project_manager_run_script(GString* scriptFolder, gchar* script)
+model_project_manager_run_script(GString* scriptFolder, 
+                                 gchar* script,
+                                 GError** error)
 {
+    GError* innerError = NULL;
     g_print("Running %s script...\n", script);
 
     GPtrArray* args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
@@ -382,9 +385,16 @@ model_project_manager_run_script(GString* scriptFolder, gchar* script)
         g_ptr_array_add(args, g_strdup(preBuildScriptLocation->str));
         g_ptr_array_add(args, NULL);
 
-        output = run_tool("/usr/bin/sh", (char**)args->pdata);
-        if(output->len > 0)
+        output = run_tool("/usr/bin/sh", (char**)args->pdata, &innerError);
+        if(innerError != NULL)
+        {
+            g_propagate_error(error, innerError);
+            return;
+        }
+        else if(output->len > 0)
+        {
             g_print("%s\n", output->str);
+        }
         
         g_string_free(output, TRUE);
     }   
@@ -484,8 +494,10 @@ model_project_manager_process_code_file(ModelProject* toBuild,
                                         GString* configString,
                                         GString* includes,
                                         GString* projLoc,
-                                        gboolean rebuild)
+                                        gboolean rebuild,
+                                        GError** error)
 {
+    GError* innerError = NULL;
     GString *objFile = g_string_clone(objFolder);
     g_string_append_printf(objFile, "/%s.o", g_path_get_basename(model_source_file_get_path(file)->str));
 
@@ -519,9 +531,19 @@ model_project_manager_process_code_file(ModelProject* toBuild,
     g_ptr_array_add(args, NULL);
 
     model_project_manager_print_command(args);
-    GString* output = run_tool("/usr/bin/gcc", (char **)args->pdata);
-    if (output->len > 0)
+    GString* output = run_tool("/usr/bin/gcc", (char **)args->pdata, &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        g_string_free(loc, TRUE);
+        g_ptr_array_free(args, TRUE);
+
+        return NULL;
+    }
+    else if (output->len > 0)
+    {
         g_print("%s\n", output->str);
+    }
 
     g_string_free(output, TRUE);
     g_string_free(loc, TRUE);
@@ -712,7 +734,12 @@ model_project_manager_build_project(ModelProjectManager* this,
         return;
     }
 
-    model_project_manager_run_script(scriptFolder, "preBuild.sh");
+    model_project_manager_run_script(scriptFolder, "preBuild.sh", &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
 
     g_print("Building...\n");
 
@@ -723,14 +750,29 @@ model_project_manager_build_project(ModelProjectManager* this,
     {
         ModelSourceFile* file = (ModelSourceFile*)g_ptr_array_index(sources, i);
 
-        if(model_source_file_get_file_type(file) == CODE)        
-            g_ptr_array_add(objFiles, model_project_manager_process_code_file(toBuild,
+        if(model_source_file_get_file_type(file) == CODE)      
+        {  
+            GString* compileCommand = model_project_manager_process_code_file(toBuild,
                                                                               file,
                                                                               objFolder,
                                                                               configString,
                                                                               includes,
                                                                               loc,
-                                                                              forceRebuild));
+                                                                              forceRebuild,
+                                                                              &innerError);
+
+            if(innerError != NULL)
+            {
+                g_propagate_error(error, innerError);
+                
+            }
+        }
+
+        if(innerError != NULL)
+        {
+            g_propagate_error(error, innerError);
+            return;
+        }
     }
 
     gint outputType = model_project_configuration_get_output_type(config);
@@ -801,10 +843,15 @@ model_project_manager_build_project(ModelProjectManager* this,
             g_ptr_array_add(args, NULL);
 
             model_project_manager_print_command(args);
-            output = run_tool("/usr/bin/gcc", (char **)args->pdata);
-
+            output = run_tool("/usr/bin/gcc", (char **)args->pdata, &innerError);
+            if(innerError != NULL)
+            {
+                g_propagate_error(error, innerError);
+            }
             if (output->len > 0)
+            {
                 g_print("%s\n", output->str);
+            }
         }
         else
         {
@@ -822,12 +869,16 @@ model_project_manager_build_project(ModelProjectManager* this,
             g_ptr_array_add(args, NULL);
 
             model_project_manager_print_command(args);
-            output = run_tool("/usr/bin/ar", (char **)args->pdata);
-
-            if (output->len > 0)
+            output = run_tool("/usr/bin/ar", (char **)args->pdata, &innerError);
+            if(innerError != NULL)
+                g_propagate_error(error, innerError);
+            else if (output->len > 0)
                 g_print("%s\n", output->str);
         }
     }
+
+    if(innerError != NULL)
+        return;
 
     if(isPublishing)
     {
@@ -845,7 +896,9 @@ model_project_manager_build_project(ModelProjectManager* this,
         }
     }
 
-    model_project_manager_run_script(scriptFolder, "postBuild.sh");
+    model_project_manager_run_script(scriptFolder, "postBuild.sh", &innerError);
+    if(innerError != NULL)
+        g_propagate_error(error, innerError);
 
     g_ptr_array_free(args, TRUE);
 

@@ -38,7 +38,7 @@ g_path_get_absolute(gchar* relPath);
 ///args - NULL terminated array of arguments (every word should be as separate string,
 ///(for example "gcc" "name.c", "-o", "name.o"). Tool name should also be included.
 GString*
-run_tool(char* tool, char** args);
+run_tool(char* tool, char** args, GError** error);
 
 ///Wrapper on free(). Performs check on NULL. If data != NULL cleans memory.
 ///data - memory to clean

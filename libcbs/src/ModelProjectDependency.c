@@ -302,17 +302,35 @@ model_project_dependency_get_includes(ModelProjectDependency* this,
     g_assert(this);
     if(this->_type == SYSTEM_DEP)
     {
+        GError* innerError = NULL;
+
         char** args = (char**)malloc(sizeof(char*) * 4);
         args[0] = g_strdup("pkgconf");
         args[1] = g_strdup("--cflags");
-        args[2] = this->_representation->str;
+        args[2] = g_strdup(this->_representation->str);
         args[3] = (char*)NULL;
 
-        GString* out = run_tool("/usr/bin/pkgconf", args); //в мабутньому варто перевіряти чи є pkg-config взагалі
+        GString* out = run_tool("/usr/bin/pkgconf", args, &innerError); //в мабутньому варто перевіряти чи є pkg-config взагалі
 
-        //додати перевірку на правильність рядка
+        if(innerError != NULL)
+        {
+            g_propagate_error(error, innerError);
+            return NULL;
+        }
+
+        for(int i = 0; i<4; i++)
+        {
+            if(args[i])
+                g_free(args[i]);
+        }
 
         g_free(args);
+
+        if(innerError != NULL)
+        {
+            g_propagate_error(error, innerError);
+            return NULL;
+        }
 
         return out;
     }
@@ -351,13 +369,20 @@ model_project_dependency_get_links(ModelProjectDependency* this,
 
     if(this->_type == SYSTEM_DEP)
     {
+        GError* innerError = NULL;
+
         char** args = (char**)malloc(sizeof(char*) * 4);
         args[0] = g_strdup("pkgconf");
         args[1] = g_strdup("--libs");
         args[2] = g_strdup(this->_representation->str);
         args[3] = (char*)NULL;
 
-        GString* out = run_tool("/usr/bin/pkgconf", args); 
+        GString* out = run_tool("/usr/bin/pkgconf", args, &innerError);
+        if(innerError != NULL)
+        {
+            g_propagate_error(error, innerError);
+            return NULL;
+        }
 
         for(int i = 0; i<4; i++)
         {
@@ -366,6 +391,12 @@ model_project_dependency_get_links(ModelProjectDependency* this,
         }
 
         g_free(args);
+
+        if(innerError != NULL)
+        {
+            g_propagate_error(error, innerError);
+            return NULL;
+        } 
 
         return out;
     }
