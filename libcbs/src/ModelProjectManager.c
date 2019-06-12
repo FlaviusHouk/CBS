@@ -752,20 +752,17 @@ model_project_manager_build_project(ModelProjectManager* this,
 
         if(model_source_file_get_file_type(file) == CODE)      
         {  
-            GString* compileCommand = model_project_manager_process_code_file(toBuild,
-                                                                              file,
-                                                                              objFolder,
-                                                                              configString,
-                                                                              includes,
-                                                                              loc,
-                                                                              forceRebuild,
-                                                                              &innerError);
+            GString* objFile = model_project_manager_process_code_file(toBuild,
+                                                                       file,
+                                                                       objFolder,
+                                                                       configString,
+                                                                       includes,
+                                                                       loc,
+                                                                       forceRebuild,
+                                                                       &innerError);
 
-            if(innerError != NULL)
-            {
-                g_propagate_error(error, innerError);
-                
-            }
+            if(objFile != NULL)
+                g_ptr_array_add(objFiles, objFile);
         }
 
         if(innerError != NULL)
