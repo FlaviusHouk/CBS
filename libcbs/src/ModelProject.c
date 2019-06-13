@@ -161,13 +161,30 @@ model_project_get_build_config(ModelProject* this, GString* configName)
 static void
 model_project_init_default_build_configs(void)
 {
+    GError* innerError = NULL;
+    GString* configDir = g_string_new(getenv("XDG_CONFIG_HOME"));
+    g_string_append(configDir, "/cbs/config.conf");
+    
+    GKeyFile* configFile = g_key_file_new();
+    if(!g_key_file_load_from_file(configFile, configDir->str, G_KEY_FILE_NONE, &innerError))
+    {
+        g_printerr(innerError->message);
+        return;
+    }
+
     defaultConfigs = g_ptr_array_new();
+    gchar* defaultDebugConfig = g_key_file_get_string(configFile, "Configs", "Debug", &innerError);
+    gchar* defaultReleaseConfig = g_key_file_get_string(configFile, "Configs", "Release", &innerError);
 
-    g_ptr_array_add(defaultConfigs, model_project_configuration_new(g_string_new("Debug")));
+    xmlDocPtr doc = xmlParseDoc(defaultDebugConfig);
+    xmlNodePtr configNode = xmlDocGetRootElement(doc);
+    g_ptr_array_add(defaultConfigs, model_project_configuration_new_from_xml(configNode));
+    xmlFreeDoc(doc);    
 
-    ModelProjectConfiguration* conf = model_project_configuration_new(g_string_new("Release"));
-    model_project_configuration_set_optimization_level(conf, RELEASE_1);
-    g_ptr_array_add(defaultConfigs, conf);
+    doc = xmlParseDoc(defaultReleaseConfig);
+    configNode = xmlDocGetRootElement(doc);
+    g_ptr_array_add(defaultConfigs, model_project_configuration_new_from_xml(configNode));
+    xmlFreeDoc(doc);   
 }
 
 static void

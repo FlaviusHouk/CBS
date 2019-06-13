@@ -329,7 +329,12 @@ model_project_configuration_new_from_xml(xmlNodePtr node)
         }
         else if(strcmp(conf->name, "OutputName") == 0)
         {
-            this->_outputName = g_string_new(xmlNodeGetContent(conf));
+            gchar* name = xmlNodeGetContent(conf);
+
+            if(strlen(name) > 0)
+                this->_outputName = g_string_new(name);
+            else
+                g_free(name);
         }
         else if(strcmp(conf->name, "CStandard") == 0)
         {
