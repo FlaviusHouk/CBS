@@ -845,7 +845,7 @@ model_project_manager_build_project(ModelProjectManager* this,
             {
                 g_propagate_error(error, innerError);
             }
-            if (output->len > 0)
+            else if (output->len > 0)
             {
                 g_print("%s\n", output->str);
             }
