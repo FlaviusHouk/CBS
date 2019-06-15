@@ -786,14 +786,15 @@ model_project_manager_build_project(ModelProjectManager* this,
         return;
     }
 
+    GString* binary = g_string_new(g_strdup(binFolder->str));
     char *projName = g_path_get_basename(model_project_get_location(toBuild)->str);
-    binFolder = g_string_append(binFolder, "/");
+    binary = g_string_append(binary, "/");
 
     GString *outputName = model_project_configuration_get_output_name(config);
     if (outputName != NULL)
-        binFolder = g_string_append(binFolder, g_strdup(outputName->str));
+        binary = g_string_append(binary, g_strdup(outputName->str));
     else
-        binFolder = g_string_append(binFolder, projName);
+        binary = g_string_append(binary, projName);
 
     model_project_manager_build_dependencies(this,
                                              toBuild,
@@ -802,7 +803,7 @@ model_project_manager_build_project(ModelProjectManager* this,
 
     g_print("Linking...\n");
 
-    if (!model_project_manager_is_output_up_to_date(binFolder, objFiles) || forceRebuild)
+    if (!model_project_manager_is_output_up_to_date(binary, objFiles) || forceRebuild)
     {
         if (outputType != STATIC_LIB)
         {
@@ -833,7 +834,7 @@ model_project_manager_build_project(ModelProjectManager* this,
 
             g_ptr_array_add(args, g_strdup("-o"));
 
-            g_ptr_array_add(args, g_strdup(binFolder->str));
+            g_ptr_array_add(args, g_strdup(binary->str));
 
             model_project_manager_split_and_add_to(args, link);
 
@@ -855,7 +856,7 @@ model_project_manager_build_project(ModelProjectManager* this,
             g_ptr_array_add(args, g_strdup("ar"));
             g_ptr_array_add(args, g_strdup("rcs"));
 
-            g_ptr_array_add(args, g_strdup(binFolder->str));
+            g_ptr_array_add(args, g_strdup(binary->str));
 
             for (int i = 0; i < objFiles->len; i++)
             {
@@ -880,11 +881,8 @@ model_project_manager_build_project(ModelProjectManager* this,
     if(isPublishing)
     {
         GPtrArray* dependencies = model_project_get_dependencies(toBuild);
-        GString* binaryFolder = g_string_new(g_path_get_dirname(binFolder->str));
 
-        model_project_manager_copy_binaries(dependencies, binaryFolder, &innerError);
-
-        g_string_free(binaryFolder, TRUE);
+        model_project_manager_copy_binaries(dependencies, binFolder, &innerError);
 
         if(innerError != NULL)
         {
@@ -902,6 +900,7 @@ model_project_manager_build_project(ModelProjectManager* this,
     g_string_free(loc, TRUE);
     g_string_free(objFolder, TRUE);
     g_string_free(binFolder, TRUE);
+    g_string_free(binary, TRUE);
     g_string_free(scriptFolder, TRUE);
     g_string_free(includes, TRUE);
 }
