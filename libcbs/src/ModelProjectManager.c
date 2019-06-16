@@ -288,6 +288,9 @@ model_project_manager_build_include_string(ModelProject* building,
             return NULL;
         }
     
+        if(depInclude == NULL)
+            continue;
+
         depInclude = g_string_truncate(depInclude, depInclude->len - 1);
         //added to prevent last space and make output looks consistent 
 

@@ -406,6 +406,23 @@ model_project_dependency_get_links(ModelProjectDependency* this,
         gchar* libPath = g_path_get_dirname(this->_representation->str);
         gchar* absPath = g_path_get_absolute(libPath);
 
+        GString* path = g_string_new(g_strdup(absPath));
+        g_string_append_printf(path, "/%s", g_strdup(libName));
+        if(!g_file_test(path->str, G_FILE_TEST_EXISTS))
+        {
+            g_set_error(error,
+                        g_type_qname(MODEL_TYPE_PROJECT_DEPENDENCY),
+                        MODEL_PROJECT_DEPENDENCY_FAILED_TO_PROCESS,
+                        "Cannot find dynamic library named %s in path %s \n",
+                        libName, libPath);
+
+            g_free(libName);
+            g_free(libPath);
+            g_free(absPath);
+
+            return;
+        }
+
         GString* link = g_string_new("-L");
 
         g_string_append_printf(link, "%s -l%s  ", libPath, libName);
