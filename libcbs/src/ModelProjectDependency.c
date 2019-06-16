@@ -420,7 +420,7 @@ model_project_dependency_get_links(ModelProjectDependency* this,
             g_free(libPath);
             g_free(absPath);
 
-            return;
+            return NULL;
         }
 
         GString* link = g_string_new("-L");

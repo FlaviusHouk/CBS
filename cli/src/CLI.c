@@ -29,6 +29,7 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #include "CLIDeleteIncludeCommand.h"
 #include "CLIHelpCommand.h"
 #include "CLITestCommand.h"
+#include "CLIVersionCommand.h"
 
 #include "Helper.h"
 #include "CLICommandInfo.h"
@@ -102,6 +103,8 @@ cli_command_parser_parse_commands(gpointer data, gpointer userData)
 		cli_command_parser_set_command(this, CLI_COMMAND_INFO(cli_test_command_new()));
 	else if(strcmp(str->str, "--help") == 0)
 		cli_command_parser_set_command(this, CLI_COMMAND_INFO(cli_help_command_new()));
+	else if(strcmp(str->str, "--version") == 0)
+		cli_command_parser_set_command(this, CLI_COMMAND_INFO(cli_version_command_new()));
 	else
 	{
 		if(this->_command == NULL)

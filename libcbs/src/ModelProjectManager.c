@@ -24,6 +24,10 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "ModelTestRunner.h"
 
+#ifdef _HAVE_CONFIG_H_
+#include "config.h"
+#endif
+
 #include "glib/gstdio.h"
 #include "gio/gio.h"
 
@@ -63,6 +67,12 @@ ModelProjectManager*
 model_project_manager_new()
 {
     return g_object_new(MODEL_TYPE_PROJECT_MANAGER, NULL);
+}
+
+gchar*
+model_project_manager_get_version()
+{
+    return g_strdup(CBS_VERSION);
 }
 
 ///Get base directory for project.

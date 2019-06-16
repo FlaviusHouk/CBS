@@ -41,6 +41,9 @@ enum PROJECT_BUILD_OPTIONS
 
 G_BEGIN_DECLS
 
+gchar*
+model_project_manager_get_version();
+
 //Instance constructor for ProjectManager type.
 ModelProjectManager*
 model_project_manager_new();
