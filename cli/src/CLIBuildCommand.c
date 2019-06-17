@@ -119,26 +119,31 @@ cli_build_command_handle_input(CLICommandInfo* command, GString* input)
 static void 
 cli_build_command_execute(CLICommandInfo* command)
 {
+    GError* innerError = NULL;
 	CLIBuildCommand* this = CLI_BUILD_COMMAND(command);
 
 	ModelProject* proj = NULL;
-	if(!model_project_load_or_create_project(this->_projLoc, &proj))
+	if(!model_project_load_or_create_project(this->_projLoc, &proj, &innerError))
 	{
 		g_print("Project does not exist\n");
 		return;
 	}
+    if(innerError != NULL)
+    {
+        g_print(innerError->message);
+        return;
+    }
 
 	ModelProjectManager* manager = model_project_manager_new();
 
-	GError* error = NULL;
 	model_project_manager_build_project(manager,
                                         proj,
                                         this->_configName,
                                         this->_options,
-                                        &error);
-	if(error)
+                                        &innerError);
+	if(innerError)
 	{
-		g_print(error->message);
+		g_print(innerError->message);
 		return;
 	}
 

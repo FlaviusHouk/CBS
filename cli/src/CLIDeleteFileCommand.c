@@ -103,23 +103,34 @@ cli_delete_file_command_delete_file(gpointer fileName, gpointer project)
 static void 
 cli_delete_file_command_execute(CLICommandInfo* command)
 {
+    GError* innerError = NULL;
     CLIDeleteFileCommand* this = CLI_DELETE_FILE_COMMAND(command);
 
 	GPtrArray* files = this->_files;
     GString* projLoc = this->_projectLoc;
 
 	ModelProject* proj = NULL;
-	if(!model_project_load_or_create_project(projLoc, &proj))
+	if(!model_project_load_or_create_project(projLoc, &proj, &innerError))
 	{
 		g_print("Project does not exist\n");
 		return;
 	}
+    if(innerError != NULL)
+    {
+        g_print(innerError->message);
+        return;
+    }
 
 	g_ptr_array_foreach(files, 
                         cli_delete_file_command_delete_file, 
                         proj);
 
-	model_project_save(proj, NULL);
+	model_project_save(proj, NULL, &innerError);
+    if(innerError != NULL)
+    {
+        g_print(innerError->message);
+        return;
+    }
 
 	g_object_unref(proj);
 }

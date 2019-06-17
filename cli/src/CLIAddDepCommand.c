@@ -132,21 +132,32 @@ cli_add_dep_command_handle_input(CLICommandInfo* command, GString* input)
 static void 
 cli_add_dep_command_execute(CLICommandInfo* command)
 {
+    GError* innerError = NULL;
     CLIAddDepCommand* this = CLI_ADD_DEP_COMMAND(command);
 
 	GString* projLoc = this->_projLoc;
 	ModelProject* proj = NULL;
-	if(!model_project_load_or_create_project(projLoc, &proj))
+	if(!model_project_load_or_create_project(projLoc, &proj, &innerError))
 	{
 		g_print("Project does not exist\n");
 		return;
 	}
+    else if(innerError != NULL)
+    {
+        g_print(innerError->message);
+        return;
+    }
 
 	ModelProjectDependency* depObj = model_project_dependency_new(this->_depRepresentation,
                                                                   *(this->_depType));
 
 	model_project_add_dependency(proj, depObj);
-	model_project_save(proj, NULL);
+	model_project_save(proj, NULL, &innerError);
+    if(innerError != NULL)
+    {
+        g_print(innerError->message);
+        return;
+    }
 
 	g_print("%s was added with %d type.\n", this->_depRepresentation->str, *(this->_depType));
 

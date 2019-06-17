@@ -179,16 +179,46 @@ model_source_file_deserialize_dependency(xmlNodePtr node, gpointer user_data)
 }
 
 ModelSourceFile*
-model_source_file_new_from_xml(xmlNodePtr node)
+model_source_file_new_from_xml(xmlNodePtr node,
+                               GError** error)
 {
+    GError* innerError = NULL;
     xmlNodePtr file = node->children;
-    ModelSourceFile* this = model_source_file_new(xml_node_read_g_string(file, "Path")); 
+
+    GString* path = xml_node_read_g_string(file, 
+                                           "Path",
+                                           &innerError);
+    if(innerError)
+    {
+        g_set_error(error,
+                    g_type_qname(MODEL_TYPE_SOURCE_FILE),
+                    XML_CANNOT_READ,
+                    "Cannot deserialize SourceFile instance.\n Error message: %s",
+                    innerError->message);
+        
+        g_error_free(innerError);
+        return NULL;
+    }
+
+    ModelSourceFile* this = model_source_file_new(path); 
 
     xml_node_read_collection(file,
                              "DependsOn",
                              "Dependency",
                              model_source_file_deserialize_dependency,
-                             this);
+                             this,
+                             &innerError);
+    if(innerError)
+    {
+        g_set_error(error,
+                    g_type_qname(MODEL_TYPE_SOURCE_FILE),
+                    XML_CANNOT_READ,
+                    "Cannot deserialize SourceFile instance.\n Error message: %s",
+                    innerError->message);
+        
+        g_error_free(innerError);
+        return NULL;
+    }
 
     return this;
 }
@@ -196,32 +226,61 @@ model_source_file_new_from_xml(xmlNodePtr node)
 static void
 model_source_file_write_dependencies(gpointer dependency, gpointer user_data)
 {
+    GError* innerError = NULL;
     GString* dep = (GString*)dependency;
     xmlTextWriter* writer = (xmlTextWriter*)user_data;
 
-    xml_text_writer_write_string(writer, "Dependency", dep->str);
+    xml_text_writer_write_string(writer, "Dependency", dep->str, &innerError);
 }
 
 void
-model_source_file_write_xml(ModelSourceFile* file, xmlTextWriterPtr writer)
+model_source_file_write_xml(ModelSourceFile* file, 
+                            xmlTextWriterPtr writer,
+                            GError** error)
 {
     g_assert(file);
     g_assert(writer);
 
+    GError* innerError = NULL;
     int rc;
 
     rc = xmlTextWriterStartElement(writer, BAD_CAST "SourceFile");
-    g_assert(rc >= 0);
+    if(rc < 0)
+    {
+        g_set_error(error,
+                    g_type_qname(MODEL_TYPE_SOURCE_FILE),
+                    XML_CANNOT_WRITE,
+                    "Cannot write Source file.\n");
+        return;
+    }
 
-    xml_text_writer_write_string(writer, "Path", file->_path->str);
+    xml_text_writer_write_string(writer, "Path", file->_path->str, &innerError);
+    if(innerError)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
 
     xml_text_writer_write_ptr_array(writer,
                                     "DependsOn",
                                     file->_dependsOn,
-                                    model_source_file_write_dependencies);
+                                    model_source_file_write_dependencies,
+                                    &innerError);
+    if(innerError)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
 
     rc = xmlTextWriterEndElement(writer);
-    g_assert(rc >= 0);
+    if(rc < 0)
+    {
+        g_set_error(error,
+                    g_type_qname(MODEL_TYPE_SOURCE_FILE),
+                    XML_CANNOT_WRITE,
+                    "Cannot write Source file.\n");
+        return;
+    }
 }
 
 static const char* 

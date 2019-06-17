@@ -110,20 +110,31 @@ cli_delete_dep_command_handle_input(CLICommandInfo* command, GString* input)
 static void 
 cli_delete_dep_command_execute(CLICommandInfo* command)
 {
+    GError* innerError = NULL;
 	CLIDeleteDepCommand* this = CLI_DELETE_DEP_COMMAND(command);
 
 	ModelProject* proj = NULL;
-	if(!model_project_load_or_create_project(this->_projLoc, &proj))
+	if(!model_project_load_or_create_project(this->_projLoc, &proj, &innerError))
 	{
 		g_print("Project does not exist\n");
 		return;
 	}
+    if(innerError != NULL)
+    {
+        g_print(innerError->message);
+        return;
+    }
 
 	model_project_remove_dependency_by_name(proj, this->_depName);
 
 	g_print("%s was removed.\n", this->_depName->str);
 
-	model_project_save(proj, NULL);
+	model_project_save(proj, NULL, &innerError);
+    if(innerError != NULL)
+    {
+        g_print(innerError->message);
+        return;
+    }
 
 	g_object_unref(proj);
 }

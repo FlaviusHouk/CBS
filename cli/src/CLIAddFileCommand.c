@@ -103,23 +103,34 @@ cli_add_file_add_file_to_project(gpointer fileName, gpointer project)
 static void 
 cli_add_file_command_execute(CLICommandInfo* command)
 {
+    GError* innerError = NULL;
     CLIAddFileCommand* this = CLI_ADD_FILE_COMMAND(command);
 
     GPtrArray* files = this->_files;
     GString* projLoc = this->_projectLoc;
 
 	ModelProject* proj = NULL;
-	if(!model_project_load_or_create_project(projLoc, &proj))
+	if(!model_project_load_or_create_project(projLoc, &proj, &innerError))
 	{
 		g_print("Project does not exist\n");
 		return;
 	}
+    if(innerError != NULL)
+    {
+        g_print(innerError->message);
+        return;
+    }
 
 	g_ptr_array_foreach(files, 
                         cli_add_file_add_file_to_project, 
                         proj);
 
-	model_project_save(proj, NULL);
+	model_project_save(proj, NULL, &innerError);
+    if(innerError != NULL)
+    {
+        g_print(innerError->message);
+        return;
+    }
 
 	g_object_unref(proj);
 }

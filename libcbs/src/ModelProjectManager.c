@@ -195,6 +195,8 @@ model_project_manager_create_project(GString* location,
                                      GError** error)
 {
     ModelProject* proj = NULL;
+    GError* innerError = NULL;
+    
     if(templateName != NULL)
     {
         const gchar* dataDir = g_getenv("XDG_DATA_HOME");
@@ -216,15 +218,18 @@ model_project_manager_create_project(GString* location,
 
         GString* templateProjectLocation = g_string_append(g_string_clone(templateLocation), "/name.cpd");
         ModelProject* proj = NULL;
-        model_project_load_or_create_project(templateProjectLocation, &proj);
+        model_project_load_or_create_project(templateProjectLocation, &proj, &innerError);
 
-        model_project_save(proj, location);
+        model_project_save(proj, location, &innerError);
+        if(&innerError != NULL)
+        {
+            g_propagate_error(error, innerError);
+            return;
+        }
 
         model_project_manager_init_src_folder(proj);
         model_project_manager_init_headers_folder(proj);
         model_project_manager_init_scripts_folder(proj);
-
-        GError* innerError = NULL;
 
         GPtrArray* toSkip = g_ptr_array_new();
         g_ptr_array_add(toSkip, g_strdup("name.cpd"));
@@ -244,7 +249,7 @@ model_project_manager_create_project(GString* location,
 
         return;
     }
-    else if(model_project_load_or_create_project(location, &proj))
+    else if(model_project_load_or_create_project(location, &proj, &innerError))
     {
         g_set_error(error,
                     g_type_qname(MODEL_TYPE_PROJECT_MANAGER),
@@ -258,7 +263,17 @@ model_project_manager_create_project(GString* location,
     model_project_manager_init_headers_folder(proj);
     model_project_manager_init_scripts_folder(proj);
     
-    model_project_save(proj, location);
+    model_project_save(proj, location, &innerError);
+    if(innerError)
+    {
+        g_set_error(error,
+                    g_type_qname(MODEL_TYPE_PROJECT_MANAGER),
+                    MODEL_PROJECT_MANAGER_CANNOT_CREATE,
+                    "Saving error.\n %s",
+                    g_strdup(innerError->message));
+        
+        g_error_free(innerError);
+    }
 }
 
 static GString*
@@ -654,6 +669,7 @@ model_project_manager_build_dependencies(ModelProjectManager* this,
                                          ProjectBuildOption buildOptions,
                                          GError ** error)
 {
+    GError* innerError = NULL;
     GPtrArray* deps = model_project_get_dependencies(toBuild);
 
     for(int i = 0; i<deps->len; i++)
@@ -666,7 +682,7 @@ model_project_manager_build_dependencies(ModelProjectManager* this,
             GString* resovledPath = model_project_resolve_path(toBuild, representation);
 
             ModelProject* projDep = NULL;
-            if(!model_project_load_or_create_project(resovledPath, &projDep))
+            if(!model_project_load_or_create_project(resovledPath, &projDep, &innerError))
             {
                 g_set_error(error,
                         g_type_qname(MODEL_TYPE_PROJECT_MANAGER),
@@ -680,7 +696,6 @@ model_project_manager_build_dependencies(ModelProjectManager* this,
             gint outputType = model_project_configuration_get_output_type(conf);
             g_assert(outputType != ELF);
 
-            GError* innerError = NULL;
             model_project_manager_build_project(this,
                                                 projDep,
                                                 NULL,
@@ -727,6 +742,14 @@ model_project_manager_build_project(ModelProjectManager* this,
     model_project_manager_generate_config_header(toBuild);
 
     ModelProjectConfiguration* config = model_project_get_build_config(toBuild, configName);
+    if(config == NULL)
+    {
+        g_set_error(error,
+                    g_type_qname(MODEL_TYPE_PROJECT_MANAGER),
+                    MODEL_PROJECT_MANAGER_CANNOT_FIND,
+                    "Active build config is not set and there is no one provided.\n");
+        return;
+    }
 
     GString* includes = model_project_manager_build_include_string(toBuild, loc, &innerError);
     if(innerError != NULL)
@@ -936,7 +959,7 @@ model_project_manager_run_tests(ModelProjectManager* this,
                                                            unitTestProjectLoc);
 
         ModelProject* unitTestProject = NULL;
-        if(!model_project_load_or_create_project(resolvedPath, &unitTestProject))
+        if(!model_project_load_or_create_project(resolvedPath, &unitTestProject, &localError))
         {
             g_set_error(error,
                         g_type_qname(MODEL_TYPE_PROJECT_MANAGER),

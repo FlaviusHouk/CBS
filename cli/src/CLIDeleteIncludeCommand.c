@@ -100,21 +100,32 @@ cli_delete_include_command_delete_include(gpointer folder, gpointer proj)
 static void
 cli_delete_include_command_execute(CLICommandInfo* command)
 {
+    GError* innerError = NULL;
 	CLIDeleteIncludeCommand* this = CLI_DELETE_INCLUDE_COMMAND(command);
 
     GPtrArray* args = this->_folders;
 	GString* projLoc = this->_projectLoc;
 
 	ModelProject* proj = NULL;
-	if(!model_project_load_or_create_project(projLoc, &proj))
+	if(!model_project_load_or_create_project(projLoc, &proj, &innerError))
 	{
 		g_print("Project does not exist\n");
 		return;
 	}
+    if(innerError != NULL)
+    {
+        g_print(innerError->message);
+        return;
+    }
 
 	g_ptr_array_foreach(args, cli_delete_include_command_delete_include, proj);
 
-	model_project_save(proj, NULL);
+	model_project_save(proj, NULL, &innerError);
+    if(innerError != NULL)
+    {
+        g_print(innerError->message);
+        return;
+    }
 
 	g_object_unref(proj);
 }

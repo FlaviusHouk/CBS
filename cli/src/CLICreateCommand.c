@@ -80,11 +80,11 @@ cli_create_command_execute(CLICommandInfo* command)
 
 	GString* loc = this->_name;
 
-	GError* error = NULL;
-	model_project_manager_create_project(loc, this->_templateName, &error);
-	if(error)
+	GError* innerError = NULL;
+	model_project_manager_create_project(loc, this->_templateName, &innerError);
+	if(innerError)
 	{
-		g_print(error->message);
+		g_print(innerError->message);
 		return;
 	}
 

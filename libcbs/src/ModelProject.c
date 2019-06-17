@@ -309,8 +309,9 @@ model_project_new(GString* location)
 static void
 model_project_read_source_file(xmlNodePtr node, gpointer user_data)
 {
+    GError* innerError = NULL;
     ModelProject* this = MODEL_PROJECT(user_data);
-    ModelSourceFile* file = model_source_file_new_from_xml(node);
+    ModelSourceFile* file = model_source_file_new_from_xml(node, &innerError);
         
     if(file != NULL)
         g_ptr_array_add(this->_sourceFiles, file);
@@ -365,51 +366,109 @@ model_project_read_data_entry(xmlNodePtr node, gpointer user_data)
 
 ///Function for XML Project object deserialization.
 static void
-model_project_read(xmlNodePtr root, ModelProject* this)
+model_project_read(xmlNodePtr root, 
+                   ModelProject* this,
+                   GError** error)
 {
+    GError* innerError = NULL;
     xmlNodePtr node = root->children;
 
-    gint ver = xml_node_read_int(node, "Version");
-    if(ver > 0)
+    gint ver = xml_node_read_int(node, "Version", &innerError);
+    if(innerError != NULL)
+    {
+        g_error_free(innerError);
+        innerError = NULL;
+        this->_xmlDocVersion = 0;
+    }
+    else
+    {
         this->_xmlDocVersion = ver;
+    }
 
     xml_node_read_collection(node,
                             "SourceFiles",
                             "SourceFile",
                             model_project_read_source_file,
-                            this);
+                            this,
+                            &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
 
     xml_node_read_collection(node,
                             "IncludeFolders",
                             "string",
                             model_project_read_header,
-                            this);
+                            this,
+                            &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
 
     xml_node_read_collection(node,
                             "SystemDependencies",
                             "Dependency",
                             model_project_read_project_dependency,
-                            this);
+                            this,
+                            &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
 
     xml_node_read_collection(node,
                             "BuildConfigs",
                             "Configuration",
                             model_project_read_build_config,
-                            this);
+                            this,
+                            &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
 
     xml_node_read_collection(node,
                              "ProjectData",
                              "DataEntry",
                              model_project_read_data_entry,
-                             this);
+                             this,
+                             &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
 
-    this->_activeConfiguration = xml_node_read_g_string(node, "ActiveBuildConfig");
-    this->_unitTestsLocation = xml_node_read_g_string(node, "UnitTestsLocation");
+    this->_activeConfiguration = xml_node_read_g_string(node, 
+                                                        "ActiveBuildConfig",
+                                                        &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
+    this->_unitTestsLocation = xml_node_read_g_string(node, 
+                                                      "UnitTestsLocation",
+                                                      &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
 }
 
 static void
-model_project_read_project(ModelProject* this)
+model_project_read_project(ModelProject* this,
+                           GError** error)
 {
+    GError* innerError = NULL;
+
     xmlDocPtr doc = xmlParseFile(this->_location->str);
     g_assert(doc);
 
@@ -417,7 +476,9 @@ model_project_read_project(ModelProject* this)
     g_assert(root);
     g_assert(strcmp(root->name, "Project") == 0);
 
-    model_project_read(root, this);
+    model_project_read(root, this, &innerError);
+    if(innerError != NULL)
+        g_propagate_error(error, innerError);
 
     xmlFreeDoc(doc);
 }
@@ -425,7 +486,9 @@ model_project_read_project(ModelProject* this)
 static void
 model_project_write_source_files(gpointer obj, gpointer data)
 {
-    model_source_file_write_xml((ModelSourceFile*)obj, (xmlTextWriterPtr)data);
+    GError* innerError = NULL;
+    
+    model_source_file_write_xml((ModelSourceFile*)obj, (xmlTextWriterPtr)data, &innerError);
 }
 
 //There are a banch of function to iterate through GPtrArray with foreach loop
@@ -473,49 +536,108 @@ model_project_write_data(gpointer key, gpointer value, gpointer data)
 }
 
 static void
-model_project_write_project(ModelProject* this)
+model_project_write_project(ModelProject* this,
+                            GError** error)
 {
     int rc;
+    GError* innerError = NULL;
     xmlTextWriterPtr writer;
     xmlDocPtr doc;
 
     writer = xmlNewTextWriterDoc(&doc, 0);
-    g_assert(writer);
+    if(!writer)
+    {
+        g_set_error(error,
+                    g_quark_from_string("XML"),
+                    XML_CANNOT_WRITE,
+                    "Cannot create XML document");
+        return;
+    }
 
     rc = xmlTextWriterStartDocument(writer, NULL, "UTF-8", NULL);
-    g_assert(rc >= 0);
+    if(rc<0)
+    {
+        g_set_error(error,
+                    g_quark_from_string("XML"),
+                    XML_CANNOT_WRITE,
+                    "Cannot start document");
+        return;
+    }
 
     rc = xmlTextWriterStartElement(writer, "Project");
-    g_assert(rc >= 0);
+    if(rc < 0)
+    {
+        g_set_error(error,
+                    g_quark_from_string("XML"),
+                    XML_CANNOT_WRITE,
+                    "Cannot start document");
+        return;
+    }
 
     xml_text_writer_write_int(writer,
                               "Version",
-                              this->_xmlDocVersion);
+                              this->_xmlDocVersion,
+                              &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
 
     xml_text_writer_write_ptr_array(writer, 
                                     "SourceFiles", 
                                     this->_sourceFiles, 
-                                    model_project_write_source_files);
+                                    model_project_write_source_files,
+                                    &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
 
     xml_text_writer_write_ptr_array(writer, 
                                    "IncludeFolders", 
                                    this->_headersFolders, 
-                                   model_project_write_include_folders);    
+                                   model_project_write_include_folders,
+                                   &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }    
 
     xml_text_writer_write_ptr_array(writer, 
                                    "SystemDependencies", 
                                    this->_dependencies, 
-                                   model_project_write_system_dependencies);
+                                   model_project_write_system_dependencies,
+                                   &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
 
     xml_text_writer_write_ptr_array(writer, 
                                    "BuildConfigs", 
                                    this->_buildConfigs, 
-                                   model_project_write_build_configs);
+                                   model_project_write_build_configs,
+                                   &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
 
     xml_text_writer_write_hash_table(writer,
                                      "ProjectData",
                                      this->_projData,
-                                     model_project_write_data);
+                                     model_project_write_data,
+                                     &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
 
     gchar* activeConf = NULL;
     if(this->_activeConfiguration == NULL)
@@ -523,7 +645,15 @@ model_project_write_project(ModelProject* this)
     else
         activeConf = this->_activeConfiguration->str;
 
-    xml_text_writer_write_string(writer, "ActiveBuildConfig", activeConf);
+    xml_text_writer_write_string(writer, 
+                                 "ActiveBuildConfig", 
+                                 activeConf,
+                                 &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
 
     gchar* unitTests = NULL;
     if(this->_unitTestsLocation == NULL)
@@ -531,10 +661,25 @@ model_project_write_project(ModelProject* this)
     else
         unitTests = this->_unitTestsLocation->str;
 
-    xml_text_writer_write_string(writer, "UnitTestsLocation", unitTests);
+    xml_text_writer_write_string(writer, 
+                                 "UnitTestsLocation", 
+                                 unitTests,
+                                 &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
 
     rc = xmlTextWriterEndDocument(writer);
-    g_assert(rc >= 0);
+    if(rc < 0)
+    {
+        g_set_error(error,
+                    g_quark_from_string("XML"),
+                    XML_CANNOT_WRITE,
+                    "Cannot end document");
+        return;
+    }
 
     xmlFreeTextWriter(writer);
     xmlSaveFileEnc(this->_location->str, doc, "UTF-8");
@@ -543,10 +688,11 @@ model_project_write_project(ModelProject* this)
 
 
 gboolean
-model_project_load_or_create_project(GString* location, ModelProject** output)
+model_project_load_or_create_project(GString* location, 
+                                     ModelProject** output,
+                                     GError** error)
 {
-    FILE* proj = fopen(location->str, "r");
-
+    GError* innerError = NULL;
     GString* dot = g_string_new(".");
     ModelProject* toRet;
     if(g_string_equal(location, dot))
@@ -554,22 +700,27 @@ model_project_load_or_create_project(GString* location, ModelProject** output)
     else
         toRet = model_project_new(location);
 
-    if(proj) //exists
+    if(g_file_test(location->str, G_FILE_TEST_EXISTS))
     {
-        fclose(proj);
-        model_project_read_project(toRet);
+        model_project_read_project(toRet, &innerError);
+
+        if(innerError != NULL)
+            g_propagate_error(error, innerError);
 
         (*output) = toRet;
         return TRUE;
     }
     else //not exists
     {
-        proj = fopen(location->str, "w+");
+        FILE* proj = fopen(location->str, "w+");
 
         gint ver = atoi(DEFAULT_PROJECT_VERSION);
         toRet->_xmlDocVersion = ver;
 
-        model_project_write_project(toRet);
+        model_project_write_project(toRet, &innerError);
+        if(innerError != NULL)
+            g_propagate_error(error, innerError);
+
         fclose(proj);
 
         (*output) = toRet;
@@ -657,9 +808,12 @@ model_project_remove_include_folder(ModelProject* this, GString* folder)
 }
 
 void
-model_project_save(ModelProject* this, GString* dest)
+model_project_save(ModelProject* this, 
+                   GString* dest,
+                   GError** error)
 {
     g_assert(this);
+    GError* innerError = NULL;
 
     if(dest != NULL && !g_string_equal(this->_location, dest))
     {
@@ -668,7 +822,9 @@ model_project_save(ModelProject* this, GString* dest)
         this->_location = newLoc;
     }
 
-    model_project_write_project(this);
+    model_project_write_project(this, &innerError);
+    if(innerError)
+        g_propagate_error(error, innerError);
 }
 
 void

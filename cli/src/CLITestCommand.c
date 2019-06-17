@@ -89,24 +89,29 @@ cli_test_command_handle_input(CLICommandInfo* command, GString* input)
 static void
 cli_test_command_execute(CLICommandInfo* command)
 {
+	GError* innerError = NULL;
     CLITestCommand* this = CLI_TEST_COMMAND(command);
 
 	GString* projLoc = this->_projLoc;
 
 	ModelProject* proj = NULL;
-	if(!model_project_load_or_create_project(projLoc, &proj))
+	if(!model_project_load_or_create_project(projLoc, &proj, &innerError))
 	{
 		g_print("Project does not exist\n");
 		return;
 	}
+	if(innerError != NULL)
+    {
+        g_print(innerError->message);
+        return;
+    }
 
 	ModelProjectManager* manager = model_project_manager_new();
 
-	GError* error = NULL;
-	model_project_manager_run_tests(manager, proj, &error);
-	if(error != NULL)
+	model_project_manager_run_tests(manager, proj, &innerError);
+	if(innerError != NULL)
 	{
-		g_print(error->message);
+		g_print(innerError->message);
 		return;
 	}
 

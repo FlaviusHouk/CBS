@@ -28,7 +28,10 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 ///@value - value that will be written in document. 
 ///Return TRUE on success. 
 gboolean
-xml_text_writer_write_string(xmlTextWriter* writer, char* tagName, char* value);
+xml_text_writer_write_string(xmlTextWriter* writer, 
+                             char* tagName, 
+                             char* value,
+                             GError** error);
 
 ///Writes int to XML document into @tagName tag.
 ///@writer - libxml2 writer
@@ -36,7 +39,10 @@ xml_text_writer_write_string(xmlTextWriter* writer, char* tagName, char* value);
 ///@value - value that will be written in document. 
 ///Return TRUE on success.
 gboolean
-xml_text_writer_write_int(xmlTextWriter* writer, char* tagName, int value);
+xml_text_writer_write_int(xmlTextWriter* writer, 
+                          char* tagName, 
+                          int value,
+                          GError** error);
 
 ///Writes GPtrArray as a collection.
 ///@writer - libxml2 writer
@@ -48,7 +54,8 @@ gboolean
 xml_text_writer_write_ptr_array(xmlTextWriter* writer,
                                  char* tagName, 
                                  GPtrArray* array,
-                                 void (*content_writer)(gpointer, gpointer));
+                                 void (*content_writer)(gpointer, gpointer),
+                                 GError** error);
 
 ///Writes GHashTable as a collection.
 ///@writer - libxml2 writer
@@ -60,7 +67,8 @@ gboolean
 xml_text_writer_write_hash_table(xmlTextWriter* writer,
                                  char* tagName, 
                                  GHashTable* table,
-                                 void (*content_writer)(gpointer, gpointer, gpointer));
+                                 void (*content_writer)(gpointer, gpointer, gpointer),
+                                 GError** error);
 
 ///Reads collection from XML document
 ///@xmlNodePtr - node that contains collection.
@@ -72,16 +80,21 @@ xml_node_read_collection(xmlNodePtr node,
                         char* collectionName,
                         char* elementName,
                         void (*deserializer)(xmlNodePtr, gpointer),
-                        gpointer user_data);
+                        gpointer user_data,
+                        GError** error);
 
 ///Read GString from xmlNode
 ///@node - first node on the same label with one with data.
 ///@name - tag name with data.
 GString*
-xml_node_read_g_string(xmlNodePtr node, char* name);
+xml_node_read_g_string(xmlNodePtr node, 
+                       char* name,
+                       GError** error);
 
 gint
-xml_node_read_int(xmlNodePtr node, char* name);
+xml_node_read_int(xmlNodePtr node, 
+                  char* name,
+                  GError** error);
 
 ///Function to converting string from ASCII encoding to @enc
 ///@string - string to encode.

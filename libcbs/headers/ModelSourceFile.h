@@ -46,11 +46,14 @@ model_source_file_new(GString* location);
 
 ///Deserialization function.
 ModelSourceFile*
-model_source_file_new_from_xml(xmlNodePtr node);
+model_source_file_new_from_xml(xmlNodePtr node,
+                               GError** error);
 
 ///Serialization function.
 void
-model_source_file_write_xml(ModelSourceFile* file, xmlTextWriterPtr writer);
+model_source_file_write_xml(ModelSourceFile* file, 
+                            xmlTextWriterPtr writer,
+                            GError** error);
 
 ///Available source file types.
 enum ModelSourceFileTypes

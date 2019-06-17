@@ -17,21 +17,49 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "Helpers/XMLHelpers.h"
 
+#include "Model.h"
+
 gboolean
-xml_text_writer_write_string(xmlTextWriter* writer, char* tagName, char* value)
+xml_text_writer_write_string(xmlTextWriter* writer,
+                             char* tagName, 
+                             char* value,
+                             GError** error)
 {
     int rc = -1;
     rc = xmlTextWriterWriteElement(writer, BAD_CAST tagName, value);
+
+    if(rc < 0)
+    {
+        g_set_error(error,
+                    g_quark_from_string("XML"),
+                    XML_CANNOT_WRITE,
+                    "Cannot write &s.\n",
+                    tagName);        
+    }
+
     return rc >= 0;
 }
 
 gboolean
-xml_text_writer_write_int(xmlTextWriter* writer, char* tagName, int value)
+xml_text_writer_write_int(xmlTextWriter* writer, 
+                          char* tagName, 
+                          int value,
+                          GError** error)
 {
     int rc = -1;
     char num[16];
     sprintf(num, "%d", value);
     rc = xmlTextWriterWriteElement(writer, BAD_CAST tagName, num);
+    
+    if(rc < 0)
+    {
+        g_set_error(error,
+                    g_quark_from_string("XML"),
+                    XML_CANNOT_WRITE,
+                    "Cannot write &s.\n",
+                    tagName);        
+    }
+
     return rc >= 0;
 }
 
@@ -39,7 +67,8 @@ gboolean
 xml_text_writer_write_ptr_array(xmlTextWriter* writer,
                                  char* tagName, 
                                  GPtrArray* array,
-                                 void (*content_writer)(gpointer, gpointer))
+                                 void (*content_writer)(gpointer, gpointer),
+                                 GError** error)
 {
     int rc = -1;
     rc = xmlTextWriterStartElement(writer, BAD_CAST tagName);
@@ -53,6 +82,15 @@ xml_text_writer_write_ptr_array(xmlTextWriter* writer,
 
     rc = xmlTextWriterEndElement(writer);
     
+    if(rc < 0)
+    {
+        g_set_error(error,
+                    g_quark_from_string("XML"),
+                    XML_CANNOT_WRITE,
+                    "Cannot write &s.\n",
+                    tagName);        
+    }
+
     return rc >= 0;
 }
 
@@ -60,7 +98,8 @@ gboolean
 xml_text_writer_write_hash_table(xmlTextWriter* writer,
                                  char* tagName, 
                                  GHashTable* table,
-                                 void (*content_writer)(gpointer, gpointer, gpointer))
+                                 void (*content_writer)(gpointer, gpointer, gpointer),
+                                 GError** error)
 {
     int rc = -1;
     rc = xmlTextWriterStartElement(writer, BAD_CAST tagName);
@@ -74,6 +113,15 @@ xml_text_writer_write_hash_table(xmlTextWriter* writer,
 
     rc = xmlTextWriterEndElement(writer);
     
+    if(rc < 0)
+    {
+        g_set_error(error,
+                    g_quark_from_string("XML"),
+                    XML_CANNOT_WRITE,
+                    "Cannot write &s.\n",
+                    tagName);        
+    }
+
     return rc >= 0;
 }
 
@@ -82,7 +130,8 @@ xml_node_read_collection(xmlNodePtr node,
                         char* collectionName,
                         char* elementName,
                         void (*deserializer)(xmlNodePtr, gpointer),
-                        gpointer user_data)
+                        gpointer user_data,
+                        GError** error)
 {
     while(node != NULL && strcmp(node->name, collectionName) != 0)
         node = node->next;
@@ -107,22 +156,45 @@ xml_node_read_collection(xmlNodePtr node,
 }
 
 GString*
-xml_node_read_g_string(xmlNodePtr node, char* name)
+xml_node_read_g_string(xmlNodePtr node, 
+                       char* name,
+                       GError** error)
 {
     while(node != NULL && strcmp(node->name, name) != 0)
         node = node->next;
+
+    if(!node)
+    {
+        g_set_error(error,
+                    g_quark_from_string("XML"),
+                    XML_CANNOT_READ,
+                    "Tag %s not found.\n",
+                    name);
+
+        return NULL;
+    }
 
     return g_string_new(xmlNodeGetContent(node));
 }
 
 gint
-xml_node_read_int(xmlNodePtr node, char* name)
+xml_node_read_int(xmlNodePtr node, 
+                  char* name,
+                  GError** error)
 {
     while(node != NULL && strcmp(node->name, name) != 0)
         node = node->next;
 
-    if(node == NULL)
+    if(!node)
+    {
+        g_set_error(error,
+                    g_quark_from_string("XML"),
+                    XML_CANNOT_READ,
+                    "Tag %s not found.\n",
+                    name);
+
         return -1;
+    }
 
     gchar* content = xmlNodeGetContent(node);
 

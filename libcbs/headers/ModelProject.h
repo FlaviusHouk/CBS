@@ -44,7 +44,9 @@ enum MODEL_PROJECT_PROPERTIES
 ///returns project from given location
 ///location - project location
 gboolean
-model_project_load_or_create_project(GString* location, ModelProject** output);
+model_project_load_or_create_project(GString* location, 
+                                     ModelProject** output,
+                                     GError** error);
 
 ///Constructor for Project class. Used for unit testing or for internal object creation.
 ModelProject* 
@@ -113,7 +115,9 @@ model_project_remove_include_folder(ModelProject* this, GString* folder);
 ///Performes saving project into file definition path.
 ///dest - path to save project. If dest == NULL Project location is used.
 void
-model_project_save(ModelProject* this, GString* dest);
+model_project_save(ModelProject* this, 
+                   GString* dest,
+                   GError** error);
 
 ///Seeks for build config (default and project defined).
 ///If there is no such config throws exception.

@@ -300,10 +300,10 @@ model_project_dependency_get_includes(ModelProjectDependency* this,
                                       GError ** error)
 {
     g_assert(this);
+    GError* innerError = NULL;
+
     if(this->_type == SYSTEM_DEP)
     {
-        GError* innerError = NULL;
-
         char** args = (char**)malloc(sizeof(char*) * 4);
         args[0] = g_strdup("pkgconf");
         args[1] = g_strdup("--cflags");
@@ -339,7 +339,7 @@ model_project_dependency_get_includes(ModelProjectDependency* this,
         GString* resolvedPath = model_project_resolve_path(this->_owner, this->_representation);
 
         ModelProject* dep = NULL;
-        if(!model_project_load_or_create_project(resolvedPath, &dep))
+        if(!model_project_load_or_create_project(resolvedPath, &dep, &innerError))
         {
             g_set_error(error,
                         g_type_qname(MODEL_TYPE_PROJECT_DEPENDENCY),
@@ -366,11 +366,10 @@ model_project_dependency_get_links(ModelProjectDependency* this,
                                    GError** error)
 {
     g_assert(this);
+    GError* innerError = NULL;
 
     if(this->_type == SYSTEM_DEP)
     {
-        GError* innerError = NULL;
-
         char** args = (char**)malloc(sizeof(char*) * 4);
         args[0] = g_strdup("pkgconf");
         args[1] = g_strdup("--libs");
@@ -437,7 +436,7 @@ model_project_dependency_get_links(ModelProjectDependency* this,
         GString* resovledPath = model_project_resolve_path(this->_owner, this->_representation);
 
         ModelProject* dep = NULL;
-        if(!model_project_load_or_create_project(resovledPath, &dep))
+        if(!model_project_load_or_create_project(resovledPath, &dep, &innerError))
         {
             g_set_error(error,
                         g_type_qname(MODEL_TYPE_PROJECT_DEPENDENCY),
