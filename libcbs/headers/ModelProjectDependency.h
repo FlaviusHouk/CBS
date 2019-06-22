@@ -66,7 +66,9 @@ model_project_dependency_new_from_xml(xmlNodePtr node);
 
 ///Serialization method.
 void
-model_project_dependency_write_xml(ModelProjectDependency* this, xmlTextWriterPtr writer);
+model_project_dependency_write_xml(ModelProjectDependency* this, 
+                                   xmlTextWriterPtr writer,
+                                   GError** error);
 
 ///Getter for Representation property
 GString*

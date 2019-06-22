@@ -267,24 +267,55 @@ model_project_dependency_new_from_xml(xmlNodePtr node)
 }
 
 void
-model_project_dependency_write_xml(ModelProjectDependency* this, xmlTextWriterPtr writer)
+model_project_dependency_write_xml(ModelProjectDependency* this, 
+                                   xmlTextWriterPtr writer,
+                                   GError** error)
 {
     g_assert(this);
     g_assert(writer);
 
     int rc;
+    GError* innerError;
 
     rc = xmlTextWriterStartElement(writer, BAD_CAST "Dependency");
-    g_assert(rc >= 0);
+    if(rc<0)
+    {
+        g_set_error(error,
+                    g_quark_from_string("XML"),
+                    XML_CANNOT_WRITE,
+                    "Cannot write dependency");
+        return;
+    }
 
-    char num[16];
-    sprintf(num, "%d", this->_type);
-
-    xmlTextWriterWriteElement(writer, "Representation", this->_representation->str);
-    xmlTextWriterWriteElement(writer, "Type", num);
+    xml_text_writer_write_string(writer, 
+                                 "Representation", 
+                                 this->_representation->str, 
+                                 &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
+    
+    xml_text_writer_write_int(writer,
+                              "Type",
+                              this->_type,
+                              &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
 
     rc = xmlTextWriterEndElement(writer);
-    g_assert(rc >= 0);
+    if(rc<0)
+    {
+        g_set_error(error,
+                    g_quark_from_string("XML"),
+                    XML_CANNOT_WRITE,
+                    "Cannot write dependency");
+        return;
+    }
 }
 
 GString*

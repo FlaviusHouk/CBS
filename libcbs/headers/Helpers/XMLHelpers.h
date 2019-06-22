@@ -54,7 +54,7 @@ gboolean
 xml_text_writer_write_ptr_array(xmlTextWriter* writer,
                                  char* tagName, 
                                  GPtrArray* array,
-                                 void (*content_writer)(gpointer, gpointer),
+                                 void (*content_writer)(gpointer, gpointer, GError**),
                                  GError** error);
 
 ///Writes GHashTable as a collection.
@@ -67,7 +67,7 @@ gboolean
 xml_text_writer_write_hash_table(xmlTextWriter* writer,
                                  char* tagName, 
                                  GHashTable* table,
-                                 void (*content_writer)(gpointer, gpointer, gpointer),
+                                 void (*content_writer)(gpointer, gpointer, gpointer, GError**),
                                  GError** error);
 
 ///Reads collection from XML document
@@ -79,7 +79,7 @@ void
 xml_node_read_collection(xmlNodePtr node,
                         char* collectionName,
                         char* elementName,
-                        void (*deserializer)(xmlNodePtr, gpointer),
+                        void (*deserializer)(xmlNodePtr, gpointer, GError**),
                         gpointer user_data,
                         GError** error);
 

@@ -86,12 +86,15 @@ model_project_configuration_new(GString* name);
 ///Deserialization method.
 ///node - xmlNode to read from.
 ModelProjectConfiguration*
-model_project_configuration_new_from_xml(xmlNodePtr node);
+model_project_configuration_new_from_xml(xmlNodePtr node,
+                                         GError** error);
 
 ///Serialization method.
 ///writer - xml writer to save data
 void
-model_project_configuration_write_xml(ModelProjectConfiguration* this, xmlTextWriterPtr writer);
+model_project_configuration_write_xml(ModelProjectConfiguration* this, 
+                                      xmlTextWriterPtr writer,
+                                      GError** error);
 
 ///Getter for Config name property
 GString*

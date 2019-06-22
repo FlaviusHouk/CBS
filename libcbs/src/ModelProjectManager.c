@@ -221,7 +221,7 @@ model_project_manager_create_project(GString* location,
         model_project_load_or_create_project(templateProjectLocation, &proj, &innerError);
 
         model_project_save(proj, location, &innerError);
-        if(&innerError != NULL)
+        if(innerError != NULL)
         {
             g_propagate_error(error, innerError);
             return;

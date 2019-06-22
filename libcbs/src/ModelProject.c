@@ -173,17 +173,26 @@ model_project_init_default_build_configs(void)
     }
 
     defaultConfigs = g_ptr_array_new();
-    gchar* defaultDebugConfig = g_key_file_get_string(configFile, "Configs", "Debug", &innerError);
-    gchar* defaultReleaseConfig = g_key_file_get_string(configFile, "Configs", "Release", &innerError);
+    gchar* defaultDebugConfig = g_key_file_get_string(configFile, 
+                                                      "Configs",
+                                                      "Debug", 
+                                                      &innerError);
+
+    gchar* defaultReleaseConfig = g_key_file_get_string(configFile, 
+                                                        "Configs", 
+                                                        "Release", 
+                                                        &innerError);
 
     xmlDocPtr doc = xmlParseDoc(defaultDebugConfig);
     xmlNodePtr configNode = xmlDocGetRootElement(doc);
-    g_ptr_array_add(defaultConfigs, model_project_configuration_new_from_xml(configNode));
+    g_ptr_array_add(defaultConfigs, 
+                    model_project_configuration_new_from_xml(configNode, &innerError));
     xmlFreeDoc(doc);    
 
     doc = xmlParseDoc(defaultReleaseConfig);
     configNode = xmlDocGetRootElement(doc);
-    g_ptr_array_add(defaultConfigs, model_project_configuration_new_from_xml(configNode));
+    g_ptr_array_add(defaultConfigs, 
+                    model_project_configuration_new_from_xml(configNode, &innerError));
     xmlFreeDoc(doc);   
 }
 
@@ -307,11 +316,17 @@ model_project_new(GString* location)
 
 ///Function for XML SourceFile object deserialization.
 static void
-model_project_read_source_file(xmlNodePtr node, gpointer user_data)
+model_project_read_source_file(xmlNodePtr node, gpointer user_data, GError** error)
 {
     GError* innerError = NULL;
     ModelProject* this = MODEL_PROJECT(user_data);
     ModelSourceFile* file = model_source_file_new_from_xml(node, &innerError);
+
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
         
     if(file != NULL)
         g_ptr_array_add(this->_sourceFiles, file);
@@ -319,7 +334,7 @@ model_project_read_source_file(xmlNodePtr node, gpointer user_data)
 
 ///Function for XML Header folder deserialization.
 static void
-model_project_read_header(xmlNodePtr node, gpointer user_data)
+model_project_read_header(xmlNodePtr node, gpointer user_data, GError** error)
 {
     ModelProject* this = MODEL_PROJECT(user_data);
     GString* data = g_string_new(xmlNodeGetContent(node));
@@ -328,7 +343,7 @@ model_project_read_header(xmlNodePtr node, gpointer user_data)
 
 ///Function for XML Dependency object deserialization.
 static void
-model_project_read_project_dependency(xmlNodePtr node, gpointer user_data)
+model_project_read_project_dependency(xmlNodePtr node, gpointer user_data, GError** error)
 {
     ModelProject* this = MODEL_PROJECT(user_data);
 
@@ -343,10 +358,14 @@ model_project_read_project_dependency(xmlNodePtr node, gpointer user_data)
 
 ///Function for XML ProjectConfiguration object deserialization.
 static void
-model_project_read_build_config(xmlNodePtr node, gpointer user_data)
+model_project_read_build_config(xmlNodePtr node, gpointer user_data, GError** error)
 {
+    GError* innerError = NULL;
     ModelProject* this = MODEL_PROJECT(user_data);
-    ModelProjectConfiguration* conf = model_project_configuration_new_from_xml(node);
+    ModelProjectConfiguration* conf = model_project_configuration_new_from_xml(node, &innerError);
+
+    if(innerError != NULL)
+        g_propagate_error(error, innerError);
 
     if(conf != NULL)
         g_ptr_array_add(this->_buildConfigs, conf);
@@ -354,7 +373,7 @@ model_project_read_build_config(xmlNodePtr node, gpointer user_data)
 
 ///Function for XML DataEntry object deserialization.
 static void
-model_project_read_data_entry(xmlNodePtr node, gpointer user_data)
+model_project_read_data_entry(xmlNodePtr node, gpointer user_data, GError** error)
 {
     ModelProject* this = MODEL_PROJECT(user_data);
 
@@ -484,18 +503,21 @@ model_project_read_project(ModelProject* this,
 }
 
 static void
-model_project_write_source_files(gpointer obj, gpointer data)
+model_project_write_source_files(gpointer obj, gpointer data, GError** error)
 {
     GError* innerError = NULL;
     
     model_source_file_write_xml((ModelSourceFile*)obj, (xmlTextWriterPtr)data, &innerError);
+
+    if(innerError != NULL)
+        g_propagate_error(error, innerError);
 }
 
 //There are a banch of function to iterate through GPtrArray with foreach loop
 //and executing some kind of job 
 
 static void
-model_project_write_include_folders(gpointer obj, gpointer data)
+model_project_write_include_folders(gpointer obj, gpointer data, GError** error)
 {
     xmlTextWriterPtr writer = (xmlTextWriterPtr)data;
     GString* str = (GString*)obj;
@@ -504,25 +526,32 @@ model_project_write_include_folders(gpointer obj, gpointer data)
 }
 
 static void
-model_project_write_system_dependencies(gpointer obj, gpointer data)
+model_project_write_system_dependencies(gpointer obj, gpointer data, GError** error)
 {
+    GError* innerError = NULL;
     xmlTextWriterPtr writer = (xmlTextWriterPtr)data;
     ModelProjectDependency* dep = (ModelProjectDependency*)obj;
 
-    model_project_dependency_write_xml(dep, writer);
+    model_project_dependency_write_xml(dep, writer, &innerError);
+
+    if(innerError != NULL)
+        g_propagate_error(error, innerError);
 }
 
 static void
-model_project_write_build_configs(gpointer obj, gpointer data)
+model_project_write_build_configs(gpointer obj, gpointer data, GError** error)
 {
+    GError* innerError = NULL;
     xmlTextWriterPtr writer = (xmlTextWriterPtr)data;
     ModelProjectConfiguration* conf = (ModelProjectConfiguration*)obj;
 
-    model_project_configuration_write_xml(conf, writer);
+    model_project_configuration_write_xml(conf, writer, &innerError);
+    if(innerError != NULL)
+        g_propagate_error(error, innerError);
 }
 
 static void
-model_project_write_data(gpointer key, gpointer value, gpointer data)
+model_project_write_data(gpointer key, gpointer value, gpointer data, GError** error)
 {
     xmlTextWriterPtr writer = (xmlTextWriterPtr)data;
 

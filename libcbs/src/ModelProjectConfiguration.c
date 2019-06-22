@@ -314,77 +314,123 @@ model_project_configuration_new(GString* name)
     this->_name = name;
 }
 
-ModelProjectConfiguration*
-model_project_configuration_new_from_xml(xmlNodePtr node)
+static void
+model_project_configuration_read_macro(xmlNodePtr node, gpointer userData, GError** error)
 {
+    GError* innerError = NULL;
+    ModelProjectConfiguration* this = MODEL_PROJECT_CONFIGURATION(userData);
+
+    GString* macro = g_string_new(xmlNodeGetContent(node));
+
+    g_ptr_array_add(this->_macrosToDefine, macro);
+}
+
+ModelProjectConfiguration*
+model_project_configuration_new_from_xml(xmlNodePtr node,
+                                         GError** error)
+{
+    GError* innerError = NULL;
     ModelProjectConfiguration* this = g_object_new(MODEL_TYPE_PROJECT_CONFIGURATION, NULL);
 
     xmlNodePtr conf = node->children;
     
-    while(conf != NULL)
+    this->_name = xml_node_read_g_string(conf, "Name", &innerError);
+    if(innerError != NULL)
     {
-        if(strcmp(conf->name, "Name") == 0)
-        {
-            this->_name = g_string_new(xmlNodeGetContent(conf));
-        }
-        else if(strcmp(conf->name, "OutputName") == 0)
-        {
-            gchar* name = xmlNodeGetContent(conf);
+        g_propagate_error(error, innerError);
+        return NULL;
+    }
 
-            if(strlen(name) > 0)
-                this->_outputName = g_string_new(name);
-            else
-                g_free(name);
-        }
-        else if(strcmp(conf->name, "CStandard") == 0)
-        {
-            this->_cStandard = atoi(xmlNodeGetContent(conf));
-            g_assert(this->_cStandard >= 0 && this->_cStandard <= C11);
-        }
-        else if(strcmp(conf->name, "OutputType") == 0)
-        {
-            this->_outputType = atoi(xmlNodeGetContent(conf));
-            g_assert(this->_outputType >= 0 && this->_outputType < OUTPUT_TYPE_COUNT);
-        }
-        else if(strcmp(conf->name, "Optimization") == 0)
-        {
-            this->_optimization = atoi(xmlNodeGetContent(conf));
-            g_assert(this->_optimization >= 0 && this->_optimization <= DEBUG_3);
-        }
-        else if(strcmp(conf->name, "Macros") == 0)
-        {
-            xmlNode* macros = conf->children;
+    GString* outputName = xml_node_read_g_string(conf, "OutputName", &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return NULL;
+    }
 
-            while(macros != NULL)
-            {
-                while(macros != NULL && strcmp(macros->name, "string") != 0)
-                {
-                    macros = macros->next;
-                }
+    if(outputName->len > 0)
+        this->_outputName = outputName;
+    else
+        g_string_free(outputName, TRUE);
 
-                GString* data = g_string_new(xmlNodeGetContent(macros));
-                g_ptr_array_add(this->_macrosToDefine, data);
+    this->_cStandard = xml_node_read_int(conf, "CStandard", &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return NULL;
+    }
+    else if(this->_cStandard < 0 || this->_cStandard > C11)
+    {
+        g_set_error(error,
+                    g_type_qname(MODEL_TYPE_PROJECT_CONFIGURATION),
+                    MODEL_PROJECT_CONFIGURATION_WRONG_CONFIG,
+                    "There is no such C Standard defined.\n");
+        return NULL;
+    }
 
-                macros = macros->next;
-            }
-        }
-        else if(strcmp(conf->name, "IgnoreOptions") == 0)
-        {
-            this->_ignoreOptions = atoi(xmlNodeGetContent(conf));
-        }
-        else if(strcmp(conf->name, "CustomConfig") == 0)
-        {
-            this->_customConfig = g_string_new(xmlNodeGetContent(conf));
-        }
+    this->_outputType = xml_node_read_int(conf, "OutputType", &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return NULL;
+    }
+    
+    if(this->_outputType < 0 || this->_outputType >= OUTPUT_TYPE_COUNT)
+    {
+        g_set_error(error,
+                    g_type_qname(MODEL_TYPE_PROJECT_CONFIGURATION),
+                    MODEL_PROJECT_CONFIGURATION_WRONG_CONFIG,
+                    "There is no such output type.\n");
+        return NULL;
+    }
 
-        conf = conf->next;
+    this->_optimization = xml_node_read_int(conf, "Optimization", &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return NULL;
+    }
+
+    if(this->_optimization < 0 || this->_optimization > DEBUG_3)
+    {
+        g_set_error(error,
+                    g_type_qname(MODEL_TYPE_PROJECT_CONFIGURATION),
+                    MODEL_PROJECT_CONFIGURATION_WRONG_CONFIG,
+                    "There is no such optimization level.\n");
+        return NULL;
+    }
+
+    xml_node_read_collection(conf,
+                             "Macros",
+                             "string",
+                             model_project_configuration_read_macro,
+                             this,
+                             &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return NULL;
+    }
+
+    this->_ignoreOptions = xml_node_read_int(conf, "IgnoreOptions", &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return NULL;
+    }
+
+    this->_customConfig = xml_node_read_g_string(conf, "CustomConfig", &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return NULL;
     }
 
     return this;
 }
 
 static void
-model_project_configuration_write_macros(gpointer obj, gpointer data)
+model_project_configuration_write_macros(gpointer obj, gpointer data, GError** error)
 {
     GString* macro = (GString*)obj;
     xmlTextWriter* writer = (xmlTextWriter*)data;
@@ -393,57 +439,92 @@ model_project_configuration_write_macros(gpointer obj, gpointer data)
 }
 
 void
-model_project_configuration_write_xml(ModelProjectConfiguration* this, xmlTextWriterPtr writer)
+model_project_configuration_write_xml(ModelProjectConfiguration* this, 
+                                      xmlTextWriterPtr writer,
+                                      GError** error)
 {
     g_assert(this);
     g_assert(writer);
 
     int rc;
+    GError* innerError = NULL;
 
     rc = xmlTextWriterStartElement(writer, BAD_CAST "Configuration");
-    g_assert(rc >= 0);
+    if(rc<0)
+    {
+        g_set_error(error,
+                    g_quark_from_string("XML"),
+                    XML_CANNOT_WRITE,
+                    "Cannot start document");
+        return;
+    }
 
-    rc = xmlTextWriterWriteElement(writer, "Name", this->_name->str);
-    g_assert(rc >= 0);
+    xml_text_writer_write_string(writer, "Name", this->_name->str, &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
 
-    rc = xmlTextWriterWriteElement(writer, "OutputName", this->_outputName->str);
-    g_assert(rc >= 0);
+    xml_text_writer_write_string(writer, "OutputName", this->_outputName->str, &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
 
-    char num[16];
-    sprintf(num, "%d", this->_cStandard);
-    rc = xmlTextWriterWriteElement(writer, "CStandard", num);
-    g_assert(rc >= 0);
+    xml_text_writer_write_int(writer, "CStandard", this->_cStandard, &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
 
-    sprintf(num, "%d", this->_outputType);
-    rc = xmlTextWriterWriteElement(writer, "OutputType", num);
-    g_assert(rc >= 0);
+    xml_text_writer_write_int(writer, "OutputType", this->_outputType, &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
 
-    sprintf(num, "%d", this->_optimization);
-    rc = xmlTextWriterWriteElement(writer, "Optimization", num);
-    g_assert(rc >= 0);
+    xml_text_writer_write_int(writer, "Optimization", this->_optimization, &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return;
+    }
 
-    rc = xmlTextWriterStartElement(writer, "Macros");
-    g_assert(rc >= 0);
+    xml_text_writer_write_ptr_array(writer,
+                                    "Macros",
+                                    this->_macrosToDefine,
+                                    model_project_configuration_write_macros,
+                                    &innerError);
 
-    g_ptr_array_foreach(this->_macrosToDefine,
-                        model_project_configuration_write_macros,
-                        writer);
-
-    rc = xmlTextWriterEndElement(writer);
-    g_assert(rc >= 0);
-
-    sprintf(num, "%d", this->_ignoreOptions);
-    rc = xmlTextWriterWriteElement(writer, "IgnoreOptions", num);
-    g_assert(rc >= 0);
+    xml_text_writer_write_int(writer, "IgnoreOptions", this->_ignoreOptions, &innerError);
 
     if(this->_customConfig != NULL)
     {
-        rc = xmlTextWriterWriteElement(writer, "CustomConfig", this->_customConfig->str);
-        g_assert(rc >= 0);
+        xml_text_writer_write_string(writer, 
+                                     "CustomConfig", 
+                                     this->_customConfig->str, 
+                                     &innerError);
+
+        if(innerError != NULL)
+        {
+            g_propagate_error(error, innerError);
+            return;
+        }
     }
 
     rc = xmlTextWriterEndElement(writer);
-    g_assert(rc >= 0);
+    if(rc<0)
+    {
+        g_set_error(error,
+                    g_quark_from_string("XML"),
+                    XML_CANNOT_WRITE,
+                    "Cannot start document");
+        return;
+    }
 }
 
 GString*

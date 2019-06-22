@@ -171,7 +171,7 @@ model_source_file_new(GString* location)
 }
 
 static void
-model_source_file_deserialize_dependency(xmlNodePtr node, gpointer user_data)
+model_source_file_deserialize_dependency(xmlNodePtr node, gpointer user_data, GError** error)
 {
     ModelSourceFile* this = MODEL_SOURCE_FILE(user_data);
 
@@ -224,13 +224,16 @@ model_source_file_new_from_xml(xmlNodePtr node,
 }
 
 static void
-model_source_file_write_dependencies(gpointer dependency, gpointer user_data)
+model_source_file_write_dependencies(gpointer dependency, gpointer user_data, GError** error)
 {
     GError* innerError = NULL;
     GString* dep = (GString*)dependency;
     xmlTextWriter* writer = (xmlTextWriter*)user_data;
 
     xml_text_writer_write_string(writer, "Dependency", dep->str, &innerError);
+
+    if(innerError != NULL)
+        g_propagate_error(error, innerError);
 }
 
 void

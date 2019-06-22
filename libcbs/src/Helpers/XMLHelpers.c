@@ -67,18 +67,18 @@ gboolean
 xml_text_writer_write_ptr_array(xmlTextWriter* writer,
                                  char* tagName, 
                                  GPtrArray* array,
-                                 void (*content_writer)(gpointer, gpointer),
+                                 void (*content_writer)(gpointer, gpointer, GError**),
                                  GError** error)
 {
     int rc = -1;
+    GError* innerError;
     rc = xmlTextWriterStartElement(writer, BAD_CAST tagName);
     
     if(rc < 0)
         return FALSE;
 
-    g_ptr_array_foreach(array, 
-                        content_writer,
-                        writer);
+    for(int i = 0; i<array->len;i++)
+        content_writer(array->pdata[i], writer, &innerError);
 
     rc = xmlTextWriterEndElement(writer);
     
@@ -98,18 +98,28 @@ gboolean
 xml_text_writer_write_hash_table(xmlTextWriter* writer,
                                  char* tagName, 
                                  GHashTable* table,
-                                 void (*content_writer)(gpointer, gpointer, gpointer),
+                                 void (*content_writer)(gpointer, gpointer, gpointer, GError**),
                                  GError** error)
 {
     int rc = -1;
+    GError* innerError;
     rc = xmlTextWriterStartElement(writer, BAD_CAST tagName);
     
     if(rc < 0)
         return FALSE;
-
-    g_hash_table_foreach(table, 
-                         content_writer,
-                         writer);
+    
+    GHashTableIter iter;
+    gpointer key, value;
+    g_hash_table_iter_init(&iter, table);
+    while(g_hash_table_iter_next(&iter, &key, &value))
+    {
+        content_writer(key, value, writer, &innerError);
+        if(innerError != NULL)
+        {
+            g_propagate_error(error, innerError);
+            return FALSE;
+        }
+    }
 
     rc = xmlTextWriterEndElement(writer);
     
@@ -129,7 +139,7 @@ void
 xml_node_read_collection(xmlNodePtr node,
                         char* collectionName,
                         char* elementName,
-                        void (*deserializer)(xmlNodePtr, gpointer),
+                        void (*deserializer)(xmlNodePtr, gpointer, GError**),
                         gpointer user_data,
                         GError** error)
 {
@@ -137,8 +147,17 @@ xml_node_read_collection(xmlNodePtr node,
         node = node->next;
 
     if(!node)
-        return;
+    {
+        g_set_error(error,
+                    g_quark_from_string("XML"),
+                    XML_CANNOT_READ,
+                    "Cannot find tag %s.\n",
+                    collectionName);
 
+        return;
+    }
+
+    GError* innerError = NULL;
     xmlNodePtr arrayItems = node->children;
 
     while(arrayItems != NULL)
@@ -148,7 +167,13 @@ xml_node_read_collection(xmlNodePtr node,
             arrayItems = arrayItems->next;
         }
 
-        deserializer(arrayItems, user_data);
+        deserializer(arrayItems, user_data, &innerError);
+
+        if(innerError != NULL)
+        {
+            g_propagate_error(error, innerError);
+            return;
+        }
 
         if(arrayItems != NULL)
             arrayItems = arrayItems->next;
