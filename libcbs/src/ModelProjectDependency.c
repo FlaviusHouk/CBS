@@ -243,24 +243,25 @@ model_project_dependency_new(GString* representation, gint type)
 }
 
 ModelProjectDependency*
-model_project_dependency_new_from_xml(xmlNodePtr node)
+model_project_dependency_new_from_xml(xmlNodePtr node,
+                                      GError** error)
 {
+    GError* innerError = NULL;
     xmlNodePtr dep = node->children;
     ModelProjectDependency* this = g_object_new(MODEL_TYPE_PROJECT_DEPENDENCY, NULL);
 
-    while(dep != NULL)
+    this->_representation = xml_node_read_g_string(dep, "Representation", &innerError);
+    if(innerError != NULL)
     {
-        if(strcmp(dep->name, "Representation") == 0)
-        {
-            this->_representation = g_string_new(xmlNodeGetContent(dep));
-        }
-        else if(strcmp(dep->name, "Type") == 0)
-        {
-            this->_type = atoi(xmlNodeGetContent(dep));
-            g_assert(this->_type < LAST_DEP_TYPE);
-        }
+        g_propagate_error(error, innerError);
+        return NULL;
+    }
 
-        dep = dep->next;
+    this->_type = xml_node_read_int(dep, "Type", &innerError);
+    if(innerError != NULL)
+    {
+        g_propagate_error(error, innerError);
+        return NULL;
     }
 
     return this;

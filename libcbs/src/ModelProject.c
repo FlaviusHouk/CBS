@@ -343,11 +343,17 @@ model_project_read_header(xmlNodePtr node, gpointer user_data, GError** error)
 
 ///Function for XML Dependency object deserialization.
 static void
-model_project_read_project_dependency(xmlNodePtr node, gpointer user_data, GError** error)
+model_project_read_project_dependency(xmlNodePtr node, 
+                                      gpointer user_data, 
+                                      GError** error)
 {
+    GError* innerError = NULL;
     ModelProject* this = MODEL_PROJECT(user_data);
 
-    ModelProjectDependency* dep = model_project_dependency_new_from_xml(node);
+    ModelProjectDependency* dep = model_project_dependency_new_from_xml(node, &innerError);
+
+    if(innerError != NULL)
+        g_propagate_error(error, innerError);
 
     if(dep != NULL)
     {

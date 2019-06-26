@@ -62,7 +62,8 @@ model_project_dependency_new(GString* representation, gint type);
 
 ///Deserialization method.
 ModelProjectDependency*
-model_project_dependency_new_from_xml(xmlNodePtr node);
+model_project_dependency_new_from_xml(xmlNodePtr node,
+                                      GError** error);
 
 ///Serialization method.
 void
