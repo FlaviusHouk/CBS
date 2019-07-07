@@ -17,6 +17,7 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 
 #define _POSIX_C_SOURCE 200809L
 
+#include "Model.h"
 #include "Helper.h"
 #include "stdio.h"
 #include "stdlib.h"
@@ -140,7 +141,12 @@ run_tool(char* tool, char** args, GError** error)
     }
 
     if(stderror != NULL && strlen(stderror) > 0)
-        g_printerr(stderror);
+    {
+        writeFunc print = model_get_output_pipe();
+
+        if(print != NULL)
+            print(stderror, ERROR);
+    }
 
     return g_string_new(stdoutput);
 }

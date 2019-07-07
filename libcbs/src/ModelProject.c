@@ -125,7 +125,10 @@ model_project_get_property(GObject* obj,
 static void
 model_project_handle_xml_error(void* userData, xmlErrorPtr error)
 {
-    g_print("%s", error->message);
+    writeFunc print = model_get_output_pipe();
+
+    if(print != NULL)
+        print(error->message, ERROR);
 }
 
 ///Collection of avalable default configs: Debug and Release; 
@@ -168,7 +171,11 @@ model_project_init_default_build_configs(void)
     GKeyFile* configFile = g_key_file_new();
     if(!g_key_file_load_from_file(configFile, configDir->str, G_KEY_FILE_NONE, &innerError))
     {
-        g_printerr(innerError->message);
+        writeFunc print = model_get_output_pipe();
+
+        if(print != NULL)
+            print(innerError->message, ERROR);
+
         return;
     }
 

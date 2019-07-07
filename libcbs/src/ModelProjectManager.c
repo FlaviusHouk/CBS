@@ -31,6 +31,16 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #include "glib/gstdio.h"
 #include "gio/gio.h"
 
+static writeFunc _writer = NULL;
+
+void 
+model_init_output_pipe(writeFunc printFunc)
+{ _writer=printFunc; }
+
+writeFunc
+model_get_output_pipe()
+{ return _writer; }
+
 struct _ModelProjectManager
 {
     GObject parent_object;
@@ -381,7 +391,10 @@ model_project_manager_print_command(GPtrArray* args)
     g_string_append(command, "\n");
     g_string_erase(command, 0, 1);
 
-    g_print(command->str);
+    writeFunc print = model_get_output_pipe();
+
+    if(print != NULL)
+        print(command->str, MESSAGE);
 
     g_string_free(command, FALSE);
 }
@@ -393,7 +406,14 @@ model_project_manager_run_script(GString* scriptFolder,
                                  GError** error)
 {
     GError* innerError = NULL;
-    g_print("Running %s script...\n", script);
+    writeFunc print = model_get_output_pipe();
+    GString* msg = g_string_new("");
+    g_string_append_printf(msg, "Running %s script...\n", script);
+
+    if(print != NULL)
+        print(msg->str, MESSAGE);
+
+    g_string_free(msg, TRUE);
 
     GPtrArray* args = g_ptr_array_new_with_free_func(clear_collection_with_null_elems);
 
@@ -421,7 +441,13 @@ model_project_manager_run_script(GString* scriptFolder,
         }
         else if(output->len > 0)
         {
-            g_print("%s\n", output->str);
+            GString* msg = g_string_new("");
+            g_string_append_printf(msg, "%s\n", output->str);
+
+            if(print)
+                print(msg->str, MESSAGE);
+
+            g_string_free(msg, TRUE);
         }
         
         g_string_free(output, TRUE);
@@ -527,12 +553,20 @@ model_project_manager_process_code_file(ModelProject* toBuild,
 {
     GError* innerError = NULL;
     GString *objFile = g_string_clone(objFolder);
+    writeFunc print = model_get_output_pipe();
     g_string_append_printf(objFile, "/%s.o", g_path_get_basename(model_source_file_get_path(file)->str));
 
     if(model_project_manager_is_object_file_up_to_date(toBuild, file, objFile) &&
        !rebuild)
     {
-        g_print("File %s is up to date.\n", objFile->str);
+        GString* msg = g_string_new("");
+        g_string_append_printf(msg, "File %s is up to date.\n", objFile->str);
+
+        if(print != NULL)
+            print(msg->str, MESSAGE);
+
+        g_string_free(msg, TRUE);
+
         return objFile;
     }
 
@@ -570,7 +604,13 @@ model_project_manager_process_code_file(ModelProject* toBuild,
     }
     else if (output->len > 0)
     {
-        g_print("%s\n", output->str);
+        GString* msg = g_string_new("");
+        g_string_append_printf(msg, "%s\n", output->str);
+
+        if(print)
+            print(msg->str, MESSAGE);
+
+        g_string_free(msg, TRUE);
     }
 
     g_string_free(output, TRUE);
@@ -729,6 +769,7 @@ model_project_manager_build_project(ModelProjectManager* this,
     GString* loc, *output;
     gboolean isPublishing = options & PUBLISH;
     gboolean forceRebuild = options & REBUILD;
+    writeFunc print = model_get_output_pipe();
 
     loc = g_string_new(model_project_manager_get_project_work_dir(model_project_get_location(toBuild)));
 
@@ -777,7 +818,8 @@ model_project_manager_build_project(ModelProjectManager* this,
         return;
     }
 
-    g_print("Building...\n");
+    if(print)
+        print("Building...\n", MESSAGE);
 
     GPtrArray* sources = model_project_get_source_files(toBuild);
     GPtrArray* objFiles = g_ptr_array_new();
@@ -837,7 +879,8 @@ model_project_manager_build_project(ModelProjectManager* this,
                                              options,
                                              &innerError);
 
-    g_print("Linking...\n");
+    if(print)
+        print("Linking...\n", MESSAGE);
 
     if (!model_project_manager_is_output_up_to_date(binary, objFiles) || forceRebuild)
     {
@@ -882,9 +925,10 @@ model_project_manager_build_project(ModelProjectManager* this,
             {
                 g_propagate_error(error, innerError);
             }
-            else if (output->len > 0)
+            else if (output->len > 0 && print)
             {
-                g_print("%s\n", output->str);
+                print(output->str, MESSAGE);
+                print("\n", MESSAGE);
             }
         }
         else
@@ -906,8 +950,11 @@ model_project_manager_build_project(ModelProjectManager* this,
             output = run_tool("/usr/bin/ar", (char **)args->pdata, &innerError);
             if(innerError != NULL)
                 g_propagate_error(error, innerError);
-            else if (output->len > 0)
-                g_print("%s\n", output->str);
+            else if (output->len > 0 && print)
+            {
+                print(output->str, MESSAGE);
+                print("\n", MESSAGE);
+            }
         }
     }
 

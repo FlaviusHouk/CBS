@@ -76,6 +76,21 @@ G_DECLARE_FINAL_TYPE(ModelSourceFile, model_source_file, MODEL, SOURCE_FILE, GOb
 ///Type that incupsulates unit test framework and provides api for the rest of classes.
 G_DECLARE_FINAL_TYPE(ModelTestRunner, model_test_runner, MODEL, TEST_RUNNER, GObject);
 
+enum OUTPUT_STRING
+{
+    MESSAGE,
+    ERROR
+};
+
+typedef 
+void (*writeFunc)(gchar*, gint);
+
+void 
+model_init_output_pipe(writeFunc printFunc);
+
+writeFunc
+model_get_output_pipe();
+
 G_END_DECLS
 
 #endif

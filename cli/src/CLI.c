@@ -117,9 +117,27 @@ cli_command_parser_parse_commands(gpointer data, gpointer userData)
 	}
 }
 
+static void
+cli_output_pipe(gchar* message, gint type)
+{
+	switch(type)
+	{
+		case MESSAGE:
+		{
+			g_print(message);
+			break;
+		}
+		case ERROR:
+		{
+			g_printerr(message);
+			break;
+		}
+	}
+}
 
 CLICommandParser* cli_command_parser_new(char** args, int argn)
 {
+	model_init_output_pipe(cli_output_pipe);
 	CLICommandParser* this = g_object_new(CLI_TYPE_COMMAND_PARSER, NULL);
 
 	GPtrArray* strCollection = g_ptr_array_new();
