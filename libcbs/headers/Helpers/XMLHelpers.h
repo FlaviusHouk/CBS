@@ -79,6 +79,7 @@ void
 xml_node_read_collection(xmlNodePtr node,
                         char* collectionName,
                         char* elementName,
+                        gboolean isOptional,
                         void (*deserializer)(xmlNodePtr, gpointer, GError**),
                         gpointer user_data,
                         GError** error);
@@ -89,11 +90,13 @@ xml_node_read_collection(xmlNodePtr node,
 GString*
 xml_node_read_g_string(xmlNodePtr node, 
                        char* name,
+                       gboolean isOptional,
                        GError** error);
 
 gint
 xml_node_read_int(xmlNodePtr node, 
                   char* name,
+                  gboolean isOptional,
                   GError** error);
 
 ///Function to converting string from ASCII encoding to @enc

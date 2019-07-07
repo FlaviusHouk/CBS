@@ -405,7 +405,7 @@ model_project_read(xmlNodePtr root,
     GError* innerError = NULL;
     xmlNodePtr node = root->children;
 
-    gint ver = xml_node_read_int(node, "Version", &innerError);
+    gint ver = xml_node_read_int(node, "Version", FALSE, &innerError);
     if(innerError != NULL)
     {
         g_error_free(innerError);
@@ -420,6 +420,7 @@ model_project_read(xmlNodePtr root,
     xml_node_read_collection(node,
                             "SourceFiles",
                             "SourceFile",
+                            FALSE,
                             model_project_read_source_file,
                             this,
                             &innerError);
@@ -432,6 +433,7 @@ model_project_read(xmlNodePtr root,
     xml_node_read_collection(node,
                             "IncludeFolders",
                             "string",
+                            FALSE,
                             model_project_read_header,
                             this,
                             &innerError);
@@ -444,6 +446,7 @@ model_project_read(xmlNodePtr root,
     xml_node_read_collection(node,
                             "SystemDependencies",
                             "Dependency",
+                            TRUE,
                             model_project_read_project_dependency,
                             this,
                             &innerError);
@@ -456,6 +459,7 @@ model_project_read(xmlNodePtr root,
     xml_node_read_collection(node,
                             "BuildConfigs",
                             "Configuration",
+                            TRUE,
                             model_project_read_build_config,
                             this,
                             &innerError);
@@ -468,6 +472,7 @@ model_project_read(xmlNodePtr root,
     xml_node_read_collection(node,
                              "ProjectData",
                              "DataEntry",
+                             TRUE,
                              model_project_read_data_entry,
                              this,
                              &innerError);
@@ -479,6 +484,7 @@ model_project_read(xmlNodePtr root,
 
     this->_activeConfiguration = xml_node_read_g_string(node, 
                                                         "ActiveBuildConfig",
+                                                        FALSE,
                                                         &innerError);
     if(innerError != NULL)
     {
@@ -487,6 +493,7 @@ model_project_read(xmlNodePtr root,
     }
     this->_unitTestsLocation = xml_node_read_g_string(node, 
                                                       "UnitTestsLocation",
+                                                      FALSE,
                                                       &innerError);
     if(innerError != NULL)
     {

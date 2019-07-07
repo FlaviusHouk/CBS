@@ -334,14 +334,14 @@ model_project_configuration_new_from_xml(xmlNodePtr node,
 
     xmlNodePtr conf = node->children;
     
-    this->_name = xml_node_read_g_string(conf, "Name", &innerError);
+    this->_name = xml_node_read_g_string(conf, "Name", FALSE, &innerError);
     if(innerError != NULL)
     {
         g_propagate_error(error, innerError);
         return NULL;
     }
 
-    GString* outputName = xml_node_read_g_string(conf, "OutputName", &innerError);
+    GString* outputName = xml_node_read_g_string(conf, "OutputName", FALSE, &innerError);
     if(innerError != NULL)
     {
         g_propagate_error(error, innerError);
@@ -353,7 +353,7 @@ model_project_configuration_new_from_xml(xmlNodePtr node,
     else
         g_string_free(outputName, TRUE);
 
-    this->_cStandard = xml_node_read_int(conf, "CStandard", &innerError);
+    this->_cStandard = xml_node_read_int(conf, "CStandard", FALSE, &innerError);
     if(innerError != NULL)
     {
         g_propagate_error(error, innerError);
@@ -368,7 +368,7 @@ model_project_configuration_new_from_xml(xmlNodePtr node,
         return NULL;
     }
 
-    this->_outputType = xml_node_read_int(conf, "OutputType", &innerError);
+    this->_outputType = xml_node_read_int(conf, "OutputType", FALSE, &innerError);
     if(innerError != NULL)
     {
         g_propagate_error(error, innerError);
@@ -384,7 +384,7 @@ model_project_configuration_new_from_xml(xmlNodePtr node,
         return NULL;
     }
 
-    this->_optimization = xml_node_read_int(conf, "Optimization", &innerError);
+    this->_optimization = xml_node_read_int(conf, "Optimization", FALSE, &innerError);
     if(innerError != NULL)
     {
         g_propagate_error(error, innerError);
@@ -403,6 +403,7 @@ model_project_configuration_new_from_xml(xmlNodePtr node,
     xml_node_read_collection(conf,
                              "Macros",
                              "string",
+                             TRUE,
                              model_project_configuration_read_macro,
                              this,
                              &innerError);
@@ -412,14 +413,14 @@ model_project_configuration_new_from_xml(xmlNodePtr node,
         return NULL;
     }
 
-    this->_ignoreOptions = xml_node_read_int(conf, "IgnoreOptions", &innerError);
+    this->_ignoreOptions = xml_node_read_int(conf, "IgnoreOptions", FALSE, &innerError);
     if(innerError != NULL)
     {
         g_propagate_error(error, innerError);
         return NULL;
     }
 
-    this->_customConfig = xml_node_read_g_string(conf, "CustomConfig", &innerError);
+    this->_customConfig = xml_node_read_g_string(conf, "CustomConfig", TRUE, &innerError);
     if(innerError != NULL)
     {
         g_propagate_error(error, innerError);

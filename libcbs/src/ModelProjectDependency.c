@@ -250,14 +250,14 @@ model_project_dependency_new_from_xml(xmlNodePtr node,
     xmlNodePtr dep = node->children;
     ModelProjectDependency* this = g_object_new(MODEL_TYPE_PROJECT_DEPENDENCY, NULL);
 
-    this->_representation = xml_node_read_g_string(dep, "Representation", &innerError);
+    this->_representation = xml_node_read_g_string(dep, "Representation", FALSE, &innerError);
     if(innerError != NULL)
     {
         g_propagate_error(error, innerError);
         return NULL;
     }
 
-    this->_type = xml_node_read_int(dep, "Type", &innerError);
+    this->_type = xml_node_read_int(dep, "Type", FALSE, &innerError);
     if(innerError != NULL)
     {
         g_propagate_error(error, innerError);

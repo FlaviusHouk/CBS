@@ -139,6 +139,7 @@ void
 xml_node_read_collection(xmlNodePtr node,
                         char* collectionName,
                         char* elementName,
+                        gboolean isOptional,
                         void (*deserializer)(xmlNodePtr, gpointer, GError**),
                         gpointer user_data,
                         GError** error)
@@ -148,11 +149,12 @@ xml_node_read_collection(xmlNodePtr node,
 
     if(!node)
     {
-        g_set_error(error,
-                    g_quark_from_string("XML"),
-                    XML_CANNOT_READ,
-                    "Cannot find tag %s.\n",
-                    collectionName);
+        if(!isOptional)
+            g_set_error(error,
+                        g_quark_from_string("XML"),
+                        XML_CANNOT_READ,
+                        "Cannot find tag %s.\n",
+                        collectionName);
 
         return;
     }
@@ -183,6 +185,7 @@ xml_node_read_collection(xmlNodePtr node,
 GString*
 xml_node_read_g_string(xmlNodePtr node, 
                        char* name,
+                       gboolean isOptional,
                        GError** error)
 {
     while(node != NULL && strcmp(node->name, name) != 0)
@@ -190,11 +193,12 @@ xml_node_read_g_string(xmlNodePtr node,
 
     if(!node)
     {
-        g_set_error(error,
-                    g_quark_from_string("XML"),
-                    XML_CANNOT_READ,
-                    "Tag %s not found.\n",
-                    name);
+        if(!isOptional)
+            g_set_error(error,
+                        g_quark_from_string("XML"),
+                        XML_CANNOT_READ,
+                        "Tag %s not found.\n",
+                        name);
 
         return NULL;
     }
@@ -205,6 +209,7 @@ xml_node_read_g_string(xmlNodePtr node,
 gint
 xml_node_read_int(xmlNodePtr node, 
                   char* name,
+                  gboolean isOptional,
                   GError** error)
 {
     while(node != NULL && strcmp(node->name, name) != 0)
@@ -212,11 +217,12 @@ xml_node_read_int(xmlNodePtr node,
 
     if(!node)
     {
-        g_set_error(error,
-                    g_quark_from_string("XML"),
-                    XML_CANNOT_READ,
-                    "Tag %s not found.\n",
-                    name);
+        if(!isOptional)
+            g_set_error(error,
+                        g_quark_from_string("XML"),
+                        XML_CANNOT_READ,
+                        "Tag %s not found.\n",
+                        name);
 
         return -1;
     }

@@ -187,6 +187,7 @@ model_source_file_new_from_xml(xmlNodePtr node,
 
     GString* path = xml_node_read_g_string(file, 
                                            "Path",
+                                           FALSE,
                                            &innerError);
     if(innerError)
     {
@@ -205,6 +206,7 @@ model_source_file_new_from_xml(xmlNodePtr node,
     xml_node_read_collection(file,
                              "DependsOn",
                              "Dependency",
+                             TRUE,
                              model_source_file_deserialize_dependency,
                              this,
                              &innerError);
