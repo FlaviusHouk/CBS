@@ -167,5 +167,7 @@ model_test_runner_execute_tests(ModelTestRunner* this, GString* loc)
         }
 
         g_module_close(tests);
+
+        return 0;
     }
 }

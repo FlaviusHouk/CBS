@@ -150,7 +150,7 @@ model_project_get_build_config(ModelProject* this, GString* configName)
     ModelProjectConfiguration* seek = model_project_configuration_new(g_string_clone(configName));
     ModelProjectConfiguration* toRet = NULL;
 
-    gint index = -1;
+    guint index = -1;
     if(g_ptr_array_find_with_equal_func(this->_buildConfigs, seek, model_project_configuration_equals, &index))
         toRet = g_ptr_array_index(this->_buildConfigs, index);
     else if(g_ptr_array_find_with_equal_func(defaultConfigs, seek, model_project_configuration_equals, &index))
@@ -180,23 +180,23 @@ model_project_init_default_build_configs(void)
     }
 
     defaultConfigs = g_ptr_array_new();
-    gchar* defaultDebugConfig = g_key_file_get_string(configFile, 
-                                                      "Configs",
-                                                      "Debug", 
-                                                      &innerError);
+    const gchar* defaultDebugConfig = g_key_file_get_string(configFile, 
+                                                            "Configs",
+                                                            "Debug", 
+                                                            &innerError);
 
-    gchar* defaultReleaseConfig = g_key_file_get_string(configFile, 
+    const gchar* defaultReleaseConfig = g_key_file_get_string(configFile, 
                                                         "Configs", 
                                                         "Release", 
                                                         &innerError);
 
-    xmlDocPtr doc = xmlParseDoc(defaultDebugConfig);
+    xmlDocPtr doc = xmlParseDoc((unsigned char*)defaultDebugConfig); //libxml requires unsigned chars
     xmlNodePtr configNode = xmlDocGetRootElement(doc);
     g_ptr_array_add(defaultConfigs, 
                     model_project_configuration_new_from_xml(configNode, &innerError));
     xmlFreeDoc(doc);    
 
-    doc = xmlParseDoc(defaultReleaseConfig);
+    doc = xmlParseDoc((unsigned char*)defaultReleaseConfig); //libxml requires unsigned chars
     configNode = xmlDocGetRootElement(doc);
     g_ptr_array_add(defaultConfigs, 
                     model_project_configuration_new_from_xml(configNode, &innerError));
@@ -344,7 +344,7 @@ static void
 model_project_read_header(xmlNodePtr node, gpointer user_data, GError** error)
 {
     ModelProject* this = MODEL_PROJECT(user_data);
-    GString* data = g_string_new(xmlNodeGetContent(node));
+    GString* data = g_string_new((gchar*)xmlNodeGetContent(node));
     g_ptr_array_add(this->_headersFolders, data);
 }
 
@@ -493,7 +493,7 @@ model_project_read(xmlNodePtr root,
     }
     this->_unitTestsLocation = xml_node_read_g_string(node, 
                                                       "UnitTestsLocation",
-                                                      FALSE,
+                                                      TRUE,
                                                       &innerError);
     if(innerError != NULL)
     {
@@ -783,10 +783,7 @@ model_project_add_source_file(ModelProject* this, ModelSourceFile* file)
     g_assert(this);
     g_assert(file);
 
-    FILE* fileCheck = fopen(model_source_file_get_path(file)->str, "r");
-    if(fileCheck)
-        fclose(fileCheck);
-    else
+    if(!g_file_test(model_source_file_get_path(file)->str, G_FILE_TEST_EXISTS))
         return FALSE;
 
     if(g_ptr_array_find_with_equal_func(this->_sourceFiles, file, model_source_file_equals, NULL))
@@ -803,7 +800,7 @@ model_project_remove_source_file(ModelProject* this, ModelSourceFile* file)
     g_assert(this);
     g_assert(file);
 
-    int index = -1;
+    guint index = 0;
 
     if(g_ptr_array_find_with_equal_func(this->_sourceFiles, file, model_source_file_equals, &index))
         g_ptr_array_remove_index(this->_sourceFiles, index);
@@ -849,7 +846,7 @@ model_project_remove_include_folder(ModelProject* this, GString* folder)
     g_assert(this);
     g_assert(folder);
 
-    int index = -1;
+    guint index = 0;
     if(!g_ptr_array_find_with_equal_func(this->_headersFolders, folder, model_project_find_gstring, &index))
         return;
 
@@ -898,7 +895,7 @@ model_project_remove_dependency(ModelProject* this, ModelProjectDependency* depe
     g_assert(this);
     g_assert(dependency);
 
-    int index = -1;
+    guint index = -1;
     if(!g_ptr_array_find_with_equal_func(this->_dependencies, dependency, model_project_dependency_equals, &index))
         return;
 

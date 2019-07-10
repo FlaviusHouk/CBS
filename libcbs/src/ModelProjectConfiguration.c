@@ -312,6 +312,7 @@ model_project_configuration_new(GString* name)
     ModelProjectConfiguration* this = g_object_new(MODEL_TYPE_PROJECT_CONFIGURATION, NULL);
 
     this->_name = name;
+    return this;
 }
 
 static void
@@ -775,7 +776,7 @@ model_project_configuration_define_macro(ModelProjectConfiguration* this,
     g_assert(this);
     g_assert(macro);
 
-    gint index;
+    guint index;
     if(g_ptr_array_find_with_equal_func(this->_macrosToDefine, 
                                         macro, 
                                         (GEqualFunc)g_string_equal, 

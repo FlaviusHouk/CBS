@@ -134,7 +134,7 @@ model_project_manager_init_src_folder(ModelProject* proj)
     if(srcDir)
     {
         const char* filename;
-        while(filename = g_dir_read_name(srcDir))
+        while((filename = g_dir_read_name(srcDir)))
         {
             GString* filePath = g_string_new(g_strdup(dirPath->str));
             filePath = g_string_append(g_string_append(filePath, "/"), filename);
