@@ -30,6 +30,7 @@ G_BEGIN_DECLS
 
 #define CLI_TYPE_BUILD_COMMAND cli_build_command_get_type()
 
+///CLICommandInfo subtype for handling Build Command.
 G_DECLARE_FINAL_TYPE(CLIBuildCommand,
                      cli_build_command,
                      CLI,

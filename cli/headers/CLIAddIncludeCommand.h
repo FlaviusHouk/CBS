@@ -30,6 +30,7 @@ G_BEGIN_DECLS
 
 #define CLI_TYPE_ADD_INCLUDE_COMMAND cli_add_include_command_get_type()
 
+///CLICommandInfo subtype for for handling Add Include Command
 G_DECLARE_FINAL_TYPE(CLIAddIncludeCommand, 
                      cli_add_include_command, 
                      CLI, 

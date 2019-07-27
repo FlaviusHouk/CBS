@@ -30,6 +30,7 @@ G_BEGIN_DECLS
 
 #define CLI_TYPE_DELETE_DEP_COMMAND cli_delete_dep_command_get_type()
 
+///CLICommandInfo subtype for Delete Dependency Command handling.
 G_DECLARE_FINAL_TYPE(CLIDeleteDepCommand,
                      cli_delete_dep_command,
                      CLI,

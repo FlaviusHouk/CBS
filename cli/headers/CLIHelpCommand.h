@@ -30,6 +30,7 @@ G_BEGIN_DECLS
 
 #define CLI_TYPE_HELP_COMMAND cli_help_command_get_type()
 
+///CLICommandInfo subtype for Help command handling.
 G_DECLARE_FINAL_TYPE(CLIHelpCommand,
                      cli_help_command,
                      CLI,

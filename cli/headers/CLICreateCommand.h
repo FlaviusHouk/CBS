@@ -30,7 +30,12 @@ G_BEGIN_DECLS
 
 #define CLI_TYPE_CREATE_COMMAND cli_create_command_get_type()
 
-G_DECLARE_FINAL_TYPE(CLICreateCommand, cli_create_command, CLI, CREATE_COMMAND, CLICommandInfo);
+///CLICommandInfo subtype for handling Create Command
+G_DECLARE_FINAL_TYPE(CLICreateCommand, 
+                     cli_create_command, 
+                     CLI, 
+                     CREATE_COMMAND, 
+                     CLICommandInfo);
 
 CLICreateCommand* 
 cli_create_command_new();

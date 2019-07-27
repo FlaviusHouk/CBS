@@ -41,14 +41,16 @@ enum MODEL_PROJECT_PROPERTIES
 };
 
 ///Function that loads project if it exists or creates new one with given location
-///returns project from given location
-///location - project location
+///returns TRUE if project was loaded and FALSE if it was created.
+///@location - project location
+///@output - loaded project
 gboolean
 model_project_load_or_create_project(GString* location, 
                                      ModelProject** output,
                                      GError** error);
 
 ///Constructor for Project class. Used for unit testing or for internal object creation.
+///@location - path to project.
 ModelProject* 
 model_project_new(GString* location);
 
@@ -59,7 +61,7 @@ model_project_get_location(ModelProject* this);
 
 ///Adds SourceFile to project. If there is one with the same name, duplicate 
 ///will not be added.
-///file - file that added to the project. It should not be freed.
+///@file - file that added to the project. It should not be freed.
 gboolean
 model_project_add_source_file(ModelProject* this, 
                               ModelSourceFile* file);
@@ -109,6 +111,7 @@ model_project_get_includes(ModelProject* this);
 
 ///Removes include folder from project. Frees memory for given folder.
 ///If there is no such folder, nothing will be done.
+///@folder - folder name to remove
 void
 model_project_remove_include_folder(ModelProject* this, GString* folder);
 
@@ -138,6 +141,7 @@ model_project_set_active_build_config(ModelProject* this, GString* configName);
 
 ///Resoves a path relative to current working directory(one cbs is statred from)
 ///and main project location. Alocates new string that should be freed.
+///@relPath - path that will be resolved.
 GString*
 model_project_resolve_path(ModelProject* this, GString* relPath);
 

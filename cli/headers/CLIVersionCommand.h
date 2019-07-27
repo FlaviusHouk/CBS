@@ -30,6 +30,7 @@ G_BEGIN_DECLS
 
 #define CLI_TYPE_VERSION_COMMAND cli_version_command_get_type()
 
+///CLICommandInfo subtype for Get Version command handling.
 G_DECLARE_FINAL_TYPE(CLIVersionCommand,
                      cli_version_command,
                      CLI,

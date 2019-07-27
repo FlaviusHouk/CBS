@@ -30,6 +30,7 @@ G_BEGIN_DECLS
 
 #define CLI_TYPE_DELETE_FILE_COMMAND cli_delete_file_command_get_type()
 
+///CLICommandInfo subtype for Delete File Command handling.
 G_DECLARE_FINAL_TYPE(CLIDeleteFileCommand, 
                      cli_delete_file_command, 
                      CLI, 

@@ -30,6 +30,7 @@ G_BEGIN_DECLS
 
 #define CLI_TYPE_ADD_FILE_COMMAND cli_add_file_command_get_type()
 
+///CLICommandIbfo subtype for handling Add File command.
 G_DECLARE_FINAL_TYPE(CLIAddFileCommand, 
                      cli_add_file_command, 
                      CLI, 

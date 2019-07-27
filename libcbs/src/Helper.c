@@ -79,6 +79,8 @@ run_tool(char* tool, char** args, GError** error)
     gint exitStatus;
     GError* innerError = NULL;
 
+    //sync function used here to prevent race condition while bulding dependent
+    //object files.
     g_spawn_sync(NULL,
                  args,
                  NULL,

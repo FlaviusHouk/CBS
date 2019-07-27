@@ -48,8 +48,10 @@ struct _ModelProject
 
 G_DEFINE_TYPE(ModelProject, model_project, G_TYPE_OBJECT)
 
+///Array of GObject properties for this type.
 static GParamSpec* obj_properties[MODEL_PROJECT_PROP_COUNT] = { NULL, };
 
+///GObject property setter
 static void
 model_project_set_property(GObject* obj,
                            guint propID,
@@ -91,6 +93,7 @@ model_project_set_property(GObject* obj,
     }
 }
 
+///GObject properties getter
 static void
 model_project_get_property(GObject* obj,
                            guint propID,
@@ -161,6 +164,7 @@ model_project_get_build_config(ModelProject* this, GString* configName)
     return toRet;
 }
 
+///Reads default build configurations. Should be called once as early as possible.
 static void
 model_project_init_default_build_configs(void)
 {
@@ -203,6 +207,7 @@ model_project_init_default_build_configs(void)
     xmlFreeDoc(doc);   
 }
 
+///GObject dispose function.
 static void
 model_project_dispose(GObject* obj)
 {
@@ -253,6 +258,7 @@ model_project_dispose(GObject* obj)
     G_OBJECT_CLASS(model_project_parent_class)->dispose(obj);
 }
 
+///GObject finalize function.
 static void
 model_project_finalize(GObject* obj)
 {
@@ -296,6 +302,7 @@ model_project_class_init(ModelProjectClass* class)
                                       obj_properties);
 }
 
+///GObject instance constructor.
 static void
 model_project_init(ModelProject* this)
 {
@@ -502,6 +509,7 @@ model_project_read(xmlNodePtr root,
     }
 }
 
+///Reads project from locating set in Project's Location field.
 static void
 model_project_read_project(ModelProject* this,
                            GError** error)
@@ -522,6 +530,9 @@ model_project_read_project(ModelProject* this,
     xmlFreeDoc(doc);
 }
 
+//There are a banch of function to iterate through GPtrArray with foreach loop
+//and executing some kind of job 
+
 static void
 model_project_write_source_files(gpointer obj, gpointer data, GError** error)
 {
@@ -532,9 +543,6 @@ model_project_write_source_files(gpointer obj, gpointer data, GError** error)
     if(innerError != NULL)
         g_propagate_error(error, innerError);
 }
-
-//There are a banch of function to iterate through GPtrArray with foreach loop
-//and executing some kind of job 
 
 static void
 model_project_write_include_folders(gpointer obj, gpointer data, GError** error)

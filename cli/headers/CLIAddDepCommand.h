@@ -30,11 +30,13 @@ G_BEGIN_DECLS
 
 #define CLI_TYPE_ADD_DEP_COMMAND cli_add_dep_command_get_type()
 
+///CLICommandInfo subtype for handling Add Dependency Command.
 G_DECLARE_FINAL_TYPE(CLIAddDepCommand, 
                      cli_add_dep_command, 
                      CLI, 
                      ADD_DEP_COMMAND, 
                      CLICommandInfo);
+
 
 CLIAddDepCommand*
 cli_add_dep_command_new();

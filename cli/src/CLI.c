@@ -117,6 +117,7 @@ cli_command_parser_parse_commands(gpointer data, gpointer userData)
 	}
 }
 
+///Output pipeline for pushing messages from libcbs.
 static void
 cli_output_pipe(gchar* message, gint type)
 {

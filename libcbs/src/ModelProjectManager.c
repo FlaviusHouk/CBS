@@ -31,6 +31,7 @@ along with C Build System.  If not, see <https://www.gnu.org/licenses/>.
 #include "glib/gstdio.h"
 #include "gio/gio.h"
 
+///Holds reference for function to pass output.
 static writeFunc _writer = NULL;
 
 void 
@@ -48,18 +49,21 @@ struct _ModelProjectManager
 
 G_DEFINE_TYPE(ModelProjectManager, model_project_manager, G_TYPE_OBJECT);
 
+///GObject function for dispose.
 static void
 model_project_manager_dispose(GObject* obj)
 {
     G_OBJECT_CLASS(model_project_manager_parent_class)->dispose(obj);
 }
 
+///GObject function for finalization.
 static void
 model_project_manager_finalize(GObject* obj)
 {
     G_OBJECT_CLASS(model_project_manager_parent_class)->finalize(obj);
 }
 
+///Type's static constructor.
 static void
 model_project_manager_class_init(ModelProjectManagerClass* class)
 {
@@ -69,9 +73,12 @@ model_project_manager_class_init(ModelProjectManagerClass* class)
     objectClass->finalize = model_project_manager_finalize;
 }
 
+
+///GObject instance constructor.
 static void
 model_project_manager_init(ModelProjectManager* this)
 {}
+
 
 ModelProjectManager*
 model_project_manager_new()
@@ -124,6 +131,8 @@ model_project_manager_get_project_dir(ModelProject* proj, gchar* dirName)
     return dirPath;
 }
 
+///Used for project initialization.
+///Creates src folder in the _location if it does not exist.
 static void
 model_project_manager_init_src_folder(ModelProject* proj)
 {
@@ -155,6 +164,8 @@ model_project_manager_init_src_folder(ModelProject* proj)
     g_string_free(dirPath, TRUE);
 }
 
+///Used for project initialization.
+///Creates headers folder in the _location if it does not exist.
 static void
 model_project_manager_init_headers_folder(ModelProject* proj)
 {
@@ -177,6 +188,8 @@ model_project_manager_init_headers_folder(ModelProject* proj)
         g_error_free(error);
 }
 
+///Used for project initialization.
+///Creates scripts folder in the _location if it does not exist.
 static void
 model_project_manager_init_scripts_folder(ModelProject* proj)
 {
@@ -286,6 +299,8 @@ model_project_manager_create_project(GString* location,
     }
 }
 
+///Builds string wich contains all necessary header's location to build source file.
+///Allocates new string.
 static GString*
 model_project_manager_build_include_string(ModelProject* building, 
                                            GString* projLoc,
@@ -335,6 +350,8 @@ model_project_manager_build_include_string(ModelProject* building,
     return includes;
 }
 
+///Builds string which contains pathes to all binaries that should be linked.
+///Allocates new string.
 static GString*
 model_project_manager_build_link_string(ModelProject* building,
                                         gboolean includeRPath,
@@ -368,7 +385,8 @@ model_project_manager_build_link_string(ModelProject* building,
     return link;
 }
 
-//Helper method for concatenating command parts. Maybe it will be moved into Helpers file
+///Helper method for concatenating command parts. 
+///Maybe it will be moved into Helpers file
 static void
 model_project_manager_append_part(gpointer part, gpointer string)
 {
@@ -382,6 +400,8 @@ model_project_manager_append_part(gpointer part, gpointer string)
     }
 }
 
+///Prints built compiler commands that will be passed to run_tool() function.
+///@args - collection of GStrings.
 static void
 model_project_manager_print_command(GPtrArray* args)
 {
@@ -399,7 +419,9 @@ model_project_manager_print_command(GPtrArray* args)
     g_string_free(command, FALSE);
 }
 
-//script is freed inside so a copy should be pased.
+///script is freed inside so a copy should be pased.
+///@striptFolder - location of the scritps.
+///@scritp - file name to run.
 static void
 model_project_manager_run_script(GString* scriptFolder, 
                                  gchar* script,
@@ -457,7 +479,7 @@ model_project_manager_run_script(GString* scriptFolder,
     g_ptr_array_free(args, TRUE);
 }
 
-//Converts strings to a GPtrArray collection to pass into run_tool() function
+///Converts strings to a GPtrArray collection to pass into run_tool() function
 static void
 model_project_manager_split_and_add_to(GPtrArray *toAdd, GString *string)
 {
@@ -476,6 +498,9 @@ model_project_manager_split_and_add_to(GPtrArray *toAdd, GString *string)
     }
 }
 
+///Checks is out file is up to date.
+///@output - output file location.
+///@objFiles - object files used to build output. Cpllection of GString.
 static gboolean
 model_project_manager_is_output_up_to_date(GString* output,
                                            GPtrArray* objFiles)
@@ -503,6 +528,10 @@ model_project_manager_is_output_up_to_date(GString* output,
     return TRUE;
 }
 
+///Checks if object file os up to date.
+///@toBuild - project which "owns" file.
+///@file - file that should be checked.
+///@objFile - location of object file.
 static gboolean
 model_project_manager_is_object_file_up_to_date(ModelProject* toBuild,
                                                 ModelSourceFile* file,
@@ -541,6 +570,17 @@ model_project_manager_is_object_file_up_to_date(ModelProject* toBuild,
     return TRUE;
 }
 
+///Callback for GPtrArray foreach loop.
+///Process (builds object file from source) c file with code.
+///@toBuild - project that is built.
+///@file - file to process.
+///@objFolder - location of folder for object files.
+///@configString - compilation options for compiler.
+///@includes - string which contains all include folders for compiler. 
+///(Should be refactorer to support different compilers)
+///@projLoc - location of project that initiated the build. 
+///(used for building dependencies)
+///@rebuild - flag that indicates force rebuild even if all files up to date.
 static GString *
 model_project_manager_process_code_file(ModelProject* toBuild,
                                         ModelSourceFile* file, 
@@ -620,6 +660,7 @@ model_project_manager_process_code_file(ModelProject* toBuild,
     return objFile;
 }
 
+///Analyzes project data and creates config.h according to it.
 static void
 model_project_manager_generate_config_header(ModelProject* toBuild)
 {
@@ -658,6 +699,10 @@ model_project_manager_generate_config_header(ModelProject* toBuild)
     g_hash_table_unref(data);
 }
 
+///Copies all binaries from dependent project into current project's binary folder.
+///Used for publish command.
+///@deps - GString collection. Contains pathes of files which should be copied.
+///@projBinaryFolder - destination.
 static void
 model_project_manager_copy_binaries(GPtrArray* deps,
                                     GString* projBinaryFolder,
@@ -703,6 +748,9 @@ model_project_manager_copy_binaries(GPtrArray* deps,
     }
 }
 
+///Builds project dependencies if any.
+///@toBuild - project that is building.
+///@buildOptions - internal CBS build params.
 static void
 model_project_manager_build_dependencies(ModelProjectManager* this,
                                          ModelProject* toBuild,

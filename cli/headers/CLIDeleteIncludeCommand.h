@@ -30,6 +30,7 @@ G_BEGIN_DECLS
 
 #define CLI_TYPE_DELETE_INCLUDE_COMMAND cli_delete_include_command_get_type()
 
+///CLICommandInfo subtype for Delete Include Command handling.
 G_DECLARE_FINAL_TYPE(CLIDeleteIncludeCommand, 
                      cli_delete_include_command, 
                      CLI, 

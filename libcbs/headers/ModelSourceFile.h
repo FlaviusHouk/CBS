@@ -78,6 +78,7 @@ model_source_file_equals(const void* this, const void* that);
 GString*
 model_source_file_get_path(ModelSourceFile* this);
 
+///Getter for Dependencies property.
 GPtrArray*
 model_source_file_get_deps(ModelSourceFile* this);
 

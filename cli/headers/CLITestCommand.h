@@ -30,6 +30,7 @@ G_BEGIN_DECLS
 
 #define CLI_TYPE_TEST_COMMAND cli_test_command_get_type()
 
+///CLICommandInfo subtype for Test Command handling.
 G_DECLARE_FINAL_TYPE(CLITestCommand,
                      cli_test_command,
                      CLI,
