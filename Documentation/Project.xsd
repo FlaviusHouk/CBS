@@ -1,0 +1,95 @@
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Project">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="SourceFiles">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="SourceFile" maxOccurs="unbounded" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:string" name="Path"/>
+                    <xs:element name="DependsOn">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element type="xs:string" name="Dependency" 
+                                      maxOccurs="unbounded" minOccurs="0"/>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="IncludeFolders">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element type="xs:string" name="string"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="SystemDependencies">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Dependency" maxOccurs="unbounded" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:string" name="Representation"/>
+                    <xs:element type="xs:byte" name="Type"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="BuildConfigs">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Configuration">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:string" name="Name"/>
+                    <xs:element type="xs:string" name="OutputName"/>
+                    <xs:element type="xs:byte" name="CStandard"/>
+                    <xs:element type="xs:byte" name="OutputType"/>
+                    <xs:element type="xs:byte" name="Optimization"/>
+                    <xs:element type="xs:string" name="Macros">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element type="xs:string" name="string"
+                                      maxOccurs="unbounded" minOccurs="0"/>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element type="xs:byte" name="IgnoreOptions"/>
+                    <xs:element type="xs:string" name="CustomConfig"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="ProjectData">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="DataEntry" maxOccurs="unbounded" minOccurs="0">
+                <xs:complexType>
+                  <xs:simpleContent>
+                    <xs:extension base="xs:string">
+                      <xs:attribute type="xs:string" name="Key" use="optional"/>
+                      <xs:attribute type="xs:string" name="Value" use="optional"/>
+                    </xs:extension>
+                  </xs:simpleContent>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element type="xs:string" name="ActiveBuildConfig"/>
+        <xs:element type="xs:string" name="UnitTestsLocation"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
