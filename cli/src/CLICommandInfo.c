@@ -39,6 +39,8 @@ cli_command_info_class_init(CLICommandInfoClass* class)
 {
 	GObjectClass* baseClass = G_OBJECT_CLASS(class);
 
+	baseClass->dispose = cli_command_info_dispose;
+
 	class->_execute = NULL;
 	class->_handleInput = NULL;
 	class->_isValid = NULL;

@@ -89,6 +89,7 @@
         </xs:element>
         <xs:element type="xs:string" name="ActiveBuildConfig"/>
         <xs:element type="xs:string" name="UnitTestsLocation"/>
+        <xs:element type="xs:byte" name="Version"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>

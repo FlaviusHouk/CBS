@@ -1,3 +1,11 @@
+## 0.0.4
+* Added new options for build command: publish, which build binaries with further distributing (via tarball or with some package) in mind and rebuild option which forces project to rebuild even if all files are up to date;
+* Object files and output binaries are checked for update. If there was no changes in source files, object file won't be compiled again;
+* Added version field for project definition to make backward compatibility available;
+* Error in external tools are now handled and it might be a reason to stop build or other process that requires invoking external tools;
+* Provided config file for cbs. According to Freedesktop recomendation it is located in ~/config/cbs folder. It contains default build definitions (currently Debug and Release);
+* Bug fixes and refactoring (look the page with this version).
+
 ## 0.0.3
 * Moving to sefl-building. From version 0.0.3 CBS can build itself. Makefiles is preserved to
 make possible build CBS from scratch;
